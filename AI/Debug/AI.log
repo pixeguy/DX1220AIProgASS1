@@ -1,0 +1,4 @@
+﻿  SceneMovement_Week999.cpp
+E:\pixeguy\Downloads\DX1220_AI\DX1220_AI\AI\Source\SceneMovement_Week999.cpp(275,16): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+E:\pixeguy\Downloads\DX1220_AI\DX1220_AI\AI\Source\SceneMovement_Week999.cpp(283,36): warning C4305: '-=': truncation from 'double' to 'float'
+  AI.vcxproj -> E:\pixeguy\Downloads\DX1220_AI\DX1220_AI\Debug\AI.exe
