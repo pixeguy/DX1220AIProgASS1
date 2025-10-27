@@ -70,6 +70,7 @@ struct GameObject : public ObjectBase
 	bool moveDown;
 	StateMachine *sm;
 	float health;
+	float maxHealth;
 
 	// For Week 05
 	//each instance has to have its own currState and nextState pointer(can't be shared)

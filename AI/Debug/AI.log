@@ -1,4 +1,6 @@
 ﻿  SceneMovement_Week999.cpp
-E:\pixeguy\Downloads\DX1220_AI\DX1220_AI\AI\Source\SceneMovement_Week999.cpp(275,16): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-E:\pixeguy\Downloads\DX1220_AI\DX1220_AI\AI\Source\SceneMovement_Week999.cpp(283,36): warning C4305: '-=': truncation from 'double' to 'float'
-  AI.vcxproj -> E:\pixeguy\Downloads\DX1220_AI\DX1220_AI\Debug\AI.exe
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week999.cpp(283,16): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week999.cpp(291,41): warning C4305: '-=': truncation from 'double' to 'float'
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week999.cpp(548,60): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week999.cpp(554,44): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+  AI.vcxproj -> C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\Debug\AI.exe

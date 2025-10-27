@@ -1,4 +1,4 @@
-#include "SceneMovement_Week999.h"
+﻿#include "SceneMovement_Week999.h"
 #include "GL\glew.h"
 #include "Application.h"
 #include <sstream>
@@ -94,6 +94,8 @@ GameObject* SceneMovement_Week999::InitSpawner(GameObject::SIDE side, Vector3 po
 	spawner->side = side;
 	spawner->target = spawner->pos;
 	spawner->energy = 0;
+	spawner->maxHealth = 100;
+	spawner->health = 90;
 	m_spawners.push_back(spawner);
 	return spawner;
 }
@@ -125,14 +127,20 @@ GameObject* SceneMovement_Week999::SpawnUnit(GameObject::SIDE side, Vector3 pos)
 	if (random < AttackerRate)
 	{
 		unit->type = GameObject::GO_ATTACKER;
+		unit->maxHealth = 100;
+		unit->health = 50;
 	}
 	else if (random < AttackerRate + RangedRate && random > AttackerRate)
 	{
 		unit->type = GameObject::GO_RANGED;
+		unit->maxHealth = 100;
+		unit->health = 50;
 	}
 	else
 	{
 		unit->type = GameObject::GO_SUPPORT;
+		unit->maxHealth = 100;
+		unit->health = 50;
 	}
 	return unit;
 }
@@ -510,6 +518,45 @@ void SceneMovement_Week999::Update(double dt)
 	}
 }
 
+void SceneMovement_Week999::RenderGOBar(GameObject* go, float vertScale)
+{
+	float healthRatio = go->health / go->maxHealth;
+	float energyRatio = go->energy / 100;
+	float barWidth = go->scale.x / 1.8f;
+	float barHeight = go->scale.y / vertScale;
+
+	// draw the health (shrinks left → right)
+	modelStack.PushMatrix();
+	// shift left edge fixed: move half the reduced width to the left
+	float offsetX = -(barWidth * (1.f - healthRatio));
+	modelStack.Translate(go->pos.x + offsetX, go->pos.y - 3.5f, zOffset);
+	modelStack.Scale(barWidth * healthRatio, barHeight, go->scale.z);
+	RenderMesh(meshList[GEO_CUBE], false);
+	modelStack.PopMatrix();
+
+	// draw the background (max health)
+	modelStack.PushMatrix();
+	modelStack.Translate(go->pos.x, go->pos.y - 3.5f, zOffset);
+	modelStack.Scale(barWidth, barHeight, go->scale.z);
+	RenderMesh(meshList[GEO_MAXCUBE], false);
+	modelStack.PopMatrix();
+
+
+	modelStack.PushMatrix();
+	// shift left edge fixed: move half the reduced width to the left
+	float energyoffsetX = -(barWidth * (1.f - energyRatio));
+	modelStack.Translate(go->pos.x + energyoffsetX, go->pos.y - 4.9, zOffset);
+	modelStack.Scale(barWidth * energyRatio, barHeight, go->scale.z);
+	RenderMesh(meshList[GEO_ENERGYCUBE], false);
+	modelStack.PopMatrix();
+
+	modelStack.PushMatrix();
+	modelStack.Translate(go->pos.x, go->pos.y - 4.9, zOffset);
+	modelStack.Scale(barWidth, barHeight, go->scale.z);
+	RenderMesh(meshList[GEO_MAXENERGYCUBE], false);
+	modelStack.PopMatrix();
+}
+
 
 void SceneMovement_Week999::RenderGO(GameObject *go)
 {
@@ -570,6 +617,7 @@ void SceneMovement_Week999::RenderGO(GameObject *go)
 		else
 			RenderMesh(meshList[GEO_BASEBLUE], false);
 		modelStack.PopMatrix();
+		RenderGOBar(go, 14);
 		break;
 	case GameObject::GO_SPAWNER:
 		modelStack.PushMatrix();
@@ -593,6 +641,7 @@ void SceneMovement_Week999::RenderGO(GameObject *go)
 		modelStack.Scale(20 * 2, 20 * 2, 1); // radius (scale by 2 for diameter)
 		RenderMesh(meshList[GEO_CIRCLE], false);
 		modelStack.PopMatrix();
+		RenderGOBar(go, 14);
 		break;
 	case GameObject::GO_ATTACKER:
 		modelStack.PushMatrix();
@@ -601,6 +650,7 @@ void SceneMovement_Week999::RenderGO(GameObject *go)
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
 		RenderMesh(meshList[GEO_ATTACKER], false);
 		modelStack.PopMatrix();
+		RenderGOBar(go, 7);
 		break;
 	case GameObject::GO_RANGED:
 		modelStack.PushMatrix();
@@ -609,6 +659,7 @@ void SceneMovement_Week999::RenderGO(GameObject *go)
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
 		RenderMesh(meshList[GEO_RANGED], false);
 		modelStack.PopMatrix();
+		RenderGOBar(go, 7);
 		break;
 	case GameObject::GO_SUPPORT:
 		modelStack.PushMatrix();
@@ -617,6 +668,7 @@ void SceneMovement_Week999::RenderGO(GameObject *go)
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
 		RenderMesh(meshList[GEO_SUPPORT], false);
 		modelStack.PopMatrix();
+		RenderGOBar(go, 7);
 		break;
 	}
 }

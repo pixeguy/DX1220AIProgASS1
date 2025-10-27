@@ -22,6 +22,7 @@ public:
 	virtual GameObject* SpawnUnit(GameObject::SIDE side, Vector3 pos);
 
 	void RenderGO(GameObject *go);
+	void RenderGOBar(GameObject* go, float vertScale);
 
 	GameObject* FetchGO();
 protected:

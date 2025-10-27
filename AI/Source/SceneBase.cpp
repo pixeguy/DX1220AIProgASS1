@@ -105,7 +105,11 @@ void SceneBase::Init()
 	}
 	meshList[GEO_AXES] = MeshBuilder::GenerateAxes("reference", 1000, 1000, 1000);
 	meshList[GEO_BALL] = MeshBuilder::GenerateSphere("ball", Color(1, 0, 0), 10, 10, 1.f);
-	meshList[GEO_CUBE] = MeshBuilder::GenerateCube("cube", Color(1, 1, 1), 2.f);
+	meshList[GEO_CUBE] = MeshBuilder::GenerateCube("cube", Color(0, 1, 0), 2.f);
+	meshList[GEO_MAXCUBE] = MeshBuilder::GenerateCube("cube", Color(1,0,0), 2.f);
+	meshList[GEO_ENERGYCUBE] = MeshBuilder::GenerateCube("cube", Color(0, 0, 1), 2.f);
+	meshList[GEO_MAXENERGYCUBE] = MeshBuilder::GenerateCube("cube", Color(0.5, 0.5, 0.5), 2.f);
+	meshList[GEO_MAXCUBE] = MeshBuilder::GenerateCube("cube", Color(1, 0, 0), 2.f);
 	meshList[GEO_LINE] = MeshBuilder::GenerateLine("line", 1.f, Color(1, 0, 0));
 	meshList[GEO_TEXT] = MeshBuilder::GenerateText("text", 16, 16);
 	meshList[GEO_TEXT]->textureID = LoadTGA("Image//calibri.tga");
