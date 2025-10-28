@@ -30,6 +30,7 @@ struct GameObject : public ObjectBase
 		GO_ATTACKER,
 		GO_RANGED,
 		GO_SUPPORT,
+		GO_PROJECTILE,
 		GO_TOTAL, //must be last
 	};
 	enum STATE
@@ -60,6 +61,7 @@ struct GameObject : public ObjectBase
 	int id;
 	int steps;
 	float energy;
+	float maxEnergy;
 	float moveSpeed;
 	float countDown;
 	STATE currState;
@@ -71,6 +73,8 @@ struct GameObject : public ObjectBase
 	StateMachine *sm;
 	float health;
 	float maxHealth;
+
+	bool EnergyReduce(float cost = 1.f);
 
 	// For Week 05
 	//each instance has to have its own currState and nextState pointer(can't be shared)

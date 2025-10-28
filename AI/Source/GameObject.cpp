@@ -23,6 +23,17 @@ GameObject::~GameObject()
 {
 }
 
+bool GameObject::EnergyReduce(float cost)
+{
+	energy += cost;
+	if (energy >= 10.f)
+	{
+		energy = 0.f;
+		return true; // ready to act
+	}
+	return false;
+}
+
 //week 4
 bool GameObject::Handle(Message* message)
 {

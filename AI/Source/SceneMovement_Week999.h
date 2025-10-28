@@ -25,8 +25,10 @@ public:
 	void RenderGOBar(GameObject* go, float vertScale);
 
 	GameObject* FetchGO();
+	GameObject* FetchProj();
 protected:
 
+	std::vector<GameObject*> m_projList;
 	std::vector<GameObject *> m_goList;
 	std::vector<GameObject *> m_spawners;
 	float m_speed;

@@ -73,6 +73,26 @@ GameObject* SceneMovement_Week999::FetchGO()
 	return FetchGO();
 }
 
+GameObject* SceneMovement_Week999::FetchProj()
+{
+	for (std::vector<GameObject*>::iterator it = m_projList.begin(); it != m_projList.end(); ++it)
+	{
+		GameObject* go = (GameObject*)*it;
+		if (!go->active)
+		{
+			go->active = true;
+			++m_objectCount;
+			return go;
+		}
+	}
+	for (unsigned i = 0; i < 10; ++i)
+	{
+		GameObject* go = new GameObject(GameObject::GO_FISH);
+		m_projList.push_back(go);
+	}
+	return FetchProj();
+}
+
 GameObject* SceneMovement_Week999::InitMainBase(GameObject::SIDE side, Vector3 pos)
 {
 	GameObject* mainBase = FetchGO();
@@ -124,24 +144,28 @@ GameObject* SceneMovement_Week999::SpawnUnit(GameObject::SIDE side, Vector3 pos)
 	unit->side = side;
 	unit->pos = pos;
 	unit->target = unit->pos;
-	if (random < AttackerRate)
-	{
-		unit->type = GameObject::GO_ATTACKER;
-		unit->maxHealth = 100;
-		unit->health = 50;
-	}
-	else if (random < AttackerRate + RangedRate && random > AttackerRate)
+	unit->moveSpeed = 5.f;
+	//if (random < AttackerRate)
+	//{
+	//	unit->type = GameObject::GO_ATTACKER;
+	//	unit->maxHealth = 100;
+	//	unit->health = 50;
+	//	unit->maxEnergy = 10;
+	//}
+	//else if (random < AttackerRate + RangedRate && random > AttackerRate)
 	{
 		unit->type = GameObject::GO_RANGED;
 		unit->maxHealth = 100;
 		unit->health = 50;
+		unit->maxEnergy = 10;
 	}
-	else
-	{
-		unit->type = GameObject::GO_SUPPORT;
-		unit->maxHealth = 100;
-		unit->health = 50;
-	}
+	//else
+	//{
+	//	unit->type = GameObject::GO_SUPPORT;
+	//	unit->maxHealth = 100;
+	//	unit->health = 50;
+	//	unit->maxEnergy = 10;
+	//}
 	return unit;
 }
 
@@ -344,40 +368,6 @@ void SceneMovement_Week999::Update(double dt)
 
 		if (go->type == GameObject::GO_SUPPORT)
 		{
-			//switch (go->currState)
-			//{
-			//case GameObject::STATE_NONE:
-			//	go->moveSpeed = FULL_SPEED;
-			//	//find nearest friendly unit and move towards it
-			//	break;
-			//case GameObject::STATE_MAINTAIN:
-			//	go->moveSpeed = FULL_SPEED;
-			//	GameObject* nearest = nullptr;
-			//	float nearestDist = FLT_MAX;
-
-			//	for (GameObject* spawner : m_spawners)
-			//	{
-			//		if (!spawner || !spawner->active)
-			//			continue;
-
-			//		float dist = (go->pos - spawner->pos).Length();
-
-			//		if (dist < nearestDist)
-			//		{
-			//			nearestDist = dist;
-			//			nearest = spawner;
-			//		}
-			//	}
-			//	go->target = nearest->pos;
-			//	if(nearestDist < m_gridSize)
-			//	{
-			//		go->currState = GameObject::STATE_MAINTAINING;
-			//	}
-			//	break;
-			//case GameObject::STATE_MAINTAINING:
-
-			//	break;
-			//}
 		}
 
 		if (go->type == GameObject::GO_SPAWNER)
@@ -469,8 +459,87 @@ void SceneMovement_Week999::Update(double dt)
 				}
 			}
 		}
+		if (go->type == GameObject::GO_ATTACKER)
+		{
+			go->nearest = NULL;
+			float nearestDistance = FLT_MAX;
+			for (std::vector<GameObject*>::iterator it2 = m_goList.begin(); it2 != m_goList.end(); ++it2)
+			{
+				GameObject* go2 = (GameObject*)*it2;
+				if (!go2->active)
+					continue;
+				if(go2->side == go->side)
+					continue;
+				if (go2->type == GameObject::GO_SPAWNER)
+				{
+					float distance = (go2->pos - go->pos).Length();
+					if (distance < m_gridSize)
+					{
+						if(go->EnergyReduce(1.f))
+						{
+							go2->health -= 10;
+						}
+						if (go2->health <= 0)
+						{
+							go2->type = GameObject::GO_NONE;
+							go2->active = false;
+							--m_objectCount;
+						}
+					}
+					else if (distance < nearestDistance)
+					{
+						nearestDistance = distance;
+						go->nearest = go2;
+						go->target = go->nearest->pos;
+					}
+				}
+			}
+		}
+		if (go->type == GameObject::GO_RANGED)
+		{
+			std::cout << go->nearest << std::endl;
+			go->nearest = NULL;
+			float nearestDistance = FLT_MAX;
+			for (std::vector<GameObject*>::iterator it2 = m_goList.begin(); it2 != m_goList.end(); ++it2)
+			{
+				GameObject* go2 = (GameObject*)*it2;
+				if (!go2->active)
+					continue;
+				if (go2->side == go->side)
+					continue;
+				if (go2->type == GameObject::GO_SPAWNER)
+				{
+					float distance = (go2->pos - go->pos).Length();
+					float diff = nearestDistance - distance;
+					if (distance < m_gridSize * 5)
+					{
+						if (go->EnergyReduce(1.f))
+						{
+							GameObject* projectile = FetchProj();
+							projectile->type = GameObject::GO_PROJECTILE;
+							projectile->pos = go->pos;
+							projectile->scale = Vector3(m_gridSize / 4, m_gridSize / 4, m_gridSize / 4);
+							projectile->target = go2->pos;
+							projectile->moveSpeed = 20.f;
+							projectile->side = go->side;
+						}
+						if (go2->health <= 0)
+						{
+							go2->type = GameObject::GO_NONE;
+							go2->active = false;
+							--m_objectCount;
+						}
+					}
+					else if (diff > m_gridSize && distance < nearestDistance)
+					{
+						nearestDistance = distance;
+						go->nearest = go2;
+						go->target = go->nearest->pos;
+					}
+				}
+			}
+		}
 	}
-
 	//Movement Section
 	for(std::vector<GameObject *>::iterator it = m_goList.begin(); it != m_goList.end(); ++it)
 	{
@@ -482,17 +551,29 @@ void SceneMovement_Week999::Update(double dt)
 		{
 			//GO->pos reach target
 			go->pos = go->target;
-			//float random = Math::RandFloatMinMax(0.f, 1.f);
-			//if (random < 0.25f && go->moveRight)
-			//	go->target = go->pos + Vector3(m_gridSize, 0, 0);
-			//else if (random < 0.5f && go->moveLeft)
-			//	go->target = go->pos + Vector3(-m_gridSize, 0, 0);
-			//else if (random < 0.75f && go->moveUp)
-			//	go->target = go->pos + Vector3(0, m_gridSize, 0);
-			//else if(go->moveDown)
-			//	go->target = go->pos + Vector3(0, -m_gridSize, 0);
-			//if (go->target.x < 0 || go->target.x > m_noGrid * m_gridSize || go->target.y < 0 || go->target.y > m_noGrid * m_gridSize)
-			//	go->target = go->pos;
+		}
+		else
+		{
+			try
+			{
+				dir.Normalize();
+				go->pos += dir * go->moveSpeed * static_cast<float>(dt) * m_speed;
+			}
+			catch (DivideByZero)
+			{
+			}
+		}
+	}
+	for (std::vector<GameObject*>::iterator it = m_projList.begin(); it != m_projList.end(); ++it)
+	{
+		GameObject* go = (GameObject*)*it;
+		if (!go->active)
+			continue;
+		Vector3 dir = go->target - go->pos;
+		if (dir.Length() < go->moveSpeed * dt * m_speed)
+		{
+			//GO->pos reach target
+			go->pos = go->target;
 		}
 		else
 		{
@@ -521,7 +602,7 @@ void SceneMovement_Week999::Update(double dt)
 void SceneMovement_Week999::RenderGOBar(GameObject* go, float vertScale)
 {
 	float healthRatio = go->health / go->maxHealth;
-	float energyRatio = go->energy / 100;
+	float energyRatio = go->energy / go->maxEnergy;
 	float barWidth = go->scale.x / 1.8f;
 	float barHeight = go->scale.y / vertScale;
 
@@ -670,6 +751,13 @@ void SceneMovement_Week999::RenderGO(GameObject *go)
 		modelStack.PopMatrix();
 		RenderGOBar(go, 7);
 		break;
+	case GameObject::GO_PROJECTILE:
+		modelStack.PushMatrix();
+		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
+		//modelStack.Rotate(180, 0, 0, 1);
+		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
+		RenderMesh(meshList[GEO_SUPPORT], false);
+		modelStack.PopMatrix();
 	}
 }
 
@@ -705,6 +793,15 @@ void SceneMovement_Week999::Render()
 	{
 		GameObject *go = (GameObject *)*it;
 		if(go->active)
+		{
+			zOffset += 0.001f;
+			RenderGO(go);
+		}
+	}
+	for (std::vector<GameObject*>::iterator it = m_projList.begin(); it != m_projList.end(); ++it)
+	{
+		GameObject* go = (GameObject*)*it;
+		if (go->active)
 		{
 			zOffset += 0.001f;
 			RenderGO(go);
