@@ -53,12 +53,12 @@ void SceneMovement_Week999::Init()
 
 }
 
-GameObject* SceneMovement_Week999::FetchGO()
+GameObject* SceneMovement_Week999::FetchGO(GameObject::GAMEOBJECT_TYPE type)
 {
 	for (std::vector<GameObject *>::iterator it = m_goList.begin(); it != m_goList.end(); ++it)
 	{
 		GameObject *go = (GameObject *)*it;
-		if (!go->active)
+		if (!go->active && go->type == type)
 		{
 			go->active = true;
 			++m_objectCount;
@@ -67,10 +67,10 @@ GameObject* SceneMovement_Week999::FetchGO()
 	}
 	for (unsigned i = 0; i < 10; ++i)
 	{
-		GameObject *go = new GameObject(GameObject::GO_FISH);
+		GameObject *go = new GameObject(type);
 		m_goList.push_back(go);
 	}
-	return FetchGO();
+	return FetchGO(type);
 }
 
 GameObject* SceneMovement_Week999::FetchProj()
@@ -95,8 +95,7 @@ GameObject* SceneMovement_Week999::FetchProj()
 
 GameObject* SceneMovement_Week999::InitMainBase(GameObject::SIDE side, Vector3 pos)
 {
-	GameObject* mainBase = FetchGO();
-	mainBase->type = GameObject::GO_MAINBASE;
+	GameObject* mainBase = FetchGO(GameObject::GO_MAINBASE);
 	mainBase->pos = pos;
 	mainBase->scale = Vector3(m_gridSize * 2, m_gridSize * 2, m_gridSize * 2);
 	mainBase->side = side;
@@ -106,8 +105,7 @@ GameObject* SceneMovement_Week999::InitMainBase(GameObject::SIDE side, Vector3 p
 
 GameObject* SceneMovement_Week999::InitSpawner(GameObject::SIDE side, Vector3 pos)
 {
-	GameObject* spawner = FetchGO();
-	spawner->type = GameObject::GO_SPAWNER;
+	GameObject* spawner = FetchGO(GameObject::GO_SPAWNER);
 	spawner->pos = pos;
 	std::cout << m_gridSize << std::endl;
 	spawner->scale = Vector3(m_gridSize * 2, m_gridSize * 2, m_gridSize);
@@ -139,12 +137,7 @@ GameObject* SceneMovement_Week999::SpawnUnit(GameObject::SIDE side, Vector3 pos)
 	static const float RangedRate = 33.3f;
 	static const float SupportRate = 33.4f;
 	float random = Math::RandFloatMinMax(0.f, 100.f);
-	GameObject* unit = FetchGO();
-	unit->scale = Vector3(m_gridSize, m_gridSize, m_gridSize);
-	unit->side = side;
-	unit->pos = pos;
-	unit->target = unit->pos;
-	unit->moveSpeed = 5.f;
+	GameObject* unit = nullptr;
 	//if (random < AttackerRate)
 	//{
 	//	unit->type = GameObject::GO_ATTACKER;
@@ -154,6 +147,7 @@ GameObject* SceneMovement_Week999::SpawnUnit(GameObject::SIDE side, Vector3 pos)
 	//}
 	//else if (random < AttackerRate + RangedRate && random > AttackerRate)
 	{
+		unit = FetchGO(GameObject::GO_RANGED);
 		unit->type = GameObject::GO_RANGED;
 		unit->maxHealth = 100;
 		unit->health = 50;
@@ -166,6 +160,13 @@ GameObject* SceneMovement_Week999::SpawnUnit(GameObject::SIDE side, Vector3 pos)
 	//	unit->health = 50;
 	//	unit->maxEnergy = 10;
 	//}
+
+
+	unit->scale = Vector3(m_gridSize, m_gridSize, m_gridSize);
+	unit->side = side;
+	unit->pos = pos;
+	unit->target = unit->pos;
+	unit->moveSpeed = 5.f;
 	return unit;
 }
 
@@ -237,23 +238,23 @@ void SceneMovement_Week999::Update(double dt)
 	{
 		bSpaceState = false;
 	}
-	static bool bVState = false;
-	if ((!bVState && Application::IsKeyPressed('R')) || (fFoodTimers > 20.0f))
-	{
-		// Exercise: Use another button to spawn GO_FISHFOOD in random location (make it slow) 
-		bVState = true;
-		GameObject *go = FetchGO();
-		go->type = GameObject::GO_FISHFOOD;
-		go->pos = Vector3(Math::RandIntMinMax(0, m_noGrid - 1) * m_gridSize + m_gridOffset,
-			Math::RandIntMinMax(0, m_noGrid - 1) * m_gridSize + m_gridOffset, 0.f);
-		go->scale = Vector3(m_gridSize, m_gridSize, m_gridSize);
-		go->moveSpeed = 1.f;
-		fFoodTimers = 0;
-	}
-	else if (bVState && !Application::IsKeyPressed('R'))
-	{
-		bVState = false;
-	}
+	//static bool bVState = false;
+	//if ((!bVState && Application::IsKeyPressed('R')) || (fFoodTimers > 20.0f))
+	//{
+	//	// Exercise: Use another button to spawn GO_FISHFOOD in random location (make it slow) 
+	//	bVState = true;
+	//	GameObject *go = FetchGO();
+	//	go->type = GameObject::GO_FISHFOOD;
+	//	go->pos = Vector3(Math::RandIntMinMax(0, m_noGrid - 1) * m_gridSize + m_gridOffset,
+	//		Math::RandIntMinMax(0, m_noGrid - 1) * m_gridSize + m_gridOffset, 0.f);
+	//	go->scale = Vector3(m_gridSize, m_gridSize, m_gridSize);
+	//	go->moveSpeed = 1.f;
+	//	fFoodTimers = 0;
+	//}
+	//else if (bVState && !Application::IsKeyPressed('R'))
+	//{
+	//	bVState = false;
+	//}
 	fFoodTimers += (float)dt;
 
 	//StateMachine
@@ -262,6 +263,8 @@ void SceneMovement_Week999::Update(double dt)
 		GameObject *go = (GameObject *)*it;
 		if (!go->active)
 			continue;
+		if (go->sm)
+			go->sm->Update(dt);
 		if(go->type == GameObject::GO_FISH)
 		{
 			//if the fish has to move in random direction

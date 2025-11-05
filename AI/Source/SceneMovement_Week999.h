@@ -24,7 +24,7 @@ public:
 	void RenderGO(GameObject *go);
 	void RenderGOBar(GameObject* go, float vertScale);
 
-	GameObject* FetchGO();
+	GameObject* FetchGO(GameObject::GAMEOBJECT_TYPE type);
 	GameObject* FetchProj();
 protected:
 

@@ -20,7 +20,7 @@ class StateNaughty : public State
 {
 	GameObject *m_go;
 public:
-	StateNaughty(const std::string &stateID, GameObject *go = NULL);
+	StateNaughty(const std::string &stateID, GameObject *go = NULL); 
 	virtual ~StateNaughty();
 
 	virtual void Enter();
