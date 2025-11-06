@@ -249,7 +249,7 @@ void SceneMovement_Week03::Update(double dt)
 							nearestDistance = distance;
 							go->nearest = go2;
 						}
-						//go->moveSpeed = 2;
+						go->moveSpeed = 2;
 						go->target = go->nearest->pos;
 						if(fishCount > 12)
 							{
@@ -293,6 +293,10 @@ void SceneMovement_Week03::Update(double dt)
 		if (!go->active)
 			continue;
 		Vector3 dir = go->target - go->pos;
+		if (go->type == GameObject::GO_FISH)
+		{
+			int a = 0;
+		}
 		if (dir.Length() < go->moveSpeed * dt * m_speed)
 		{
 			//GO->pos reach target
@@ -313,6 +317,25 @@ void SceneMovement_Week03::Update(double dt)
 		{
 			try
 			{
+				//float random = Math::RandFloatMinMax(0.f, 1.f);
+				//if ((go->pos.x / m_gridSize) != abs(go->pos.x / m_gridSize))
+				//{
+				//	std::cout << (go->pos.x / m_gridSize) << "..." << abs((go->pos.x / m_gridSize)) << std::endl;
+				//	// if the GO is not within a column, then 
+				//	if (random < 0.75f && go->moveUp)
+				//		dir.x = 0.0f;
+				//	else if (go->moveDown)
+				//		dir.x = 0.0f;
+				//}
+				//else if ((go->pos.y / m_gridSize) != abs(go->pos.y / m_gridSize))
+				//{
+				//	// if the GO is not within a row, then 
+				//	if (random < 0.25f && go->moveRight)
+				//		dir.y = 0.0f;
+				//	else if (random < 0.5f && go->moveLeft)
+				//		dir.y = 0.0f;
+				//}
+
 				dir.Normalize();
 				go->pos += dir * go->moveSpeed * static_cast<float>(dt) * m_speed;
 			}

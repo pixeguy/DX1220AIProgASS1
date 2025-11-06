@@ -51,7 +51,7 @@ void SceneMovement_Week04::Init()
 	// Exercise Week 4
 	// Register this scene with the "post office"
 	// Post office will now be capable of addressing this scene with messages
-	//PostOffice::GetInstance()->Register("Scene", this);
+	PostOffice::GetInstance()->Register("Scene", this);
 	
 	srand(time(NULL));
 }
@@ -443,6 +443,11 @@ void SceneMovement_Week04::RenderGO(GameObject* go)
 		modelStack.PopMatrix();		modelStack.PopMatrix();
 		break;
 	}
+}
+
+bool SceneMovement_Week04::Handle(Message* message)
+{
+	return false;
 }
 
 void SceneMovement_Week04::Render()

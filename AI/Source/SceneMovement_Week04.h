@@ -6,9 +6,10 @@
 #include "PostOffice.h"
 #include "ConcreteMessages.h"
 #include "SceneBase.h"
+#include "ObjectBase.h"
 // Exercise Week 04
 
-class SceneMovement_Week04 : public SceneBase /* Exercise Week 04 */
+class SceneMovement_Week04 : public SceneBase, ObjectBase /* Exercise Week 04 */
 {
 public:
 	SceneMovement_Week04();
@@ -20,8 +21,8 @@ public:
 	virtual void Exit();
 
 	void RenderGO(GameObject *go);
-	// Exercise Week 04
-	
+	bool Handle(Message* message);
+
 
 	GameObject* FetchGO(GameObject::GAMEOBJECT_TYPE type);
 protected:
