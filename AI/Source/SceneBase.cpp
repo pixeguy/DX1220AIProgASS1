@@ -152,6 +152,8 @@ void SceneBase::Init()
 		meshList[GEO_RANGED]->textureID = LoadTGA("Image//full.tga");
 		meshList[GEO_SUPPORT] = MeshBuilder::GenerateQuad("support", Color(1, 1, 1));
 		meshList[GEO_SUPPORT]->textureID = LoadTGA("Image//hungry.tga");
+		meshList[GEO_MECHANIC] = MeshBuilder::GenerateQuad("support", Color(0, 1, 1));
+		meshList[GEO_MECHANIC]->textureID = LoadTGA("Image//hungry.tga");
 	}
 	meshList[GEO_TEXT]->material.kAmbient.Set(1, 0, 0);
 

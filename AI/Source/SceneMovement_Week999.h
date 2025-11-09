@@ -21,16 +21,16 @@ public:
 	virtual GameObject* InitSpawner(GameObject::SIDE side, Vector3 pos);
 	virtual GameObject* SpawnUnit(GameObject::SIDE side, Vector3 pos);
 
-	void RenderGO(GameObject *go);
 	void RenderGOBar(GameObject* go, float vertScale);
+	void RenderGO(GameObject *go);
 
 	GameObject* FetchGO(GameObject::GAMEOBJECT_TYPE type);
 	GameObject* FetchProj();
 protected:
 
 	std::vector<GameObject*> m_projList;
+	std::vector<GameObject*> m_spawners;
 	std::vector<GameObject *> m_goList;
-	std::vector<GameObject *> m_spawners;
 	float m_speed;
 	float m_worldWidth;
 	float m_worldHeight;

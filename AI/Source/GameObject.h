@@ -27,9 +27,12 @@ struct GameObject : public ObjectBase
 		GO_PIPE,
 		GO_MAINBASE,
 		GO_SPAWNER,
+		GO_MECHANIC,
 		GO_ATTACKER,
 		GO_RANGED,
 		GO_SUPPORT,
+		GO_TANK,
+		GO_MORTAR,
 		GO_PROJECTILE,
 		GO_TOTAL, //must be last
 	};
@@ -73,6 +76,11 @@ struct GameObject : public ObjectBase
 	StateMachine *sm;
 	float health;
 	float maxHealth;
+
+	//for spawner only
+	int metalParts;
+	int woodenLogs;
+	float matRatio;
 
 	bool EnergyReduce(float cost = 1.f);
 

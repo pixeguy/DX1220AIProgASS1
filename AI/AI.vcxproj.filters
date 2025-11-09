@@ -83,10 +83,19 @@
     <ClCompile Include="Source\SceneMovement_Week999.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source\SceneMovement_Week04.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Source\SceneMovement_Week03.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\SceneMovement_Week04.cpp">
+    <ClCompile Include="Source\StatesBuilding.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\StatesMechanic.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\StatesRanged.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -184,10 +193,19 @@
     <ClInclude Include="Source\SceneMovement_Week999.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Source\SceneMovement_Week04.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="Source\SceneMovement_Week03.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\SceneMovement_Week04.h">
+    <ClInclude Include="Source\StatesBuilding.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\StatesMechanic.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\StatesRanged.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

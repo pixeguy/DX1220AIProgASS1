@@ -90,6 +90,7 @@ public:
 		GEO_ATTACKER,
 		GEO_RANGED,
 		GEO_SUPPORT,
+		GEO_MECHANIC,
 		NUM_GEOMETRY,
 	};
 public:
