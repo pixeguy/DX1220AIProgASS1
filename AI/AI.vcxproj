@@ -151,12 +151,14 @@
     <ClCompile Include="Source\shader.cpp" />
     <ClCompile Include="Source\State.cpp" />
     <ClCompile Include="Source\StateMachine.cpp" />
+    <ClCompile Include="Source\StatesAttacker.cpp" />
     <ClCompile Include="Source\StatesBuilding.cpp" />
     <ClCompile Include="Source\StatesFish.cpp" />
     <ClCompile Include="Source\StatesFishFood.cpp" />
     <ClCompile Include="Source\StatesMechanic.cpp" />
     <ClCompile Include="Source\StatesRanged.cpp" />
     <ClCompile Include="Source\StatesShark.cpp" />
+    <ClCompile Include="Source\StatesSupport.cpp" />
     <ClCompile Include="Source\Utility.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -188,12 +190,14 @@
     <ClInclude Include="Source\shader.hpp" />
     <ClInclude Include="Source\State.h" />
     <ClInclude Include="Source\StateMachine.h" />
+    <ClInclude Include="Source\StatesAttacker.h" />
     <ClInclude Include="Source\StatesBuilding.h" />
     <ClInclude Include="Source\StatesFish.h" />
     <ClInclude Include="Source\StatesFishFood.h" />
     <ClInclude Include="Source\StatesMechanic.h" />
     <ClInclude Include="Source\StatesRanged.h" />
     <ClInclude Include="Source\StatesShark.h" />
+    <ClInclude Include="Source\StatesSupport.h" />
     <ClInclude Include="Source\Utility.h" />
     <ClInclude Include="Source\Vertex.h" />
   </ItemGroup>

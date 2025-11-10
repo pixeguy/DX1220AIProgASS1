@@ -149,7 +149,9 @@ void SceneBase::Init()
 		meshList[GEO_ATTACKER] = MeshBuilder::GenerateQuad("attacker", Color(1, 1, 1));
 		meshList[GEO_ATTACKER]->textureID = LoadTGA("Image//toofull.tga");
 		meshList[GEO_RANGED] = MeshBuilder::GenerateQuad("ranged", Color(1, 1, 1));
-		meshList[GEO_RANGED]->textureID = LoadTGA("Image//full.tga");
+		meshList[GEO_RANGED]->textureID = LoadTGA("Image//RangedFaceRight.tga");
+		meshList[GEO_RANGEDRIGHT] = MeshBuilder::GenerateQuad("ranged", Color(1, 1, 1));
+		meshList[GEO_RANGEDRIGHT]->textureID = LoadTGA("Image//RangedFaceLeft.tga");
 		meshList[GEO_SUPPORT] = MeshBuilder::GenerateQuad("support", Color(1, 1, 1));
 		meshList[GEO_SUPPORT]->textureID = LoadTGA("Image//hungry.tga");
 		meshList[GEO_MECHANIC] = MeshBuilder::GenerateQuad("support", Color(0, 1, 1));

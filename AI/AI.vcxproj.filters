@@ -98,6 +98,12 @@
     <ClCompile Include="Source\StatesRanged.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source\StatesAttacker.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\StatesSupport.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Application.h">
@@ -206,6 +212,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\StatesRanged.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\StatesAttacker.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\StatesSupport.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

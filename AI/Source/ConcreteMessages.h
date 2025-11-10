@@ -15,6 +15,7 @@ struct MessageWRU : public Message
 		HIGHEST_ENERGYFISH,
 		NEAREST_SPAWNER,
 		NEAREST_ENEMY,
+		NEAREST_ALLY_NOSUP,
 	};
 	MessageWRU(GameObject *goValue, SEARCH_TYPE typeValue, float thresholdValue) : go(goValue), type(typeValue), threshold(thresholdValue) {}
 	virtual ~MessageWRU() {}
