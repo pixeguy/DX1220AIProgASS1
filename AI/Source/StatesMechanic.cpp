@@ -14,7 +14,7 @@ StateMechanicHealthy::~StateMechanicHealthy()
 
 void StateMechanicHealthy::Enter()
 {
-	m_go->moveSpeed = 0;
+	m_go->moveSpeed = 5;
 	m_go->target = m_go->pos;
 	m_go->nearest = NULL;
 }

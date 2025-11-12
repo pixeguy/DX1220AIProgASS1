@@ -65,7 +65,11 @@ struct GameObject : public ObjectBase
 	int steps;
 	float energy;
 	float maxEnergy;
-	float moveSpeed;
+	float actionSpeed; //actionSpeed and moveSpeed are multipliers
+	float moveSpeed;   //i just dowan go through the whole code change all the names
+	float supportActionSpeed = 0;
+	float supportSpeed = 0;
+	float finalMoveSpeed;
 	float countDown;
 	STATE currState;
 	GameObject *nearest;
@@ -76,6 +80,7 @@ struct GameObject : public ObjectBase
 	StateMachine *sm;
 	float health;
 	float maxHealth;
+	bool moving;
 
 	//for spawner only
 	int metalParts;

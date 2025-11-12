@@ -14,7 +14,8 @@ StateAttackerHealthy::~StateAttackerHealthy()
 
 void StateAttackerHealthy::Enter()
 {
-	m_go->moveSpeed = 0;
+	m_go->moveSpeed = 1;
+	m_go->actionSpeed = 0.3;
 	m_go->target = m_go->pos;
 	m_go->nearest = NULL;
 }
