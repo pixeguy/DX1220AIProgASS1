@@ -70,7 +70,7 @@ struct GameObject : public ObjectBase
 	float supportActionSpeed = 0;
 	float supportSpeed = 0;
 	float finalMoveSpeed;
-	float countDown;
+	float countDown = 0;
 	STATE currState;
 	GameObject *nearest;
 	bool moveLeft;

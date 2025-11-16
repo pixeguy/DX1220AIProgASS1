@@ -83,7 +83,11 @@ struct MessageSpawnFood : public Message
 
 struct MessageStop : public Message
 {
-	MessageStop() {}
+	MessageStop(GameObject* specFishFood) {
+		go = specFishFood;
+	}
+
+	GameObject* go;
 };
 
 //this message is meant to turn food into fish

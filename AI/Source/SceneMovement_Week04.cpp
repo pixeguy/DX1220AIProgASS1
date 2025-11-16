@@ -4,6 +4,7 @@
 #include <sstream>
 #include "StatesFish.h"
 #include "StatesShark.h"
+#include "StatesFishFood.h"
 #include "SceneData.h"
 // Exercise Week 04
 
@@ -85,6 +86,12 @@ GameObject* SceneMovement_Week04::FetchGO(GameObject::GAMEOBJECT_TYPE type)
 			go->sm->AddState(new StateCrazy("Crazy", go));
 			go->sm->AddState(new StateNaughty("Naughty", go));
 			go->sm->AddState(new StateHappy("Happy", go));
+		}
+		else if (type == GameObject::GO_FISHFOOD)
+		{
+			go->sm = new StateMachine();
+			go->sm->AddState(new StateGrow("Grow", go));
+			go->sm->AddState(new StateEvolve("Evolve", go));
 		}
 	}
 	return FetchGO(type);
@@ -204,14 +211,11 @@ void SceneMovement_Week04::Update(double dt)
 			continue;
 		if (go->type == GameObject::GO_FISH)
 		{
-			// Exercise Week 04
-
 			for (std::vector<GameObject*>::iterator it2 = m_goList.begin(); it2 != m_goList.end(); ++it2)
 			{
 				GameObject* go2 = (GameObject*)*it2;
 				if (!go2->active)
 					continue;
-				// Exercise Week 04
 				if (go2->type == GameObject::GO_SHARK)
 				{
 					float distance = (go->pos - go2->pos).Length();
@@ -219,11 +223,7 @@ void SceneMovement_Week04::Update(double dt)
 					{
 						go->energy = -1;
 					}
-					//else if (distance < SHARK_DIST && distance < nearestDistance && go->sm->GetCurrentState() == "Full")
-					//{
-					//	nearestDistance = distance;
-					//	go->nearest = go2;
-					//}
+
 				}
 				else if (go2->type == GameObject::GO_FISHFOOD)
 				{
@@ -233,19 +233,41 @@ void SceneMovement_Week04::Update(double dt)
 						go->energy += 2.5f;
 						go2->active = false;
 					}
-					//else if (distance < FOOD_DIST && distance < nearestDistance && go->sm->GetCurrentState() == "Hungry")
-					//{
-					//	nearestDistance = distance;
-					//	go->nearest = go2;
-					//}
+
 				}
+				if (go->sm->GetCurrentState() == "Hungry")
+				{
+					MessageWRU msgCheckFish = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_FISHFOOD, 50.0f);
+					Handle(&msgCheckFish);
+				}
+				else if (go->sm->GetCurrentState() == "Full")
+				{
+					MessageWRU msgCheckFish = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SHARK, 50.0f);
+					Handle(&msgCheckFish);
+				}
+				//if (go2->type == GameObject::GO_SHARK)
+				//{
+				//	float distance = (go->pos - go2->pos).Length();
+				//	if (distance < m_gridSize)
+				//	{
+				//		go->energy = -1;
+				//	}
+
+				//}
+				//else if (go2->type == GameObject::GO_FISHFOOD)
+				//{
+				//	float distance = (go->pos - go2->pos).Length();
+				//	if (distance < m_gridSize)
+				//	{
+				//		go->energy += 2.5f;
+				//		go2->active = false;
+				//	}
+
+				//}
 			}
 		}
 		else if (go->type == GameObject::GO_SHARK)
 		{
-			// Exercise Week 04
-
-
 			go->nearest = NULL;
 			float nearestDistance = FLT_MAX;
 			float highestEnergy = FLT_MIN;
@@ -254,28 +276,29 @@ void SceneMovement_Week04::Update(double dt)
 				GameObject* go2 = (GameObject*)*it2;
 				if (!go2->active)
 					continue;
-				// Exercise Week 04
 				if (go2->type == GameObject::GO_FISH)
 				{
-					if (go->sm->GetCurrentState() == "Naughty")
+					float distance = (go->pos - go2->pos).Length();
+					if (distance < m_gridSize)
 					{
-						float distance = (go->pos - go2->pos).Length();
-						if (distance < nearestDistance && (go2->sm->GetCurrentState() == "TooFull" || go2->sm->GetCurrentState() == "Full"))
-						{
-							nearestDistance = distance;
-							go->nearest = go2;
-						}
-					}
-					if (go->sm->GetCurrentState() == "Crazy")
-					{
-						if (go2->energy > highestEnergy)
-						{
-							highestEnergy = go2->energy;
-							go->nearest = go2;
-						}
+						go->energy = -1;
 					}
 				}
 			}
+			if (go->sm->GetCurrentState() == "Naughty")
+			{
+				MessageWRU msgCheckFish = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_FULLFISH, 50.0f);
+				Handle(&msgCheckFish);
+			}
+			else if (go->sm->GetCurrentState() == "Crazy")
+			{
+				MessageWRU msgCheckFish = MessageWRU(go, MessageWRU::SEARCH_TYPE::HIGHEST_ENERGYFISH, 50.0f);
+				Handle(&msgCheckFish);
+			}
+		}
+		else if (go->type == GameObject::GO_FISHFOOD)
+		{
+			std::cout << go->sm->GetCurrentState()  << " , "  << go->countDown << std::endl;
 		}
 	}
 
@@ -402,6 +425,15 @@ void SceneMovement_Week04::RenderGO(GameObject* go)
 		// Exercise Week 4
 		modelStack.PopMatrix();
 		modelStack.PopMatrix();
+
+		{
+			modelStack.PushMatrix();
+			const Vector3 displacement = go->target - go->pos;
+			modelStack.Rotate(Math::RadianToDegree(atan2(displacement.y, displacement.x)), 0, 0, 1);
+			modelStack.Scale(displacement.Length() / SceneData::GetInstance()->GetGridSize(), .3f, 1.f);
+			RenderMesh(meshList[GEO_LINE], false);
+			modelStack.PopMatrix();
+		}
 		break;
 	case GameObject::GO_SHARK:
 		modelStack.PushMatrix();
@@ -447,6 +479,143 @@ void SceneMovement_Week04::RenderGO(GameObject* go)
 
 bool SceneMovement_Week04::Handle(Message* message)
 {
+	MessageSpawnFood* msgSpawnFood = dynamic_cast<MessageSpawnFood*>(message);
+	if (msgSpawnFood) {
+		for (int i = 0; i < msgSpawnFood->count; i++)
+		{
+			GameObject* go = new GameObject((GameObject::GAMEOBJECT_TYPE)(msgSpawnFood->type));
+			go->scale.Set(m_gridSize, m_gridSize, m_gridSize);
+			go->pos.Set(m_gridOffset + msgSpawnFood->go->pos.x +
+				Math::RandIntMinMax(msgSpawnFood->distRange[0], msgSpawnFood->distRange[1]) * m_gridSize,
+				m_gridOffset + msgSpawnFood->go->pos.y +
+				Math::RandIntMinMax(msgSpawnFood->distRange[0], msgSpawnFood->distRange[1]) * m_gridSize, 0);
+			go->target = go->pos;
+			go->moveSpeed = 1;
+			go->active = true;
+			go->sm->AddState(new StateGrow("Grow", go));
+			go->sm->AddState(new StateEvolve("Evolve", go));
+			go->sm->SetNextState("Grow");
+			m_goList.push_back(go);
+		}
+	}
+
+	MessageStop* msgFishFoodStop = dynamic_cast<MessageStop*>(message);
+	if (msgFishFoodStop) {
+		GameObject* go = msgFishFoodStop->go;
+		go->moveSpeed = 0;
+	}
+
+	MessageEvolve* msgEvolveFishFood = dynamic_cast<MessageEvolve*>(message);
+	if (msgEvolveFishFood) {
+		GameObject* go = msgEvolveFishFood->go;
+		go->type = GameObject::GO_FISH;
+	}
+
+	MessageWRU* messageWRU = dynamic_cast<MessageWRU*>(message);
+	if (messageWRU)
+	{
+		GameObject* go = messageWRU->go;
+		go->nearest = nullptr;
+
+		float nearestDistance = FLT_MAX;
+		float highestEnergy = FLT_MIN;
+
+		for (GameObject* go2 : m_goList)
+		{
+			if (!go2->active)
+				continue;
+			if (messageWRU->type == MessageWRU::NEAREST_SPAWNER && go2->type == GameObject::GO_SPAWNER && go->side == go2->side)
+			{
+				float distance = (go->pos - go2->pos).Length();
+				if (distance < messageWRU->threshold && distance < nearestDistance)
+				{
+					nearestDistance = distance;
+					go->nearest = go2;
+				}
+			}
+			else if (messageWRU->type == MessageWRU::NEAREST_ENEMY && go2->side != go->side)
+			{
+				float distance = (go->pos - go2->pos).Length();
+				if (distance < messageWRU->threshold && distance < nearestDistance)
+				{
+					nearestDistance = distance;
+					go->nearest = go2;
+				}
+			}
+			else if (messageWRU->type == MessageWRU::NEAREST_ALLY_NOSUP && go2->side == go->side)
+			{
+				if (go2 != go) {
+					if (go2->type != GameObject::GO_SPAWNER && go2->type != GameObject::GO_MAINBASE && go2->type != GameObject::GO_SUPPORT) {
+						float distance = (go->pos - go2->pos).Length();
+						bool alreadySupported = false;
+
+						// Check if go2 already has a support pointing to it
+						for (auto go3 : m_goList)
+						{
+							if (!go3->active) continue;
+							if (go3->type != GameObject::GO_SUPPORT) continue;
+
+							if (go3->nearest == go2)
+							{
+								alreadySupported = true;
+								break;
+							}
+						}
+
+						// If it's not supported yet, consider it for nearest
+						if (!alreadySupported)
+						{
+							if (distance < messageWRU->threshold && distance < nearestDistance)
+							{
+								nearestDistance = distance;
+								go->nearest = go2;
+							}
+						}
+					}
+				}
+			}
+			else if (messageWRU->type == MessageWRU::NEAREST_FISHFOOD && go2->type == GameObject::GO_FISHFOOD)
+			{
+				float distance = (go->pos - go2->pos).Length();
+				if (distance < messageWRU->threshold && distance < nearestDistance)
+				{
+					nearestDistance = distance;
+					go->nearest = go2;
+					MessageStop msgFishFoodStop = MessageStop(go2);
+					go->nearest->Handle(&msgFishFoodStop);
+				}
+			}
+			else if (messageWRU->type == MessageWRU::NEAREST_SHARK && go2->type == GameObject::GO_SHARK)
+			{
+				float distance = (go->pos - go2->pos).Length();
+				if (distance < messageWRU->threshold && distance < nearestDistance)
+				{
+					nearestDistance = distance;
+					go->nearest = go2;
+				}
+			}
+			else if (messageWRU->type == MessageWRU::NEAREST_FULLFISH && go2->type == GameObject::GO_FISH)
+			{
+				float distance = (go->pos - go2->pos).Length();
+				if (distance < nearestDistance &&
+					(go2->sm->GetCurrentState() == "TooFull" || go2->sm->GetCurrentState() == "Full"))
+				{
+					nearestDistance = distance;
+					go->nearest = go2;
+				}
+			}
+			else if (messageWRU->type == MessageWRU::HIGHEST_ENERGYFISH && go2->type == GameObject::GO_FISH)
+			{
+				if (go2->energy > highestEnergy)
+				{
+					highestEnergy = go2->energy;
+					go->nearest = go2;
+				}
+			}
+		}
+
+		return true;
+	}
 	return false;
 }
 
