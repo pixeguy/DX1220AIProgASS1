@@ -16,6 +16,7 @@ struct MessageWRU : public Message
 		NEAREST_SPAWNER,
 		NEAREST_ENEMY,
 		NEAREST_ALLY_NOSUP,
+		FURTHEST_FRONTLINE,
 	};
 	MessageWRU(GameObject *goValue, SEARCH_TYPE typeValue, float thresholdValue) : go(goValue), type(typeValue), threshold(thresholdValue) {}
 	virtual ~MessageWRU() {}

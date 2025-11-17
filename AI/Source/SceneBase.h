@@ -92,6 +92,8 @@ public:
 		GEO_RANGEDRIGHT,
 		GEO_SUPPORT,
 		GEO_MECHANIC,
+		GEO_MORTAR,
+		GEO_TANK,
 		NUM_GEOMETRY,
 	};
 public:

@@ -61,6 +61,7 @@ struct GameObject : public ObjectBase
 	bool active;
 	float mass;
 	Vector3 target;
+	Vector3 normalTarget;
 	int id;
 	int steps;
 	float energy;

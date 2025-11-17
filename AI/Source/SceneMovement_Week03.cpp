@@ -7,6 +7,7 @@
 #include "StatesBuilding.h"
 #include "StatesMechanic.h"
 #include "StatesRanged.h"
+#include "StatesTank.h"
 
 
 #include "StatesAttacker.h"
@@ -130,6 +131,12 @@ GameObject* SceneMovement_Week03::FetchGO(GameObject::GAMEOBJECT_TYPE type)
 			go->sm->AddState(new StateNone("None","Healthy", go));
 			go->sm->AddState(new StateSupportHealthy("Healthy", go));
 			go->sm->AddState(new StateSupportDeath("Death", go));
+		}
+		else if (type == GameObject::GO_TANK)
+		{
+			go->sm = new StateMachine();
+			go->sm->AddState(new StateNone("None", "Healthy", go));
+			go->sm->AddState(new StateTankHealthy("Healthy", go));
 		}
 	}
 	return FetchGO(type);
@@ -269,6 +276,7 @@ GameObject* SceneMovement_Week03::SpawnMetalUnit(GameObject::SIDE side, Vector3 
 		unit->type = GameObject::GO_MORTAR;
 	}
 
+	unit->sm->SetNextState("None");
 	unit->maxHealth = 100;
 	unit->health = 50;
 	unit->maxEnergy = 10;
@@ -397,7 +405,7 @@ void SceneMovement_Week03::Update(double dt)
 		bFState = true;
 
 		Vector3 randomPos = RandomPointInRing(m_spawners[0]->pos, 3.75, 10);
-		SpawnUnit(GameObject::SIDE_BLUE, randomPos,GameObject::GO_SUPPORT);
+		SpawnMetalUnit(GameObject::SIDE_BLUE, randomPos,GameObject::GO_TANK);
 	}
 	else if (bFState && !Application::IsKeyPressed('F'))
 	{
@@ -538,6 +546,7 @@ void SceneMovement_Week03::Update(double dt)
 			{
 				MessageWRU msgCheckSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 50.0f);
 				Handle(&msgCheckSpawner);
+				//healthy code is in mechanic state file;
 			}
 		}
 		else if (go->type == GameObject::GO_RANGED)
@@ -586,7 +595,7 @@ void SceneMovement_Week03::Update(double dt)
 				MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
 				Handle(&msgCheckEnemy);
 			}
-			else //use 10 - 15 for radius to check whether enemy is too close
+			else 
 			{
 				if ((go->nearest->pos - go->pos).Length() < m_gridSize)
 				{
@@ -618,6 +627,32 @@ void SceneMovement_Week03::Update(double dt)
 			}
 			else { go->moving = false; /*std::cout << "cant find anything" << std::endl;*/ }
 		}
+		else if (go->type == GameObject::GO_TANK)
+		{
+			//tank uses target more instead of nearest. because to prevent tanks stacking on top of each other at the front
+			if (go->nearest == NULL || go->nearest->active == false) {
+				MessageWRU msgCheckFrontline = MessageWRU(go, MessageWRU::SEARCH_TYPE::FURTHEST_FRONTLINE, 200);
+				Handle(&msgCheckFrontline);
+				go->steps = Math::RandIntMinMax(-1, 1);
+				int redOrBlue = (go->type == GameObject::SIDE_BLUE) ? 1 : -1;
+				go->normalTarget = go->nearest->pos + Vector3(redOrBlue * m_gridSize,go->steps * m_gridSize,0);
+			}
+			else
+			{
+				MessageWRU msgCheckFrontline = MessageWRU(go, MessageWRU::SEARCH_TYPE::FURTHEST_FRONTLINE, 200);
+				Handle(&msgCheckFrontline);
+				int redOrBlue = (go->type == GameObject::SIDE_BLUE) ? 1 : -1;
+				go->normalTarget = go->nearest->pos + Vector3(redOrBlue *  2 *m_gridSize, (float)go->steps * m_gridSize, 0);
+				if ((go->normalTarget - go->pos).Length() < m_gridSize)
+				{
+					go->moving = false;
+				}
+				else { //if im not there yet, continue checking
+					go->moving = true;
+				}
+			}
+			std::cout << go->nearest->type << std::endl;
+		}
 	}
 
 
@@ -628,6 +663,8 @@ void SceneMovement_Week03::Update(double dt)
 
 		spawner->energy += 1; // dont wanna use EnergyReduce function, i want energy to stop at max
 		GameObject::SIDE side = spawner->side;
+
+
 		//deep nested code ahead !!! BEWARE !!! i lazy recode it lol
 
 		//spawner uses random number if both materials have enough, to spawn random wooden or metal unit
@@ -1146,6 +1183,19 @@ void SceneMovement_Week03::RenderGO(GameObject* go)
 			RenderMesh(meshList[GEO_RANGEDRIGHT], false);
 		modelStack.PopMatrix();
 		RenderGOBar(go, 7);
+		break;
+	case GameObject::GO_TANK:
+		modelStack.PushMatrix();
+		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
+		modelStack.Rotate(180, 0, 0, 1);
+		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
+		if (go->moveLeft)
+			RenderMesh(meshList[GEO_TANK], false);
+		else
+			RenderMesh(meshList[GEO_TANK], false);
+		modelStack.PopMatrix();
+		RenderGOBar(go, 7);
+		break;
 	}
 }
 
@@ -1165,6 +1215,7 @@ bool SceneMovement_Week03::Handle(Message* message)
 		{
 			if (!go2->active)
 				continue;
+
 			if (messageWRU->type == MessageWRU::NEAREST_SPAWNER && go2->type == GameObject::GO_SPAWNER && go->side == go2->side)
 			{
 				float distance = (go->pos - go2->pos).Length();
@@ -1172,6 +1223,18 @@ bool SceneMovement_Week03::Handle(Message* message)
 				{
 					nearestDistance = distance;
 					go->nearest = go2;
+				}
+			}
+			else if (messageWRU->type == MessageWRU::FURTHEST_FRONTLINE && go2->side == go->side)
+			{
+				if (go2->type != GameObject::GO_SPAWNER && go2->type != GameObject::GO_MAINBASE) {
+					float distance = (go->pos - go2->pos).Length();
+					//use highestEnergy because thats just declared as FLT_MIN
+					if (distance < messageWRU->threshold && distance > highestEnergy)
+					{
+						highestEnergy = distance;
+						go->nearest = go2;
+					}
 				}
 			}
 			else if (messageWRU->type == MessageWRU::NEAREST_ENEMY && go2->side != go->side)

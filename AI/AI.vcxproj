@@ -159,6 +159,7 @@
     <ClCompile Include="Source\StatesRanged.cpp" />
     <ClCompile Include="Source\StatesShark.cpp" />
     <ClCompile Include="Source\StatesSupport.cpp" />
+    <ClCompile Include="Source\StatesTank.cpp" />
     <ClCompile Include="Source\Utility.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -198,6 +199,7 @@
     <ClInclude Include="Source\StatesRanged.h" />
     <ClInclude Include="Source\StatesShark.h" />
     <ClInclude Include="Source\StatesSupport.h" />
+    <ClInclude Include="Source\StatesTank.h" />
     <ClInclude Include="Source\Utility.h" />
     <ClInclude Include="Source\Vertex.h" />
   </ItemGroup>
