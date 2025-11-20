@@ -156,6 +156,7 @@
     <ClCompile Include="Source\StatesFish.cpp" />
     <ClCompile Include="Source\StatesFishFood.cpp" />
     <ClCompile Include="Source\StatesMechanic.cpp" />
+    <ClCompile Include="Source\StatesMortar.cpp" />
     <ClCompile Include="Source\StatesRanged.cpp" />
     <ClCompile Include="Source\StatesShark.cpp" />
     <ClCompile Include="Source\StatesSupport.cpp" />
@@ -196,6 +197,7 @@
     <ClInclude Include="Source\StatesFish.h" />
     <ClInclude Include="Source\StatesFishFood.h" />
     <ClInclude Include="Source\StatesMechanic.h" />
+    <ClInclude Include="Source\StatesMortar.h" />
     <ClInclude Include="Source\StatesRanged.h" />
     <ClInclude Include="Source\StatesShark.h" />
     <ClInclude Include="Source\StatesSupport.h" />

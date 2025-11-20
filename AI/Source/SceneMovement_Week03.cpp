@@ -8,6 +8,7 @@
 #include "StatesMechanic.h"
 #include "StatesRanged.h"
 #include "StatesTank.h"
+#include "StatesMortar.h"
 
 
 #include "StatesAttacker.h"
@@ -137,6 +138,12 @@ GameObject* SceneMovement_Week03::FetchGO(GameObject::GAMEOBJECT_TYPE type)
 			go->sm = new StateMachine();
 			go->sm->AddState(new StateNone("None", "Healthy", go));
 			go->sm->AddState(new StateTankHealthy("Healthy", go));
+		}
+		else if (type == GameObject::GO_MORTAR)
+		{
+			go->sm = new StateMachine();
+			go->sm->AddState(new StateNone("None", "Healthy", go));
+			go->sm->AddState(new StateMortarHealthy("Healthy", go));
 		}
 	}
 	return FetchGO(type);
@@ -405,7 +412,7 @@ void SceneMovement_Week03::Update(double dt)
 		bFState = true;
 
 		Vector3 randomPos = RandomPointInRing(m_spawners[0]->pos, 3.75, 10);
-		SpawnMetalUnit(GameObject::SIDE_BLUE, randomPos,GameObject::GO_TANK);
+		SpawnMetalUnit(GameObject::SIDE_BLUE, randomPos,GameObject::GO_MORTAR);
 	}
 	else if (bFState && !Application::IsKeyPressed('F'))
 	{
@@ -634,8 +641,8 @@ void SceneMovement_Week03::Update(double dt)
 				MessageWRU msgCheckFrontline = MessageWRU(go, MessageWRU::SEARCH_TYPE::FURTHEST_FRONTLINE, 200);
 				Handle(&msgCheckFrontline);
 				go->steps = Math::RandIntMinMax(-1, 1);
-				int redOrBlue = (go->type == GameObject::SIDE_BLUE) ? 1 : -1;
-				go->normalTarget = go->nearest->pos + Vector3(redOrBlue * m_gridSize,go->steps * m_gridSize,0);
+	/*			int redOrBlue = (go->type == GameObject::SIDE_BLUE) ? 1 : -1;
+				go->normalTarget = go->nearest->pos + Vector3(redOrBlue * m_gridSize,go->steps * m_gridSize,0);*/
 			}
 			else
 			{
@@ -651,7 +658,18 @@ void SceneMovement_Week03::Update(double dt)
 					go->moving = true;
 				}
 			}
-			std::cout << go->nearest->type << std::endl;
+		}
+		else if (go->type == GameObject::GO_MORTAR)
+		{
+			if (go->nearest == NULL || go->nearest->active == false)
+			{
+				MessageWRU nearestMortarEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_MORTAR_ENEMY, 35,10);
+				Handle(&nearestMortarEnemy);
+			}
+			else
+			{
+
+			}
 		}
 	}
 
@@ -1196,6 +1214,30 @@ void SceneMovement_Week03::RenderGO(GameObject* go)
 		modelStack.PopMatrix();
 		RenderGOBar(go, 7);
 		break;
+	case GameObject::GO_MORTAR:
+		modelStack.PushMatrix();
+		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
+		modelStack.Rotate(180, 0, 0, 1);
+		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
+		if (go->moveLeft)
+			RenderMesh(meshList[GEO_MORTAR], false);
+		else
+			RenderMesh(meshList[GEO_MORTAR], false);
+		modelStack.PopMatrix();
+		RenderGOBar(go, 7);
+
+		//modelStack.PushMatrix();
+		//modelStack.Translate(go->pos.x, go->pos.y, zOffset + 0.001f); // small offset to prevent z-fighting
+		//modelStack.Scale(20 * 2, 20 * 2, 1); // radius (scale by 2 for diameter)
+		//RenderMesh(meshList[GEO_CIRCLE], false);
+		//modelStack.PopMatrix();
+
+		//modelStack.PushMatrix();
+		//modelStack.Translate(go->pos.x, go->pos.y, zOffset + 0.001f); // small offset to prevent z-fighting
+		//modelStack.Scale(70 * 2, 70 * 2, 1); // radius (scale by 2 for diameter)
+		//RenderMesh(meshList[GEO_CIRCLE], false);
+		//modelStack.PopMatrix();
+		break;
 	}
 }
 
@@ -1220,6 +1262,15 @@ bool SceneMovement_Week03::Handle(Message* message)
 			{
 				float distance = (go->pos - go2->pos).Length();
 				if (distance < messageWRU->threshold && distance < nearestDistance)
+				{
+					nearestDistance = distance;
+					go->nearest = go2;
+				}
+			}
+			else if (messageWRU->type == MessageWRU::NEAREST_MORTAR_ENEMY && go2->side != go->side)
+			{
+				float distance = (go->pos - go2->pos).Length();
+				if (distance < messageWRU->threshold && distance > messageWRU->mortarTooCloseValue && distance < nearestDistance)
 				{
 					nearestDistance = distance;
 					go->nearest = go2;

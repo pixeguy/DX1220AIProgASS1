@@ -1,0 +1,418 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{18D69E36-A723-4700-919F-981C0C7C200A}|AI\\AI.vcxproj|C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\SceneMovement_Week03.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{18D69E36-A723-4700-919F-981C0C7C200A}|AI\\AI.vcxproj|solutionrelative:AI\\Source\\SceneMovement_Week03.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{18D69E36-A723-4700-919F-981C0C7C200A}|AI\\AI.vcxproj|C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\StatesMortar.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{18D69E36-A723-4700-919F-981C0C7C200A}|AI\\AI.vcxproj|solutionrelative:AI\\Source\\StatesMortar.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{18D69E36-A723-4700-919F-981C0C7C200A}|AI\\AI.vcxproj|C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\ConcreteMessages.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{18D69E36-A723-4700-919F-981C0C7C200A}|AI\\AI.vcxproj|solutionrelative:AI\\Source\\ConcreteMessages.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{18D69E36-A723-4700-919F-981C0C7C200A}|AI\\AI.vcxproj|C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\SceneBase.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{18D69E36-A723-4700-919F-981C0C7C200A}|AI\\AI.vcxproj|solutionrelative:AI\\Source\\SceneBase.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{18D69E36-A723-4700-919F-981C0C7C200A}|AI\\AI.vcxproj|C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\StatesMechanic.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{18D69E36-A723-4700-919F-981C0C7C200A}|AI\\AI.vcxproj|solutionrelative:AI\\Source\\StatesMechanic.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{18D69E36-A723-4700-919F-981C0C7C200A}|AI\\AI.vcxproj|C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\StatesMortar.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{18D69E36-A723-4700-919F-981C0C7C200A}|AI\\AI.vcxproj|solutionrelative:AI\\Source\\StatesMortar.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{18D69E36-A723-4700-919F-981C0C7C200A}|AI\\AI.vcxproj|C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\StatesTank.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{18D69E36-A723-4700-919F-981C0C7C200A}|AI\\AI.vcxproj|solutionrelative:AI\\Source\\StatesTank.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{18D69E36-A723-4700-919F-981C0C7C200A}|AI\\AI.vcxproj|C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\GameObject.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{18D69E36-A723-4700-919F-981C0C7C200A}|AI\\AI.vcxproj|solutionrelative:AI\\Source\\GameObject.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{18D69E36-A723-4700-919F-981C0C7C200A}|AI\\AI.vcxproj|C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\SceneMovement_Week04.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{18D69E36-A723-4700-919F-981C0C7C200A}|AI\\AI.vcxproj|solutionrelative:AI\\Source\\SceneMovement_Week04.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{18D69E36-A723-4700-919F-981C0C7C200A}|AI\\AI.vcxproj|C:\\PROGRAM FILES\\MICROSOFT VISUAL STUDIO\\2022\\COMMUNITY\\VC\\TOOLS\\MSVC\\14.39.33519\\INCLUDE\\VECTOR||{3B902123-F8A7-4915-9F01-361F908088D0}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{18D69E36-A723-4700-919F-981C0C7C200A}|AI\\AI.vcxproj|C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\StatesRanged.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{18D69E36-A723-4700-919F-981C0C7C200A}|AI\\AI.vcxproj|solutionrelative:AI\\Source\\StatesRanged.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{18D69E36-A723-4700-919F-981C0C7C200A}|AI\\AI.vcxproj|C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\StatesFishFood.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{18D69E36-A723-4700-919F-981C0C7C200A}|AI\\AI.vcxproj|solutionrelative:AI\\Source\\StatesFishFood.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{18D69E36-A723-4700-919F-981C0C7C200A}|AI\\AI.vcxproj|C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\StatesFish.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{18D69E36-A723-4700-919F-981C0C7C200A}|AI\\AI.vcxproj|solutionrelative:AI\\Source\\StatesFish.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{18D69E36-A723-4700-919F-981C0C7C200A}|AI\\AI.vcxproj|C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\Application.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{18D69E36-A723-4700-919F-981C0C7C200A}|AI\\AI.vcxproj|solutionrelative:AI\\Source\\Application.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{18D69E36-A723-4700-919F-981C0C7C200A}|AI\\AI.vcxproj|C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\StateMachine.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{18D69E36-A723-4700-919F-981C0C7C200A}|AI\\AI.vcxproj|solutionrelative:AI\\Source\\StateMachine.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{18D69E36-A723-4700-919F-981C0C7C200A}|AI\\AI.vcxproj|C:\\PROGRAM FILES\\MICROSOFT VISUAL STUDIO\\2022\\COMMUNITY\\VC\\TOOLS\\MSVC\\14.39.33519\\INCLUDE\\XTREE||{3B902123-F8A7-4915-9F01-361F908088D0}|"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 47,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:130:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:131:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:132:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:144:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:142:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:141:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:135:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:138:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:137:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{34e76e81-ee4a-11d0-ae2e-00a0c90fffc3}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:135:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:137:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:139:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:140:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:141:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:142:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:143:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:145:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:146:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:147:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:148:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:149:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:150:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:151:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:152:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:153:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:154:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:155:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:156:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:157:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:158:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:159:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "ConcreteMessages.h",
+              "DocumentMoniker": "C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\ConcreteMessages.h",
+              "RelativeDocumentMoniker": "AI\\Source\\ConcreteMessages.h",
+              "ToolTip": "C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\ConcreteMessages.h",
+              "RelativeToolTip": "AI\\Source\\ConcreteMessages.h",
+              "ViewState": "AQIAAAEAAAAAAAAAAAD4vxYAAADDAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2025-11-20T07:33:43.206Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "SceneBase.h",
+              "DocumentMoniker": "C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\SceneBase.h",
+              "RelativeDocumentMoniker": "AI\\Source\\SceneBase.h",
+              "ToolTip": "C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\SceneBase.h",
+              "RelativeToolTip": "AI\\Source\\SceneBase.h",
+              "ViewState": "AQIAAEoAAAAAAAAAAAAUwF8AAAAKAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2025-11-20T07:20:43.932Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "StatesMortar.cpp",
+              "DocumentMoniker": "C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\StatesMortar.cpp",
+              "RelativeDocumentMoniker": "AI\\Source\\StatesMortar.cpp",
+              "ToolTip": "C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\StatesMortar.cpp",
+              "RelativeToolTip": "AI\\Source\\StatesMortar.cpp",
+              "ViewState": "AQIAAAMAAAAAAAAAAAAAABgAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-11-20T07:15:51.219Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "StatesMortar.h",
+              "DocumentMoniker": "C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\StatesMortar.h",
+              "RelativeDocumentMoniker": "AI\\Source\\StatesMortar.h",
+              "ToolTip": "C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\StatesMortar.h",
+              "RelativeToolTip": "AI\\Source\\StatesMortar.h",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAsAAAAcAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2025-11-20T07:15:30.063Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "StatesTank.cpp",
+              "DocumentMoniker": "C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\StatesTank.cpp",
+              "RelativeDocumentMoniker": "AI\\Source\\StatesTank.cpp",
+              "ToolTip": "C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\StatesTank.cpp",
+              "RelativeToolTip": "AI\\Source\\StatesTank.cpp",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAABAAAAATAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-11-20T07:13:51.055Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "vector",
+              "DocumentMoniker": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.39.33519\\include\\vector",
+              "RelativeDocumentMoniker": "..\\..\\..\\..\\..\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.39.33519\\include\\vector",
+              "ToolTip": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.39.33519\\include\\vector",
+              "RelativeToolTip": "..\\..\\..\\..\\..\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.39.33519\\include\\vector",
+              "ViewState": "AQIAADsAAAAAAAAAAAAkwEkAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2025-11-20T05:52:34.996Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "StatesRanged.cpp",
+              "DocumentMoniker": "C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\StatesRanged.cpp",
+              "RelativeDocumentMoniker": "AI\\Source\\StatesRanged.cpp",
+              "ToolTip": "C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\StatesRanged.cpp",
+              "RelativeToolTip": "AI\\Source\\StatesRanged.cpp",
+              "ViewState": "AQIAAAIAAAAAAAAAAAAAABsAAAApAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-11-20T05:50:44.598Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "StatesMechanic.cpp",
+              "DocumentMoniker": "C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\StatesMechanic.cpp",
+              "RelativeDocumentMoniker": "AI\\Source\\StatesMechanic.cpp",
+              "ToolTip": "C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\StatesMechanic.cpp",
+              "RelativeToolTip": "AI\\Source\\StatesMechanic.cpp",
+              "ViewState": "AQIAAAYAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-11-20T05:50:19.823Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "GameObject.cpp",
+              "DocumentMoniker": "C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\GameObject.cpp",
+              "RelativeDocumentMoniker": "AI\\Source\\GameObject.cpp",
+              "ToolTip": "C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\GameObject.cpp",
+              "RelativeToolTip": "AI\\Source\\GameObject.cpp",
+              "ViewState": "AQIAABgAAAAAAAAAAAAAADIAAAAdAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-11-20T05:23:46.422Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "Application.cpp",
+              "DocumentMoniker": "C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\Application.cpp",
+              "RelativeDocumentMoniker": "AI\\Source\\Application.cpp",
+              "ToolTip": "C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\Application.cpp",
+              "RelativeToolTip": "AI\\Source\\Application.cpp",
+              "ViewState": "AQIAAO4AAAAAAAAAAAArwP0AAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-11-20T05:20:02.066Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "StatesFish.cpp",
+              "DocumentMoniker": "C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\StatesFish.cpp",
+              "RelativeDocumentMoniker": "AI\\Source\\StatesFish.cpp",
+              "ToolTip": "C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\StatesFish.cpp",
+              "RelativeToolTip": "AI\\Source\\StatesFish.cpp",
+              "ViewState": "AQIAAFQAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-11-20T05:15:57.584Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "StatesFishFood.cpp",
+              "DocumentMoniker": "C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\StatesFishFood.cpp",
+              "RelativeDocumentMoniker": "AI\\Source\\StatesFishFood.cpp",
+              "ToolTip": "C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\StatesFishFood.cpp",
+              "RelativeToolTip": "AI\\Source\\StatesFishFood.cpp",
+              "ViewState": "AQIAAAMAAAAAAAAAAAAAABsAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-11-20T05:11:19.202Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "StateMachine.cpp",
+              "DocumentMoniker": "C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\StateMachine.cpp",
+              "RelativeDocumentMoniker": "AI\\Source\\StateMachine.cpp",
+              "ToolTip": "C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\StateMachine.cpp",
+              "RelativeToolTip": "AI\\Source\\StateMachine.cpp",
+              "ViewState": "AQIAAAYAAAAAAAAAAAArwBQAAAAJAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-11-20T05:10:52.103Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "xtree",
+              "DocumentMoniker": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.39.33519\\include\\xtree",
+              "RelativeDocumentMoniker": "..\\..\\..\\..\\..\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.39.33519\\include\\xtree",
+              "ToolTip": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.39.33519\\include\\xtree",
+              "RelativeToolTip": "..\\..\\..\\..\\..\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.39.33519\\include\\xtree",
+              "ViewState": "AQIAAFgEAAAAAAAAAAArwGcEAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2025-11-20T05:10:47.957Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "SceneMovement_Week04.cpp",
+              "DocumentMoniker": "C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\SceneMovement_Week04.cpp",
+              "RelativeDocumentMoniker": "AI\\Source\\SceneMovement_Week04.cpp",
+              "ToolTip": "C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\SceneMovement_Week04.cpp",
+              "RelativeToolTip": "AI\\Source\\SceneMovement_Week04.cpp",
+              "ViewState": "AQIAAMgAAAAAAAAAAAAkwO0AAAAuAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-11-20T05:10:09.144Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "SceneMovement_Week03.cpp",
+              "DocumentMoniker": "C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\SceneMovement_Week03.cpp",
+              "RelativeDocumentMoniker": "AI\\Source\\SceneMovement_Week03.cpp",
+              "ToolTip": "C:\\Users\\zhan feng\\Documents\\GitHub\\DX1220AIProgASS1\\AI\\Source\\SceneMovement_Week03.cpp",
+              "RelativeToolTip": "AI\\Source\\SceneMovement_Week03.cpp",
+              "ViewState": "AQIAAC8CAAAAAAAAAAAIwDcCAABFAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-11-20T05:07:18.472Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

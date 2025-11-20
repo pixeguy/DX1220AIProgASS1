@@ -17,13 +17,16 @@ struct MessageWRU : public Message
 		NEAREST_ENEMY,
 		NEAREST_ALLY_NOSUP,
 		FURTHEST_FRONTLINE,
+		NEAREST_MORTAR_ENEMY,
 	};
 	MessageWRU(GameObject *goValue, SEARCH_TYPE typeValue, float thresholdValue) : go(goValue), type(typeValue), threshold(thresholdValue) {}
+	MessageWRU(GameObject* goValue, SEARCH_TYPE typeValue, float thresholdValue, float tooCloseValue) : go(goValue), type(typeValue), threshold(thresholdValue), mortarTooCloseValue(tooCloseValue) {}
 	virtual ~MessageWRU() {}
 
 	GameObject *go;
 	SEARCH_TYPE type;
 	float threshold;
+	float mortarTooCloseValue;
 };
 
 struct MessageCheckActive : public Message

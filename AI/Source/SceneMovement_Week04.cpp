@@ -492,6 +492,7 @@ bool SceneMovement_Week04::Handle(Message* message)
 			go->target = go->pos;
 			go->moveSpeed = 1;
 			go->active = true;
+			go->sm = new StateMachine();
 			go->sm->AddState(new StateGrow("Grow", go));
 			go->sm->AddState(new StateEvolve("Evolve", go));
 			go->sm->SetNextState("Grow");

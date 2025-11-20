@@ -1,32 +1,33 @@
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\Application.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\Application.obj
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\Camera.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\Camera.obj
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\GameObject.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\GameObject.obj
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\Graph.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\Graph.obj
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\LoadOBJ.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\LoadOBJ.obj
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\LoadTGA.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\LoadTGA.obj
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\main.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\main.obj
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\Maze.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\Maze.obj
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\Mesh.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\Mesh.obj
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\MeshBuilder.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\MeshBuilder.obj
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\PostOffice.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\PostOffice.obj
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneBase.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\SceneBase.obj
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneData.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\SceneData.obj
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week01.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\SceneMovement_Week01.obj
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week02.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\SceneMovement_Week02.obj
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week03.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\SceneMovement_Week03.obj
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week04.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\SceneMovement_Week04.obj
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week999.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\SceneMovement_Week999.obj
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneTicTacToe.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\SceneTicTacToe.obj
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\shader.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\shader.obj
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\State.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\State.obj
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\StateMachine.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\StateMachine.obj
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\StatesAttacker.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\StatesAttacker.obj
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\StatesBuilding.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\StatesBuilding.obj
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\StatesFish.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\StatesFish.obj
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\StatesFishFood.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\StatesFishFood.obj
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\StatesMechanic.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\StatesMechanic.obj
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\StatesRanged.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\StatesRanged.obj
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\StatesShark.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\StatesShark.obj
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\StatesSupport.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\StatesSupport.obj
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\StatesTank.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\StatesTank.obj
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\Utility.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\Utility.obj
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\Application.cpp;C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Debug\Application.obj
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\Camera.cpp;C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Debug\Camera.obj
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\GameObject.cpp;C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Debug\GameObject.obj
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\Graph.cpp;C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Debug\Graph.obj
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\LoadOBJ.cpp;C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Debug\LoadOBJ.obj
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\LoadTGA.cpp;C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Debug\LoadTGA.obj
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\main.cpp;C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Debug\main.obj
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\Maze.cpp;C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Debug\Maze.obj
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\Mesh.cpp;C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Debug\Mesh.obj
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\MeshBuilder.cpp;C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Debug\MeshBuilder.obj
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\PostOffice.cpp;C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Debug\PostOffice.obj
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneBase.cpp;C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Debug\SceneBase.obj
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneData.cpp;C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Debug\SceneData.obj
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week01.cpp;C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Debug\SceneMovement_Week01.obj
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week02.cpp;C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Debug\SceneMovement_Week02.obj
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week03.cpp;C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Debug\SceneMovement_Week03.obj
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week04.cpp;C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Debug\SceneMovement_Week04.obj
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week999.cpp;C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Debug\SceneMovement_Week999.obj
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneTicTacToe.cpp;C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Debug\SceneTicTacToe.obj
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\shader.cpp;C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Debug\shader.obj
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\State.cpp;C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Debug\State.obj
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\StateMachine.cpp;C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Debug\StateMachine.obj
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\StatesAttacker.cpp;C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Debug\StatesAttacker.obj
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\StatesBuilding.cpp;C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Debug\StatesBuilding.obj
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\StatesFish.cpp;C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Debug\StatesFish.obj
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\StatesFishFood.cpp;C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Debug\StatesFishFood.obj
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\StatesMechanic.cpp;C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Debug\StatesMechanic.obj
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\StatesMortar.cpp;C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Debug\StatesMortar.obj
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\StatesRanged.cpp;C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Debug\StatesRanged.obj
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\StatesShark.cpp;C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Debug\StatesShark.obj
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\StatesSupport.cpp;C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Debug\StatesSupport.obj
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\StatesTank.cpp;C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Debug\StatesTank.obj
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\Utility.cpp;C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Debug\Utility.obj
