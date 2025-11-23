@@ -232,5 +232,8 @@
     <ClInclude Include="Source\StatesMortar.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Source\GridSettings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

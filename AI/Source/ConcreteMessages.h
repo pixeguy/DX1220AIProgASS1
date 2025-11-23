@@ -18,6 +18,9 @@ struct MessageWRU : public Message
 		NEAREST_ALLY_NOSUP,
 		FURTHEST_FRONTLINE,
 		NEAREST_MORTAR_ENEMY,
+		NEAREST_FREE_SUP,
+		NEAREST_URG_SUP,
+		NEAREST_ALLY_ATTACKER,
 	};
 	MessageWRU(GameObject *goValue, SEARCH_TYPE typeValue, float thresholdValue) : go(goValue), type(typeValue), threshold(thresholdValue) {}
 	MessageWRU(GameObject* goValue, SEARCH_TYPE typeValue, float thresholdValue, float tooCloseValue) : go(goValue), type(typeValue), threshold(thresholdValue), mortarTooCloseValue(tooCloseValue) {}
@@ -99,6 +102,24 @@ struct MessageEvolve : public Message
 {
 	MessageEvolve(GameObject* goVal) : go(goVal) {}
 
+	GameObject* go;
+};
+
+struct MessageAskHelp : public Message
+{
+	MessageAskHelp(GameObject* goVal) : go(goVal) {}
+	GameObject* go;
+};
+
+struct MessageSpawnProj : public Message
+{
+	MessageSpawnProj(GameObject* goVal) : go(goVal) {}
+	GameObject* go;
+};
+
+struct MessageAskForAtk : public Message
+{
+	MessageAskForAtk(GameObject* goVal) : go(goVal) {}
 	GameObject* go;
 };
 

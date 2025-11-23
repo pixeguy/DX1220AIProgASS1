@@ -94,6 +94,7 @@ public:
 		GEO_MECHANIC,
 		GEO_MORTAR,
 		GEO_TANK,
+		GEO_MORBOMB,
 		NUM_GEOMETRY,
 	};
 public:

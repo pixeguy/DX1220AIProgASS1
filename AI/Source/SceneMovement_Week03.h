@@ -32,19 +32,19 @@ public:
 	bool Handle(Message* message);
 
 	GameObject* FetchGO(GameObject::GAMEOBJECT_TYPE type);
-	GameObject* FetchProj();
+	GameObject* FetchProj(GameObject::GAMEOBJECT_TYPE type);
+
+	int GetHealPriority(GameObject* go);
+
+	GameObject* ref; //delete later
 
 protected:
 	std::vector<GameObject*> m_projList;
 	std::vector<GameObject*> m_spawners;
 	std::vector<GameObject*> m_goList;
 	float m_speed;
-	float m_worldWidth;
-	float m_worldHeight;
 	GameObject* m_ghost;
 	int m_objectCount;
-	int m_noGrid;
-	float m_gridSize;
 	float m_gridOffset;
 	float m_hourOfTheDay;
 	int m_numGO[GameObject::GO_TOTAL];

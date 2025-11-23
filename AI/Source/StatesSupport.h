@@ -16,6 +16,30 @@ public:
 	virtual void Exit();
 };
 
+class StateSupportHealing : public State
+{
+	GameObject* m_go;
+public:
+	StateSupportHealing(const std::string& stateID, GameObject* go = NULL);
+	virtual ~StateSupportHealing();
+
+	virtual void Enter();
+	virtual void Update(double dt);
+	virtual void Exit();
+};
+
+class StateSupportUrgentHealing : public State
+{
+	GameObject* m_go;
+public:
+	StateSupportUrgentHealing(const std::string& stateID, GameObject* go = NULL);
+	virtual ~StateSupportUrgentHealing();
+
+	virtual void Enter();
+	virtual void Update(double dt);
+	virtual void Exit();
+};
+
 class StateSupportDeath : public State
 {
 	GameObject* m_go;

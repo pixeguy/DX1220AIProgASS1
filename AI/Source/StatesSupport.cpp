@@ -1,7 +1,10 @@
 #include "StatesSupport.h"
 #include "SceneData.h"
+#include "GridSettings.h"
+#include "PostOffice.h"
+#include "ConcreteMessages.h"
 
-
+#pragma region healthy state
 StateSupportHealthy::StateSupportHealthy(const std::string & stateID, GameObject * go)
 	: State(stateID),
 	m_go(go)
@@ -15,31 +18,61 @@ StateSupportHealthy::~StateSupportHealthy()
 void StateSupportHealthy::Enter()
 {
 	m_go->moveSpeed = 1;
-	m_go->actionSpeed = 1;
+	m_go->actionSpeed = 0.2;
 	m_go->target = m_go->pos;
 	m_go->nearest = NULL;
 }
 
 void StateSupportHealthy::Update(double dt)
 {
-	m_go->moveLeft = m_go->moveRight = m_go->moveUp = m_go->moveDown = true;
+	if (m_go->healTarget != NULL && m_go->healTarget->active == true) {
+		if (m_go->urgent)
+		{
+			m_go->sm->SetNextState("UrgentHealing");
+			return;
+		}
+		m_go->sm->SetNextState("Healing");
+		return;
+	}
+
+	m_go->moveLeft = m_go->moveRight = m_go->moveUp = m_go->moveDown = false;
 	if (m_go->nearest)
 	{
-		if (m_go->nearest->pos.x > m_go->pos.x)
-			m_go->moveLeft = false;
+		float diffX = m_go->nearest->pos.x - m_go->pos.x;
+		float diffY = m_go->nearest->pos.y - m_go->pos.y;
+		if (fabs(diffX) > fabs(diffY))
+		{
+			if (diffX > 0)
+				m_go->moveRight = true;
+			else
+				m_go->moveLeft = true;
+		}
 		else
-			m_go->moveRight = false;
-		if (m_go->nearest->pos.y > m_go->pos.y)
-			m_go->moveDown = false;
-		else
-			m_go->moveUp = false;
+		{
+			if (diffY > 0)
+				m_go->moveUp = true;
+			else
+				m_go->moveDown = true;
+		}
 	}
+	if (m_go->nearest != NULL) {
+		if ((m_go->nearest->pos - m_go->pos).Length() < m_gridSize * 5) {
+			m_go->nearest->supportSpeed = 5;
+			m_go->nearest->supportActionSpeed = 0.5;
+			m_go->moving = false;
+			/*std::cout << "followed something to close" << std::endl;*/
+		}
+		else { m_go->moving = true; m_go->nearest->supportSpeed = 0; m_go->nearest->supportActionSpeed = 0; /*std::cout << "following" << std::endl*/; }
+	}
+	else { m_go->moving = false; /*std::cout << "cant find anything" << std::endl;*/ }
 }
 
 void StateSupportHealthy::Exit()
 {
 }
+#pragma endregion
 
+#pragma region death state
 StateSupportDeath::StateSupportDeath(const std::string& stateID, GameObject* go)
 	: State(stateID),
 	m_go(go)
@@ -67,6 +100,140 @@ void StateSupportDeath::Update(double dt)
 void StateSupportDeath::Exit()
 {
 }
+#pragma endregion
+
+#pragma region healing state
+StateSupportHealing::StateSupportHealing(const std::string& stateID, GameObject* go)
+	: State(stateID),
+	m_go(go)
+{
+}
+
+StateSupportHealing::~StateSupportHealing()
+{
+}
+
+void StateSupportHealing::Enter()
+{
+	m_go->moving = true;
+	m_go->moveSpeed = 1;
+	m_go->actionSpeed = 0.2;
+}
+
+void StateSupportHealing::Update(double dt)
+{
+	if (m_go->urgent)
+	{
+		m_go->sm->SetNextState("UrgentHealing");
+		return;
+	}
+	m_go->moveLeft = m_go->moveRight = m_go->moveUp = m_go->moveDown = false;
+	if (m_go->nearest)
+	{
+		float diffX = m_go->nearest->pos.x - m_go->pos.x;
+		float diffY = m_go->nearest->pos.y - m_go->pos.y;
+		if (fabs(diffX) > fabs(diffY))
+		{
+			if (diffX > 0)
+				m_go->moveRight = true;
+			else
+				m_go->moveLeft = true;
+		}
+		else
+		{
+			if (diffY > 0)
+				m_go->moveUp = true;
+			else
+				m_go->moveDown = true;
+		}
+	}
+
+	if (m_go->nearest) {
+		if ((m_go->nearest->pos - m_go->pos).Length() < m_gridSize * 3)
+		{
+			m_go->moving = false;
+			if (m_go->EnergyReduce(m_go->actionSpeed))
+			{
+				m_go->nearest->health += 2;
+			}
+		}
+		else {
+			m_go->moving = true;
+		}
+	}
+}
+void StateSupportHealing::Exit()
+{
+}
+#pragma endregion
+
+#pragma region urgent healing state
+StateSupportUrgentHealing::StateSupportUrgentHealing(const std::string& stateID, GameObject* go)
+	: State(stateID),
+	m_go(go)
+{
+}
+
+StateSupportUrgentHealing::~StateSupportUrgentHealing()
+{
+}
+
+void StateSupportUrgentHealing::Enter()
+{
+	m_go->moving = true;
+	m_go->moveSpeed = 2;
+	m_go->actionSpeed = 0.3;
+}
+
+void StateSupportUrgentHealing::Update(double dt)
+{
+	if (m_go->nearest->sm->GetCurrentState() != "NearDeath")
+	{
+		m_go->urgent = false;
+		m_go->sm->SetNextState("Healing");
+		return;
+	}
+
+	m_go->moveLeft = m_go->moveRight = m_go->moveUp = m_go->moveDown = false;
+	if (m_go->nearest)
+	{
+		float diffX = m_go->nearest->pos.x - m_go->pos.x;
+		float diffY = m_go->nearest->pos.y - m_go->pos.y;
+		if (fabs(diffX) > fabs(diffY))
+		{
+			if (diffX > 0)
+				m_go->moveRight = true;
+			else
+				m_go->moveLeft = true;
+		}
+		else
+		{
+			if (diffY > 0)
+				m_go->moveUp = true;
+			else
+				m_go->moveDown = true;
+		}
+	}
+
+	if (m_go->nearest) {
+		if ((m_go->nearest->pos - m_go->pos).Length() < m_gridSize * 3)
+		{
+			m_go->moving = false;
+			if (m_go->EnergyReduce(m_go->actionSpeed))
+			{
+				m_go->nearest->health += 2;
+			}
+		}
+		else {
+			m_go->moving = true;
+		}
+	}
+}
+void StateSupportUrgentHealing::Exit()
+{
+}
+#pragma endregion
+
 
 
 

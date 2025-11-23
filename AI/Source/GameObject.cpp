@@ -1,5 +1,6 @@
 #include "GameObject.h"
 #include "ConcreteMessages.h"
+#include "GridSettings.h"
 
 GameObject::GameObject(GAMEOBJECT_TYPE typeValue) 
 	: type(typeValue),
@@ -51,6 +52,23 @@ bool GameObject::Handle(Message* message)
 	else if (dynamic_cast<MessageStop*>(message) != nullptr)
 	{
 		moveSpeed = 0;
+		return true;
+	}
+	else if (dynamic_cast<MessageAskHelp*>(message) != nullptr)
+	{
+		MessageAskHelp* msg = static_cast<MessageAskHelp*>(message);
+		healTarget = msg->go;
+		nearest = msg->go;
+		if (msg->go->urgent) {
+			urgent = true; //set supporters to also urgent, both urgent
+		}
+		return true;
+	}
+	else if (dynamic_cast<MessageAskForAtk*>(message) != nullptr)
+	{
+		MessageAskForAtk* msg = static_cast<MessageAskForAtk*>(message);
+		nearest = msg->go->lastAttacker;
+		urgent = true; //attackers always urgent when called for help
 		return true;
 	}
 

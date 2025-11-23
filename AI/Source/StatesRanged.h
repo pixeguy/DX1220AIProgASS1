@@ -16,4 +16,28 @@ public:
 	virtual void Exit();
 };
 
+class StateRangedHurt : public State
+{
+	GameObject* m_go;
+public:
+	StateRangedHurt(const std::string& stateID, GameObject* go = NULL);
+	virtual ~StateRangedHurt();
+
+	virtual void Enter();
+	virtual void Update(double dt);
+	virtual void Exit();
+};
+
+class StateRangedPanic : public State
+{
+	GameObject* m_go;
+public:
+	StateRangedPanic(const std::string& stateID, GameObject* go = NULL);
+	virtual ~StateRangedPanic();
+
+	virtual void Enter();
+	virtual void Update(double dt);
+	virtual void Exit();
+};
+
 #endif

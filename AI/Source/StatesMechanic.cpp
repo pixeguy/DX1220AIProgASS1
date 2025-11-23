@@ -21,17 +21,25 @@ void StateMechanicHealthy::Enter()
 
 void StateMechanicHealthy::Update(double dt)
 {
-	m_go->moveLeft = m_go->moveRight = m_go->moveUp = m_go->moveDown = true;
+	m_go->moveLeft = m_go->moveRight = m_go->moveUp = m_go->moveDown = false;
 	if (m_go->nearest)
 	{
-		if (m_go->nearest->pos.x > m_go->pos.x)
-			m_go->moveLeft = false;
+		float diffX = m_go->nearest->pos.x - m_go->pos.x;
+		float diffY = m_go->nearest->pos.y - m_go->pos.y;
+		if (fabs(diffX) > fabs(diffY))
+		{
+			if (diffX > 0)
+				m_go->moveRight = true;
+			else
+				m_go->moveLeft = true;
+		}
 		else
-			m_go->moveRight = false;
-		if (m_go->nearest->pos.y > m_go->pos.y)
-			m_go->moveDown = false;
-		else
-			m_go->moveUp = false;
+		{
+			if (diffY > 0)
+				m_go->moveUp = true;
+			else
+				m_go->moveDown = true;
+		}
 	}
 
 	//if close enough to a spawner

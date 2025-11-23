@@ -34,6 +34,7 @@ struct GameObject : public ObjectBase
 		GO_TANK,
 		GO_MORTAR,
 		GO_PROJECTILE,
+		GO_MORBOMB,
 		GO_TOTAL, //must be last
 	};
 	enum STATE
@@ -61,7 +62,7 @@ struct GameObject : public ObjectBase
 	bool active;
 	float mass;
 	Vector3 target;
-	Vector3 normalTarget;
+	Vector3 normalTarget; //for when units are not moving directly towards nearest but a bit offset
 	int id;
 	int steps;
 	float energy;
@@ -82,11 +83,29 @@ struct GameObject : public ObjectBase
 	float health;
 	float maxHealth;
 	bool moving;
+	GameObject* lastAttacker = NULL;
+	GameObject* external = NULL; //for calling others
+	GameObject* external2 = NULL; //for archer calling more others
+
+	int specID; //remove later
+
+
+	int choice = 0;
 
 	//for spawner only
 	int metalParts;
 	int woodenLogs;
 	float matRatio;
+
+	//for healers
+	GameObject* healTarget = NULL;
+	bool urgent = false;
+
+	//for bullets
+	GameObject* owner;
+
+	//for mortar bullets
+	Vector3 startPos;
 
 	bool EnergyReduce(float cost = 1.f);
 

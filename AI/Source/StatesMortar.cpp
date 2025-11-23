@@ -15,7 +15,8 @@ StateMortarHealthy::~StateMortarHealthy()
 void StateMortarHealthy::Enter()
 {
 	m_go->moveSpeed = 0;
-	m_go->actionSpeed = 0.2;
+	m_go->moving = false;
+	m_go->actionSpeed = 0.05;
 	m_go->target = m_go->pos;
 	m_go->nearest = NULL;
 }

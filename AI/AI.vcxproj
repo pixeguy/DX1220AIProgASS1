@@ -169,6 +169,7 @@
     <ClInclude Include="Source\ConcreteMessages.h" />
     <ClInclude Include="Source\GameObject.h" />
     <ClInclude Include="Source\Graph.h" />
+    <ClInclude Include="Source\GridSettings.h" />
     <ClInclude Include="Source\Light.h" />
     <ClInclude Include="Source\LoadOBJ.h" />
     <ClInclude Include="Source\LoadTGA.h" />
