@@ -127,6 +127,10 @@ void StateRangedPanic::Enter()
 
 void StateRangedPanic::Update(double dt)
 {
+	if (m_go->health < 20) {
+		m_go->sm->SetNextState("NearDeath");
+		return;
+	}
 	m_go->moveLeft = m_go->moveRight = m_go->moveUp = m_go->moveDown = false;
 	if (m_go->nearest)
 	{
@@ -150,6 +154,55 @@ void StateRangedPanic::Update(double dt)
 }
 
 void StateRangedPanic::Exit()
+{
+}
+
+#pragma endregion
+
+#pragma region near death state
+StateRangedNearDeath::StateRangedNearDeath(const std::string& stateID, GameObject* go)
+	: State(stateID),
+	m_go(go)
+{
+}
+
+StateRangedNearDeath::~StateRangedNearDeath()
+{
+}
+
+void StateRangedNearDeath::Enter()
+{
+	m_go->moveSpeed = 0.75;
+	m_go->actionSpeed = 0.2;
+	m_go->target = m_go->pos;
+	m_go->nearest = NULL;
+}
+
+void StateRangedNearDeath::Update(double dt)
+{
+	m_go->moveLeft = m_go->moveRight = m_go->moveUp = m_go->moveDown = false;
+	if (m_go->nearest)
+	{
+		float diffX = m_go->normalTarget.x - m_go->pos.x;
+		float diffY = m_go->normalTarget.y - m_go->pos.y;
+		if (fabs(diffX) > fabs(diffY))
+		{
+			if (diffX > 0)
+				m_go->moveRight = true;
+			else
+				m_go->moveLeft = true;
+		}
+		else
+		{
+			if (diffY > 0)
+				m_go->moveUp = true;
+			else
+				m_go->moveDown = true;
+		}
+	}
+}
+
+void StateRangedNearDeath::Exit()
 {
 }
 

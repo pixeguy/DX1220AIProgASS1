@@ -120,6 +120,8 @@ GameObject* SceneMovement_Week03::FetchGO(GameObject::GAMEOBJECT_TYPE type)
 			go->sm->AddState(new StateRangedHealthy("Healthy", go));
 			go->sm->AddState(new StateRangedHurt("Hurt", go));
 			go->sm->AddState(new StateRangedPanic("Panic", go));
+			go->sm->AddState(new StateRangedNearDeath("NearDeath", go));
+			//go->sm->AddState(new StateRangedPanic("Death", go));
 		}	
 		else if (type == GameObject::GO_ATTACKER)
 		{
@@ -516,8 +518,8 @@ void SceneMovement_Week03::Update(double dt)
 	{
 		bGState = true;
 
-		Vector3 randomPos = RandomPointInRing(m_spawners[0]->pos, 3.75, 10);
-		SpawnUnit(GameObject::SIDE_BLUE, randomPos, GameObject::GO_ATTACKER);
+		Vector3 randomPos = RandomPointInRing(m_spawners[1]->pos, 3.75, 10);
+		SpawnUnit(GameObject::SIDE_BLUE, randomPos, GameObject::GO_SUPPORT);
 	}
 	else if (bGState && !Application::IsKeyPressed('G'))
 	{
@@ -533,8 +535,8 @@ void SceneMovement_Week03::Update(double dt)
 		if (go->sm)
 			go->sm->Update(dt);
 	}
-	if (ref != NULL && ref->nearest != NULL)
-		std::cout << ref->nearest << std::endl;
+	//if (ref != NULL && ref->nearest != NULL)
+		//std::cout << ref->nearest << std::endl;
 	//External triggers
 	for (std::vector<GameObject*>::iterator it = m_goList.begin(); it != m_goList.end(); ++it)
 	{
@@ -662,7 +664,12 @@ void SceneMovement_Week03::Update(double dt)
 				}
 				else //use 10 - 15 for radius to check whether enemy is too close
 				{
-					if ((go->nearest->pos - go->pos).Length() < m_gridSize * 2) //if target too close
+					GameObject* temp = go->nearest;
+					MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
+					Handle(&msgCheckEnemy);
+					float dist = (go->nearest->pos - go->pos).Length();
+					go->nearest = temp;
+					if (dist < m_gridSize * 2) //if target too close
 					{
 						//move away
 						go->moving = true;
@@ -688,17 +695,33 @@ void SceneMovement_Week03::Update(double dt)
 					}
 				}
 			}
-			else if (go->sm->GetCurrentState() == "Hurt" || go->sm->GetCurrentState() == "Panic") {
-				MessageWRU msgNeedSup = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_FREE_SUP, 200.0f);
-				Handle(&msgNeedSup);
-				if (go->external != NULL) {
-					if (go->external->active) {
-						MessageAskHelp msgAskHelp = MessageAskHelp(go);
-						go->external->Handle(&msgAskHelp);
+			else if (go->sm->GetCurrentState() == "Hurt" || go->sm->GetCurrentState() == "Panic" || go->sm->GetCurrentState() == "NearDeath") {
+				if(go->sm->GetCurrentState() != "NearDeath")
+				{
+					MessageWRU msgNeedSup = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_FREE_SUP, 200.0f);
+					Handle(&msgNeedSup);
+					if (go->external != NULL) {
+						if (go->external->active) {
+							MessageAskHelp msgAskHelp = MessageAskHelp(go);
+							go->external->Handle(&msgAskHelp);
+						}
+					}
+				}
+				else
+				{
+					//find nearest free support
+					MessageWRU msgNeedSup = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_URG_SUP, 200.0f);
+					Handle(&msgNeedSup);
+					if (go->external != NULL) {
+						if (go->external->active) {
+							MessageAskHelp msgAskHelp = MessageAskHelp(go);
+							go->external->Handle(&msgAskHelp);
+						}
 					}
 				}
 				if(go->sm->GetCurrentState() == "Panic")//give ranged a last attacker for testing
 				{
+					//go->lastAttacker = ref;
 					//find nearest spawner
 					MessageWRU msgNeedAtk = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ALLY_ATTACKER, 200.0f);
 					Handle(&msgNeedAtk);
@@ -717,11 +740,18 @@ void SceneMovement_Week03::Update(double dt)
 				}
 				else //use 10 - 15 for radius to check whether enemy is too close
 				{
+					GameObject* temp = go->nearest;
+					MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
+					Handle(&msgCheckEnemy);
+					float dist = (go->nearest->pos - go->pos).Length();
+					go->nearest = temp;
+
 					int distanceaway;
 					if (go->sm->GetCurrentState() == "Panic") 
 					{ distanceaway = 4; }
 					else if (go->sm->GetCurrentState() == "Hurt") { distanceaway = 3; }	
-					if ((go->nearest->pos - go->pos).Length() < m_gridSize * distanceaway) //if target too close
+					else { distanceaway = 5; }
+					if (dist < m_gridSize * distanceaway) //if target too close
 					{
 						//std::cout << "running away!" << std::endl;
 						//move away
@@ -753,9 +783,9 @@ void SceneMovement_Week03::Update(double dt)
 		}
 		else if (go->type == GameObject::GO_ATTACKER) //REMEMBERRRRRRRR TELL SUPPORTER TO GO AWAY ONCE HEALED //also a chance, unit back off to spawner but still getting hit
 		{
-			//if (go->side == GameObject::SIDE_BLUE) {
-			//	std::cout << "Attacker State: " << go->sm->GetCurrentState() << std::endl;
-			//}
+			if (go->side == GameObject::SIDE_RED) {
+				std::cout << "Attacker State: " << go->sm->GetCurrentState() << std::endl;
+			}
 			if (go->sm->GetCurrentState() == "Healthy") {
 				//if no target, or if current target died
 				if (go->nearest == NULL || go->nearest->active == false) {
@@ -770,7 +800,7 @@ void SceneMovement_Week03::Update(double dt)
 						float finalActionSpeed = (go->actionSpeed * 1) + go->supportActionSpeed;
 						if (go->EnergyReduce(finalActionSpeed))
 						{
-							go->nearest->health -= 0;
+							go->nearest->health -= 5;
 							go->nearest->lastAttacker = go;
 						}
 					}

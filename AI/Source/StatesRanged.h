@@ -40,4 +40,16 @@ public:
 	virtual void Exit();
 };
 
+class StateRangedNearDeath : public State
+{
+	GameObject* m_go;
+public:
+	StateRangedNearDeath(const std::string& stateID, GameObject* go = NULL);
+	virtual ~StateRangedNearDeath();
+
+	virtual void Enter();
+	virtual void Update(double dt);
+	virtual void Exit();
+};
+
 #endif
