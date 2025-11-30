@@ -6,7 +6,7 @@
 
 class StateAttackerHealthy : public State
 {
-	GameObject *m_go;
+	GameObject *go;
 public:
 	StateAttackerHealthy(const std::string &stateID, GameObject *go = NULL);
 	virtual ~StateAttackerHealthy();
@@ -18,7 +18,7 @@ public:
 
 class StateAttackerStayStrong : public State
 {
-	GameObject* m_go;
+	GameObject* go;
 public:
 	StateAttackerStayStrong(const std::string& stateID, GameObject* go = NULL);
 	virtual ~StateAttackerStayStrong();
@@ -30,7 +30,7 @@ public:
 
 class StateAttackerFlee : public State
 {
-	GameObject* m_go;
+	GameObject* go;
 public:
 	StateAttackerFlee(const std::string& stateID, GameObject* go = NULL);
 	virtual ~StateAttackerFlee();
@@ -42,7 +42,7 @@ public:
 
 class StateAttackerNearDeath : public State
 {
-	GameObject* m_go;
+	GameObject* go;
 public:
 	StateAttackerNearDeath(const std::string& stateID, GameObject* go = NULL);
 	virtual ~StateAttackerNearDeath();
@@ -54,7 +54,7 @@ public:
 
 class StateAttackerDead : public State
 {
-	GameObject* m_go;
+	GameObject* go;
 public:
 	StateAttackerDead(const std::string& stateID, GameObject* go = NULL);
 	virtual ~StateAttackerDead();

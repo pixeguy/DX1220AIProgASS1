@@ -6,7 +6,7 @@
 
 class StateRangedHealthy : public State
 {
-	GameObject *m_go;
+	GameObject *go;
 public:
 	StateRangedHealthy(const std::string &stateID, GameObject *go = NULL);
 	virtual ~StateRangedHealthy();
@@ -18,7 +18,7 @@ public:
 
 class StateRangedHurt : public State
 {
-	GameObject* m_go;
+	GameObject* go;
 public:
 	StateRangedHurt(const std::string& stateID, GameObject* go = NULL);
 	virtual ~StateRangedHurt();
@@ -30,7 +30,7 @@ public:
 
 class StateRangedPanic : public State
 {
-	GameObject* m_go;
+	GameObject* go;
 public:
 	StateRangedPanic(const std::string& stateID, GameObject* go = NULL);
 	virtual ~StateRangedPanic();
@@ -42,7 +42,7 @@ public:
 
 class StateRangedNearDeath : public State
 {
-	GameObject* m_go;
+	GameObject* go;
 public:
 	StateRangedNearDeath(const std::string& stateID, GameObject* go = NULL);
 	virtual ~StateRangedNearDeath();

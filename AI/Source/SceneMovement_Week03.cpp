@@ -543,94 +543,8 @@ void SceneMovement_Week03::Update(double dt)
 		GameObject* go = (GameObject*)*it;
 		if (!go->active)
 			continue;
- 		if (go->type == GameObject::GO_FISH)
-		{
-			for (std::vector<GameObject*>::iterator it2 = m_goList.begin(); it2 != m_goList.end(); ++it2)
-			{
-				GameObject* go2 = (GameObject*)*it2;
-				if (!go2->active)
-					continue;
-				if (go2->type == GameObject::GO_SHARK)
-				{
-					float distance = (go->pos - go2->pos).Length();
-					if (distance < m_gridSize)
-					{
-						go->energy = -1;
-					}
-
-				}
-				else if (go2->type == GameObject::GO_FISHFOOD)
-				{
-					float distance = (go->pos - go2->pos).Length();
-					if (distance < m_gridSize)
-					{
-						go->energy += 2.5f;
-						go2->active = false;
-					}
-
-				}
-				if (go->sm->GetCurrentState() == "Hungry")
-				{
-					MessageWRU msgCheckFish = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_FISHFOOD, 50.0f);
-					Handle(&msgCheckFish);
-				}
-				else if (go->sm->GetCurrentState() == "Full")
-				{
-					MessageWRU msgCheckFish = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SHARK, 50.0f);
-					Handle(&msgCheckFish);
-				}
-				//if (go2->type == GameObject::GO_SHARK)
-				//{
-				//	float distance = (go->pos - go2->pos).Length();
-				//	if (distance < m_gridSize)
-				//	{
-				//		go->energy = -1;
-				//	}
-
-				//}
-				//else if (go2->type == GameObject::GO_FISHFOOD)
-				//{
-				//	float distance = (go->pos - go2->pos).Length();
-				//	if (distance < m_gridSize)
-				//	{
-				//		go->energy += 2.5f;
-				//		go2->active = false;
-				//	}
-
-				//}
-			}
-		}
-		else if (go->type == GameObject::GO_SHARK)
-		{
-			go->nearest = NULL;
-			float nearestDistance = FLT_MAX;
-			float highestEnergy = FLT_MIN;
-			for (std::vector<GameObject*>::iterator it2 = m_goList.begin(); it2 != m_goList.end(); ++it2)
-			{
-				GameObject* go2 = (GameObject*)*it2;
-				if (!go2->active)
-					continue;
-				if (go2->type == GameObject::GO_FISH)
-				{
-					float distance = (go->pos - go2->pos).Length();
-					if (distance < m_gridSize)
-					{
-						go->energy = -1;
-					}
-				}
-			}
-			if (go->sm->GetCurrentState() == "Naughty")
-			{
-				MessageWRU msgCheckFish = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_FULLFISH, 50.0f);
-				Handle(&msgCheckFish);
-			}
-			else if (go->sm->GetCurrentState() == "Crazy")
-			{
-				MessageWRU msgCheckFish = MessageWRU(go, MessageWRU::SEARCH_TYPE::HIGHEST_ENERGYFISH, 50.0f);
-				Handle(&msgCheckFish);
-			}
-		}
-		else if (go->type == GameObject::GO_SPAWNER)
+ 		
+		if (go->type == GameObject::GO_SPAWNER)
 		{
 			for (std::vector<GameObject*>::iterator it2 = m_goList.begin(); it2 != m_goList.end(); ++it2)
 			{
@@ -662,29 +576,20 @@ void SceneMovement_Week03::Update(double dt)
 					MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
 					Handle(&msgCheckEnemy);
 				}
-				else //use 10 - 15 for radius to check whether enemy is too close
+				else //use for radius to check whether enemy is too close
 				{
 					GameObject* temp = go->nearest;
 					MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
 					Handle(&msgCheckEnemy);
-					float dist = (go->nearest->pos - go->pos).Length();
+					go->countDown = (go->nearest->pos - go->pos).Length();
 					go->nearest = temp;
-					if (dist < m_gridSize * 2) //if target too close
+					if (go->countDown < m_gridSize * 2) //if target too close
 					{
-						//move away
-						go->moving = true;
-						int redOrBlue = (go->type == GameObject::SIDE_BLUE) ? -1 : 1;
-						go->normalTarget = go->pos + Vector3(redOrBlue * 3 * m_gridSize, 0, 0);
+						continue;
 					}
 					else if ((go->nearest->pos - go->pos).Length() < m_gridSize * 5)
 					{
-						go->moving = false;
-						float finalActionSpeed = (go->actionSpeed * 1) + go->supportActionSpeed;
-						if (go->EnergyReduce(finalActionSpeed))
-						{
-							//PostOffice::GetInstance()->Send("Scene", new MessageSpawnFood(m_go, GameObject::GO_FISHFOOD, 2, range));
-							PostOffice::GetInstance()->Send("Scene", new MessageSpawnProj(go));
-						}
+						continue;
 					}
 					else
 					{
@@ -719,7 +624,7 @@ void SceneMovement_Week03::Update(double dt)
 						}
 					}
 				}
-				if(go->sm->GetCurrentState() == "Panic")//give ranged a last attacker for testing
+				if(go->sm->GetCurrentState() != "Hurt")//give ranged a last attacker for testing
 				{
 					//go->lastAttacker = ref;
 					//find nearest spawner
@@ -738,37 +643,25 @@ void SceneMovement_Week03::Update(double dt)
 					MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
 					Handle(&msgCheckEnemy);
 				}
-				else //use 10 - 15 for radius to check whether enemy is too close
+				else //use for radius to check whether enemy is too close
 				{
 					GameObject* temp = go->nearest;
 					MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
 					Handle(&msgCheckEnemy);
-					float dist = (go->nearest->pos - go->pos).Length();
+					go->countDown = (go->nearest->pos - go->pos).Length();
 					go->nearest = temp;
 
 					int distanceaway;
-					if (go->sm->GetCurrentState() == "Panic") 
-					{ distanceaway = 4; }
+					if (go->sm->GetCurrentState() == "Panic") { distanceaway = 4; }
 					else if (go->sm->GetCurrentState() == "Hurt") { distanceaway = 3; }	
-					else { distanceaway = 5; }
-					if (dist < m_gridSize * distanceaway) //if target too close
+					else { distanceaway = 4; }
+					if (go->countDown < m_gridSize * distanceaway) //if target too close
 					{
-						//std::cout << "running away!" << std::endl;
-						//move away
-						go->moving = true;
-						int redOrBlue = (go->type == GameObject::SIDE_BLUE) ? -1 : 1;
-						go->normalTarget = go->pos + Vector3(redOrBlue * 3 * m_gridSize, 0, 0);
+						continue;
 					}
-					else if ((go->nearest->pos - go->pos).Length() < m_gridSize * 5)
+					else if ((go->nearest->pos - go->pos).Length() < m_gridSize * 6)
 					{
-						//std::cout << "shooting!" << std::endl;
-						go->moving = false;
-						float finalActionSpeed = (go->actionSpeed * 1) + go->supportActionSpeed;
-						if (go->EnergyReduce(finalActionSpeed))
-						{
-							//PostOffice::GetInstance()->Send("Scene", new MessageSpawnFood(m_go, GameObject::GO_FISHFOOD, 2, range));
-							PostOffice::GetInstance()->Send("Scene", new MessageSpawnProj(go));
-						}
+						continue;
 					}
 					else
 					{
@@ -784,7 +677,7 @@ void SceneMovement_Week03::Update(double dt)
 		else if (go->type == GameObject::GO_ATTACKER) //REMEMBERRRRRRRR TELL SUPPORTER TO GO AWAY ONCE HEALED //also a chance, unit back off to spawner but still getting hit
 		{
 			if (go->side == GameObject::SIDE_RED) {
-				std::cout << "Attacker State: " << go->sm->GetCurrentState() << std::endl;
+				//std::cout << "Attacker State: " << go->sm->GetCurrentState() << std::endl;
 			}
 			if (go->sm->GetCurrentState() == "Healthy") {
 				//if no target, or if current target died
@@ -796,22 +689,15 @@ void SceneMovement_Week03::Update(double dt)
 				{
 					if ((go->nearest->pos - go->pos).Length() < m_gridSize)
 					{
-						go->moving = false;
-						float finalActionSpeed = (go->actionSpeed * 1) + go->supportActionSpeed;
-						if (go->EnergyReduce(finalActionSpeed))
-						{
-							go->nearest->health -= 5;
-							go->nearest->lastAttacker = go;
-						}
+						continue;
 					}
-					else if (!go->urgent) { //if im not close enough, continue checking
-						go->moving = true;
-						MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
-						Handle(&msgCheckEnemy);
+					else if (go->urgent) { //if im not close enough, continue checking
+						continue;
 					}
 					else {
 						go->moving = true;
-						go->moveSpeed = 2;
+						MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
+						Handle(&msgCheckEnemy);
 					}
 				}
 			}
@@ -832,51 +718,6 @@ void SceneMovement_Week03::Update(double dt)
 					Handle(&msgCheckSpawner);
 					go->steps = Math::RandIntMinMax(-1,1);
 					if (go->steps == 0) { go->steps = 1; } go->steps = 1;
-				}
-				else
-				{
-					float distToSpawner = (go->nearest->pos - go->pos).Length();
-					bool closeToSpawner = distToSpawner < m_gridSize * 3;  // choose radius
-
-					bool attackerLostSight =
-						(go->lastAttacker != NULL &&
-							go->lastAttacker->nearest != go);
-
-					if (!closeToSpawner && attackerLostSight)
-					{
-						go->moving = false;
-					}
-					else
-					{
-						// run to spawner and pace behind it
-						int redOrBlue = (go->type == GameObject::SIDE_BLUE) ? -1 : 1;
-						go->normalTarget = go->nearest->pos +
-							Vector3(redOrBlue * 2.5f * m_gridSize,
-								(go->steps * 0.5f) * m_gridSize,
-								0);
-
-						float distToSpot = (go->normalTarget - go->pos).Length();
-
-						if (distToSpot < m_gridSize)
-						{
-							Vector3 paceOffset = Vector3(0, (-go->steps) * m_gridSize, 0);
-							Vector3 paceTarget = go->normalTarget + paceOffset;
-
-							if ((paceTarget - go->pos).Length() < m_gridSize)
-							{
-								go->steps *= -1;
-								paceOffset = Vector3(0, (go->steps * 0.5f) * m_gridSize, 0);
-								paceTarget = go->normalTarget + paceOffset;
-							}
-
-							go->moving = true;
-							go->normalTarget = paceTarget;
-						}
-						else
-						{
-							go->moving = true;
-						}
-					}
 				}
 			}
 			else if (go->sm->GetCurrentState() == "StayStrong") {
@@ -901,13 +742,7 @@ void SceneMovement_Week03::Update(double dt)
 				{
 					if ((go->nearest->pos - go->pos).Length() < m_gridSize)
 					{
-						go->moving = false;				
-						float finalActionSpeed = (go->actionSpeed * 1) + go->supportActionSpeed;
-						if (go->EnergyReduce(finalActionSpeed))
-						{
-							go->nearest->health -= 5;
-							go->nearest->lastAttacker = go;
-						}
+						continue;
 					}
 					else { //if im not close enough, continue checking
 						go->moving = true;
@@ -933,56 +768,11 @@ void SceneMovement_Week03::Update(double dt)
 					go->steps = Math::RandIntMinMax(-1, 1);
 					if (go->steps == 0) { go->steps = 1; } go->steps = 1;
 				}
-				else
-				{
-					float distToSpawner = (go->nearest->pos - go->pos).Length();
-					bool closeToSpawner = distToSpawner < m_gridSize * 3;  // choose radius
-
-					bool attackerLostSight =
-						(go->lastAttacker != NULL &&
-							go->lastAttacker->nearest != go);
-
-					if (!closeToSpawner && attackerLostSight)
-					{
-						go->moving = false;
-					}
-					else
-					{
-						// run to spawner and pace behind it
-						int redOrBlue = (go->type == GameObject::SIDE_BLUE) ? -1 : 1;
-						go->normalTarget = go->nearest->pos +
-							Vector3(redOrBlue * 2.5f * m_gridSize,
-								(go->steps * 0.5f) * m_gridSize,
-								0);
-
-						float distToSpot = (go->normalTarget - go->pos).Length();
-
-						if (distToSpot < m_gridSize)
-						{
-							Vector3 paceOffset = Vector3(0, (-go->steps) * m_gridSize, 0);
-							Vector3 paceTarget = go->normalTarget + paceOffset;
-
-							if ((paceTarget - go->pos).Length() < m_gridSize)
-							{
-								go->steps *= -1;
-								paceOffset = Vector3(0, (go->steps * 0.5f) * m_gridSize, 0);
-								paceTarget = go->normalTarget + paceOffset;
-							}
-
-							go->moving = true;
-							go->normalTarget = paceTarget;
-						}
-						else
-						{
-							go->moving = true;
-						}
-					}
-				}
 			}
 		}
 		else if (go->type == GameObject::GO_SUPPORT) 
 		{
-			std::cout << "Supporter State: " << go->urgent << std::endl;
+			//std::cout << "Supporter State: " << go->urgent << std::endl;
 			if (go->sm->GetCurrentState() == "Healthy") {
 				if (go->nearest == NULL || go->nearest->active == false) {
 					MessageWRU nearestAllyNoSup = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ALLY_NOSUP, 40);
@@ -1286,12 +1076,13 @@ void SceneMovement_Week03::Update(double dt)
 
 		//use additive speed so i can add on whenever i want
 		go->finalMoveSpeed = (go->moveSpeed * 5) + go->supportSpeed;
-		//if (go->type == GameObject::GO_ATTACKER) //{ std::cout << go->finalMoveSpeed << std::endl; }
+		if (go->type == GameObject::GO_RANGED) { std::cout << dir.Length() << std::endl; }
 		if (go->moving == true) {
 			if (dir.Length() < go->finalMoveSpeed * dt * m_speed)
 			{
 				//GO->pos reach target
 				go->pos = go->target;
+				
 				if (go->moveRight)
 					go->target = go->pos + Vector3(m_gridSize, 0, 0);
 

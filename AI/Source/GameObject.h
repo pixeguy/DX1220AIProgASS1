@@ -75,6 +75,7 @@ struct GameObject : public ObjectBase
 	float countDown = 0;
 	STATE currState;
 	GameObject *nearest;
+	//GameObject* nearest2 = NULL; //for archer to find 2nd nearest
 	bool moveLeft;
 	bool moveRight;
 	bool moveUp;

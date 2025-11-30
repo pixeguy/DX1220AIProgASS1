@@ -1,10 +1,13 @@
 #include "StatesRanged.h"
 #include "SceneData.h"
+#include "GridSettings.h"
+#include "PostOffice.h"
+#include "ConcreteMessages.h"
 
 #pragma region healthy state
 StateRangedHealthy::StateRangedHealthy(const std::string & stateID, GameObject * go)
 	: State(stateID),
-	m_go(go)
+	go(go)
 {
 }
 
@@ -14,36 +17,63 @@ StateRangedHealthy::~StateRangedHealthy()
 
 void StateRangedHealthy::Enter()
 {
-	m_go->moveSpeed = 0.75;
-	m_go->actionSpeed = 0.2;
-	m_go->target = m_go->pos;
-	m_go->nearest = NULL;
+	go->moveSpeed = 0.75;
+	go->actionSpeed = 0.2;
+	go->target = go->pos;
+	go->nearest = NULL;
 }
 
 void StateRangedHealthy::Update(double dt)
 {
-	if (m_go->health < 80) {
-		m_go->sm->SetNextState("Hurt");
+	if (go->health < 80) {
+		go->sm->SetNextState("Hurt");
 		return;
 	}
-	m_go->moveLeft = m_go->moveRight = m_go->moveUp = m_go->moveDown = false;
-	if (m_go->nearest)
+	go->moveLeft = go->moveRight = go->moveUp = go->moveDown = false;
+	if (go->nearest)
 	{
-		float diffX = m_go->normalTarget.x - m_go->pos.x;
-		float diffY = m_go->normalTarget.y - m_go->pos.y;
+		float diffX = go->normalTarget.x - go->pos.x;
+		float diffY = go->normalTarget.y - go->pos.y;
 		if (fabs(diffX) > fabs(diffY))
 		{
 			if (diffX > 0)
-				m_go->moveRight = true;
+				go->moveRight = true;
 			else
-				m_go->moveLeft = true;
+				go->moveLeft = true;
 		}
 		else
 		{
 			if (diffY > 0)
-				m_go->moveUp = true;
+				go->moveUp = true;
 			else
-				m_go->moveDown = true;
+				go->moveDown = true;
+		}
+	}
+
+
+	{
+		if (go->nearest != NULL && go->nearest->active != false)
+		{
+			if (go->countDown < m_gridSize * 2) //if target too close
+			{
+				//move away
+				//go->ignoreCurMove = true;
+				go->moving = true;
+				int redOrBlue = (go->type == GameObject::SIDE_BLUE) ? -1 : 1;
+				go->normalTarget = go->pos + Vector3(redOrBlue * 3 * m_gridSize, 0, 0);
+				go->target = go->pos + Vector3(redOrBlue * m_gridSize, 0, 0);
+
+			}
+			else if ((go->nearest->pos - go->pos).Length() < m_gridSize * 5)
+			{
+				go->moving = false;
+				float finalActionSpeed = (go->actionSpeed * 1) + go->supportActionSpeed;
+				if (go->EnergyReduce(finalActionSpeed))
+				{
+					//PostOffice::GetInstance()->Send("Scene", new MessageSpawnFood(go, GameObject::GO_FISHFOOD, 2, range));
+					PostOffice::GetInstance()->Send("Scene", new MessageSpawnProj(go));
+				}
+			}
 		}
 	}
 }
@@ -56,7 +86,7 @@ void StateRangedHealthy::Exit()
 #pragma region hurt state
 StateRangedHurt::StateRangedHurt(const std::string& stateID, GameObject* go)
 	: State(stateID),
-	m_go(go)
+	go(go)
 {
 }
 
@@ -66,36 +96,60 @@ StateRangedHurt::~StateRangedHurt()
 
 void StateRangedHurt::Enter()
 {
-	m_go->moveSpeed = 0.75;
-	m_go->actionSpeed = 0.2;
-	m_go->target = m_go->pos;
-	m_go->nearest = NULL;
+	go->moveSpeed = 0.75;
+	go->actionSpeed = 0.2;
+	go->target = go->pos;
+	go->nearest = NULL;
 }
 
 void StateRangedHurt::Update(double dt)
 {
-	if (m_go->health < 50) {
-		m_go->sm->SetNextState("Panic");
+	if (go->health < 50) {
+		go->sm->SetNextState("Panic");
 		return;
 	}
-	m_go->moveLeft = m_go->moveRight = m_go->moveUp = m_go->moveDown = false;
-	if (m_go->nearest)
+	go->moveLeft = go->moveRight = go->moveUp = go->moveDown = false;
+	if (go->nearest)
 	{
-		float diffX = m_go->normalTarget.x - m_go->pos.x;
-		float diffY = m_go->normalTarget.y - m_go->pos.y;
+		float diffX = go->normalTarget.x - go->pos.x;
+		float diffY = go->normalTarget.y - go->pos.y;
 		if (fabs(diffX) > fabs(diffY))
 		{
 			if (diffX > 0)
-				m_go->moveRight = true;
+				go->moveRight = true;
 			else
-				m_go->moveLeft = true;
+				go->moveLeft = true;
 		}
 		else
 		{
 			if (diffY > 0)
-				m_go->moveUp = true;
+				go->moveUp = true;
 			else
-				m_go->moveDown = true;
+				go->moveDown = true;
+		}
+	}
+
+	{
+		if (go->nearest != NULL && go->nearest->active != false)
+		{
+			if (go->countDown < m_gridSize * 3) //if target too close
+			{
+				go->moving = true;
+				int redOrBlue = (go->type == GameObject::SIDE_BLUE) ? -1 : 1;
+				go->normalTarget = go->pos + Vector3(redOrBlue * 3 * m_gridSize, 0, 0);
+				go->target = go->pos + Vector3(redOrBlue * m_gridSize, 0, 0);
+			}
+			else if ((go->nearest->pos - go->pos).Length() < m_gridSize * 5)
+			{
+				//std::cout << "shooting!" << std::endl;
+				go->moving = false;
+				float finalActionSpeed = (go->actionSpeed * 1) + go->supportActionSpeed;
+				if (go->EnergyReduce(finalActionSpeed))
+				{
+					//PostOffice::GetInstance()->Send("Scene", new MessageSpawnFood(m_go, GameObject::GO_FISHFOOD, 2, range));
+					PostOffice::GetInstance()->Send("Scene", new MessageSpawnProj(go));
+				}
+			}
 		}
 	}
 }
@@ -109,7 +163,7 @@ void StateRangedHurt::Exit()
 #pragma region panic state
 StateRangedPanic::StateRangedPanic(const std::string& stateID, GameObject* go)
 	: State(stateID),
-	m_go(go)
+	go(go)
 {
 }
 
@@ -119,36 +173,62 @@ StateRangedPanic::~StateRangedPanic()
 
 void StateRangedPanic::Enter()
 {
-	m_go->moveSpeed = 0.75;
-	m_go->actionSpeed = 0.2;
-	m_go->target = m_go->pos;
-	m_go->nearest = NULL;
+	go->moveSpeed = 0.75;
+	go->actionSpeed = 0.2;
+	go->target = go->pos;
+	go->nearest = NULL;
 }
 
 void StateRangedPanic::Update(double dt)
 {
-	if (m_go->health < 20) {
-		m_go->sm->SetNextState("NearDeath");
+	if (go->health < 20) {
+		go->sm->SetNextState("NearDeath");
 		return;
 	}
-	m_go->moveLeft = m_go->moveRight = m_go->moveUp = m_go->moveDown = false;
-	if (m_go->nearest)
+	go->moveLeft = go->moveRight = go->moveUp = go->moveDown = false;
+	if (go->nearest)
 	{
-		float diffX = m_go->normalTarget.x - m_go->pos.x;
-		float diffY = m_go->normalTarget.y - m_go->pos.y;
+		float diffX = go->normalTarget.x - go->pos.x;
+		float diffY = go->normalTarget.y - go->pos.y;
 		if (fabs(diffX) > fabs(diffY))
 		{
 			if (diffX > 0)
-				m_go->moveRight = true;
+				go->moveRight = true;
 			else
-				m_go->moveLeft = true;
+				go->moveLeft = true;
 		}
 		else
 		{
 			if (diffY > 0)
-				m_go->moveUp = true;
+				go->moveUp = true;
 			else
-				m_go->moveDown = true;
+				go->moveDown = true;
+		}
+	}
+
+	{
+		if (go->nearest != NULL && go->nearest->active != false)
+		{
+			if (go->countDown < m_gridSize * 4) //if target too close
+			{
+				//std::cout << "running away!" << std::endl;
+				//move away
+				go->moving = true;
+				int redOrBlue = (go->type == GameObject::SIDE_BLUE) ? -1 : 1;
+				go->normalTarget = go->pos + Vector3(redOrBlue * 3 * m_gridSize, 0, 0);
+				go->target = go->pos + Vector3(redOrBlue * m_gridSize, 0, 0);
+			}
+			else if ((go->nearest->pos - go->pos).Length() < m_gridSize * 5)
+			{
+				//std::cout << "shooting!" << std::endl;
+				go->moving = false;
+				float finalActionSpeed = (go->actionSpeed * 1) + go->supportActionSpeed;
+				if (go->EnergyReduce(finalActionSpeed))
+				{
+					//PostOffice::GetInstance()->Send("Scene", new MessageSpawnFood(m_go, GameObject::GO_FISHFOOD, 2, range));
+					PostOffice::GetInstance()->Send("Scene", new MessageSpawnProj(go));
+				}
+			}
 		}
 	}
 }
@@ -162,7 +242,7 @@ void StateRangedPanic::Exit()
 #pragma region near death state
 StateRangedNearDeath::StateRangedNearDeath(const std::string& stateID, GameObject* go)
 	: State(stateID),
-	m_go(go)
+	go(go)
 {
 }
 
@@ -172,32 +252,58 @@ StateRangedNearDeath::~StateRangedNearDeath()
 
 void StateRangedNearDeath::Enter()
 {
-	m_go->moveSpeed = 0.75;
-	m_go->actionSpeed = 0.2;
-	m_go->target = m_go->pos;
-	m_go->nearest = NULL;
+	go->moveSpeed = 0.75;
+	go->actionSpeed = 0.2;
+	go->target = go->pos;
+	go->nearest = NULL;
 }
 
 void StateRangedNearDeath::Update(double dt)
 {
-	m_go->moveLeft = m_go->moveRight = m_go->moveUp = m_go->moveDown = false;
-	if (m_go->nearest)
+	go->moveLeft = go->moveRight = go->moveUp = go->moveDown = false;
+	if (go->nearest)
 	{
-		float diffX = m_go->normalTarget.x - m_go->pos.x;
-		float diffY = m_go->normalTarget.y - m_go->pos.y;
+		float diffX = go->normalTarget.x - go->pos.x;
+		float diffY = go->normalTarget.y - go->pos.y;
 		if (fabs(diffX) > fabs(diffY))
 		{
 			if (diffX > 0)
-				m_go->moveRight = true;
+				go->moveRight = true;
 			else
-				m_go->moveLeft = true;
+				go->moveLeft = true;
 		}
 		else
 		{
 			if (diffY > 0)
-				m_go->moveUp = true;
+				go->moveUp = true;
 			else
-				m_go->moveDown = true;
+				go->moveDown = true;
+		}
+	}
+
+	{
+		if (go->nearest != NULL && go->nearest->active != false)
+		{
+			if (go->countDown < m_gridSize * 4) //if target too close
+			{
+				//std::cout << "running away!" << std::endl;
+				//move away
+				go->moving = true;
+				int redOrBlue = (go->type == GameObject::SIDE_BLUE) ? -1 : 1;
+				go->normalTarget = go->pos + Vector3(redOrBlue * 3 * m_gridSize, 0, 0);
+				go->target = go->pos + Vector3(redOrBlue * m_gridSize, 0, 0);
+			}
+			else if ((go->nearest->pos - go->pos).Length() < m_gridSize * 5)
+			{
+				//std::cout << "shooting!" << std::endl;
+				go->moving = false;
+				float finalActionSpeed = (go->actionSpeed * 1) + go->supportActionSpeed;
+				if (go->EnergyReduce(finalActionSpeed))
+				{
+					//PostOffice::GetInstance()->Send("Scene", new MessageSpawnFood(m_go, GameObject::GO_FISHFOOD, 2, range));
+					PostOffice::GetInstance()->Send("Scene", new MessageSpawnProj(go));
+				}
+			}
 		}
 	}
 }
