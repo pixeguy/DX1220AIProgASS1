@@ -518,8 +518,8 @@ void SceneMovement_Week03::Update(double dt)
 	{
 		bGState = true;
 
-		Vector3 randomPos = RandomPointInRing(m_spawners[1]->pos, 3.75, 10);
-		SpawnUnit(GameObject::SIDE_BLUE, randomPos, GameObject::GO_SUPPORT);
+		Vector3 randomPos = RandomPointInRing(m_spawners[0]->pos, 3.75, 10);
+		SpawnUnit(GameObject::SIDE_BLUE, randomPos, GameObject::GO_ATTACKER);
 	}
 	else if (bGState && !Application::IsKeyPressed('G'))
 	{
