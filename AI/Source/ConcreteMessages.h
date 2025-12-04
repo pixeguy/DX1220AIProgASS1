@@ -21,6 +21,7 @@ struct MessageWRU : public Message
 		NEAREST_FREE_SUP,
 		NEAREST_URG_SUP,
 		NEAREST_ALLY_ATTACKER,
+		ALLYACTIVECOUNT,
 	};
 	MessageWRU(GameObject *goValue, SEARCH_TYPE typeValue, float thresholdValue) : go(goValue), type(typeValue), threshold(thresholdValue) {}
 	MessageWRU(GameObject* goValue, SEARCH_TYPE typeValue, float thresholdValue, float tooCloseValue) : go(goValue), type(typeValue), threshold(thresholdValue), mortarTooCloseValue(tooCloseValue) {}

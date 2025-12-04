@@ -56,7 +56,7 @@ void StateAttackerHealthy::Update(double dt)
 	}
 
 	{
-		if (go->nearest != NULL && go->nearest->active != false) {
+		if (go->nearest != NULL && go->nearest->active != false && !go->nearest->hiding) {
 			if ((go->nearest->pos - go->pos).Length() < m_gridSize)
 			{
 				go->moving = false;
@@ -145,7 +145,7 @@ void StateAttackerStayStrong::Update(double dt)
 	}
 
 	{
-		if (go->nearest != NULL && go->nearest->active != false) {
+		if (go->nearest != NULL && go->nearest->active != false && !go->nearest->hiding) {
 			if ((go->nearest->pos - go->pos).Length() < m_gridSize)
 			{
 				go->moving = false;
@@ -246,7 +246,7 @@ void StateAttackerFlee::Update(double dt)
 			else
 			{
 				// run to spawner and pace behind it
-				int redOrBlue = (go->type == GameObject::SIDE_BLUE) ? 1 : -1;
+				int redOrBlue = (go->side == GameObject::SIDE_BLUE) ? 1 : -1;
 				go->normalTarget = go->nearest->pos + Vector3(redOrBlue * 2.5f * m_gridSize,(go->steps * 0.5f) * m_gridSize,0);
 
 				float distToSpot = (go->normalTarget - go->pos).Length();
@@ -363,11 +363,8 @@ void StateAttackerNearDeath::Update(double dt)
 			else
 			{
 				// run to spawner and pace behind it
-				int redOrBlue = (go->type == GameObject::SIDE_BLUE) ? 1 : -1;
-				go->normalTarget = go->nearest->pos +
-					Vector3(redOrBlue * 2.5f * m_gridSize,
-						(go->steps * 0.5f) * m_gridSize,
-						0);
+				int redOrBlue = (go->side == GameObject::SIDE_BLUE) ? 1 : -1;
+				go->normalTarget = go->nearest->pos + Vector3(redOrBlue * 2.5f * m_gridSize,(go->steps * 0.5f) * m_gridSize,0);
 
 				float distToSpot = (go->normalTarget - go->pos).Length();
 

@@ -101,6 +101,8 @@ struct GameObject : public ObjectBase
 	//for healers
 	GameObject* healTarget = NULL;
 	bool urgent = false;
+	bool hiding = false;
+	int alliesActiveCount = 0;
 
 	//for bullets
 	GameObject* owner;

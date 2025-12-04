@@ -140,13 +140,16 @@ GameObject* SceneMovement_Week03::FetchGO(GameObject::GAMEOBJECT_TYPE type)
 			go->sm->AddState(new StateSupportHealthy("Healthy", go));
 			go->sm->AddState(new StateSupportHealing("Healing", go));
 			go->sm->AddState(new StateSupportUrgentHealing("UrgentHealing", go));
+			go->sm->AddState(new StateSupportHurt("Hurt", go));
+			go->sm->AddState(new StateSupportHiding("Hiding", go));
 			go->sm->AddState(new StateSupportDeath("Death", go));
 		}
 		else if (type == GameObject::GO_TANK)
 		{
 			go->sm = new StateMachine();
-			go->sm->AddState(new StateNone("None", "Healthy", go));
+			go->sm->AddState(new StateNone("None", "SoloHealthy", go));
 			go->sm->AddState(new StateTankHealthy("Healthy", go));
+			go->sm->AddState(new StateTankSoloHealthy("SoloHealthy", go));
 		}
 		else if (type == GameObject::GO_MORTAR)
 		{
@@ -493,7 +496,7 @@ void SceneMovement_Week03::Update(double dt)
 			GameObject* go = (GameObject*)*it;
 			if (!go->active)
 				continue;
-			if (go->type == GameObject::GO_RANGED)
+			if (go->type == GameObject::GO_TANK)
 			{
 				if (go->specID == 2) {
 					found = true;
@@ -505,7 +508,7 @@ void SceneMovement_Week03::Update(double dt)
 		if (!found)
 		{
 			Vector3 randomPos = RandomPointInRing(m_spawners[0]->pos, 3.75, 10);
-			GameObject* uni1 = SpawnUnit(GameObject::SIDE_BLUE, randomPos, GameObject::GO_RANGED);
+			GameObject* uni1 = SpawnMetalUnit(GameObject::SIDE_BLUE, randomPos, GameObject::GO_TANK);
 			uni1->specID = 2;
 		}
 	}
@@ -519,7 +522,7 @@ void SceneMovement_Week03::Update(double dt)
 		bGState = true;
 
 		Vector3 randomPos = RandomPointInRing(m_spawners[0]->pos, 3.75, 10);
-		SpawnUnit(GameObject::SIDE_BLUE, randomPos, GameObject::GO_ATTACKER);
+		SpawnUnit(GameObject::SIDE_BLUE, randomPos, GameObject::GO_RANGED);
 	}
 	else if (bGState && !Application::IsKeyPressed('G'))
 	{
@@ -572,8 +575,8 @@ void SceneMovement_Week03::Update(double dt)
 			if (go->sm->GetCurrentState() == "Healthy")
 			{
 				//if no target, or if current target died
-				if (go->nearest == NULL || go->nearest->active == false) {
-					MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
+				if (go->nearest == NULL || go->nearest->active == false || go->nearest->hiding) {
+					MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 500.0f);
 					Handle(&msgCheckEnemy);
 				}
 				else //use for radius to check whether enemy is too close
@@ -639,7 +642,7 @@ void SceneMovement_Week03::Update(double dt)
 				}
 
 				//if no target, or if current target died
-				if (go->nearest == NULL || go->nearest->active == false) {
+				if (go->nearest == NULL || go->nearest->active == false || go->nearest->hiding) {
 					MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
 					Handle(&msgCheckEnemy);
 				}
@@ -681,7 +684,7 @@ void SceneMovement_Week03::Update(double dt)
 			}
 			if (go->sm->GetCurrentState() == "Healthy") {
 				//if no target, or if current target died
-				if (go->nearest == NULL || go->nearest->active == false) {
+				if (go->nearest == NULL || go->nearest->active == false || go->nearest->hiding) {
 					MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
 					Handle(&msgCheckEnemy);
 				}
@@ -734,7 +737,7 @@ void SceneMovement_Week03::Update(double dt)
 
 				//NORMAL ATTACKING BEHAVIOUR
 				//if no target, or if current target died
-				if (go->nearest == NULL || go->nearest->active == false) {
+				if (go->nearest == NULL || go->nearest->active == false || go->nearest->hiding) {
 					MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
 					Handle(&msgCheckEnemy);
 				}
@@ -772,37 +775,85 @@ void SceneMovement_Week03::Update(double dt)
 		}
 		else if (go->type == GameObject::GO_SUPPORT) 
 		{
-			//std::cout << "Supporter State: " << go->urgent << std::endl;
+			std::cout << "Supporter State: " << go->sm->GetCurrentState() << std::endl;
+
+			go->alliesActiveCount = 0;
+			MessageWRU allyCount = MessageWRU(go, MessageWRU::SEARCH_TYPE::ALLYACTIVECOUNT, 500);
+			Handle(&allyCount);
+
 			if (go->sm->GetCurrentState() == "Healthy") {
 				if (go->nearest == NULL || go->nearest->active == false) {
 					MessageWRU nearestAllyNoSup = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ALLY_NOSUP, 40);
 					Handle(&nearestAllyNoSup);
 				}
 			}
+			else if (go->sm->GetCurrentState() == "Hurt" || go->sm->GetCurrentState() == "Hiding") {
+				MessageWRU nearestSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200);
+				Handle(&nearestSpawner);
+			}
 		}
 		else if (go->type == GameObject::GO_TANK)
 		{
-			//tank uses target more instead of nearest. because to prevent tanks stacking on top of each other at the front
-			if (go->nearest == NULL || go->nearest->active == false) {
+			//std::cout << "TANK STATE: " << go->sm->GetCurrentState() << std::endl;
+			if (go->sm->GetCurrentState() == "Healthy") {
+				if (go->external2 == NULL || go->external2->active == false) {
+					GameObject* temp = go->nearest;
+					MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
+					Handle(&msgCheckEnemy);
+					go->external2 = go->nearest;
+					go->nearest = temp;
+				}
+				//tank uses target more instead of nearest. because to prevent tanks stacking on top of each other at the front
+				if (go->nearest == NULL || go->nearest->active == false) {
+					MessageWRU msgCheckFrontline = MessageWRU(go, MessageWRU::SEARCH_TYPE::FURTHEST_FRONTLINE, 200);
+					Handle(&msgCheckFrontline);
+					go->steps = Math::RandIntMinMax(-2, 2);
+					//int redOrBlue = (go->type == GameObject::SIDE_BLUE) ? 1 : -1;
+					//go->normalTarget = go->nearest->pos + Vector3(redOrBlue * m_gridSize,go->steps * m_gridSize,0);
+				}
+				else
+				{
+					MessageWRU msgCheckFrontline = MessageWRU(go, MessageWRU::SEARCH_TYPE::FURTHEST_FRONTLINE, 200);
+					Handle(&msgCheckFrontline);
+					int redOrBlue = (go->side == GameObject::SIDE_BLUE) ? -1 : 1;
+					if (go->nearest == NULL || go->nearest->active == false)
+					{
+						go->sm->SetNextState("SoloHealthy");
+						return; // or handle “no frontline found” however you want
+					}
+					go->normalTarget = go->nearest->pos + Vector3(redOrBlue * m_gridSize * 1.5f, (float)go->steps * m_gridSize, 0);
+					//std::cout << redOrBlue * m_gridSize << std::endl;
+					if ((go->normalTarget - go->pos).Length() < m_gridSize)
+					{
+						go->moving = false;
+					}
+					else { //if im not there yet, continue checking
+						go->moving = true;
+					}
+				}
+			}
+			else if (go->sm->GetCurrentState() == "SoloHealthy") {
+				if (go->nearest == NULL || go->nearest->active == false) {
+					MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
+					Handle(&msgCheckEnemy);
+				}
+				GameObject* temp = go->nearest;
+				go->nearest = NULL;
 				MessageWRU msgCheckFrontline = MessageWRU(go, MessageWRU::SEARCH_TYPE::FURTHEST_FRONTLINE, 200);
 				Handle(&msgCheckFrontline);
-				go->steps = Math::RandIntMinMax(-1, 1);
-				//int redOrBlue = (go->type == GameObject::SIDE_BLUE) ? 1 : -1;
-				//go->normalTarget = go->nearest->pos + Vector3(redOrBlue * m_gridSize,go->steps * m_gridSize,0);
-			}
-			else
-			{
-				MessageWRU msgCheckFrontline = MessageWRU(go, MessageWRU::SEARCH_TYPE::FURTHEST_FRONTLINE, 200); // how is this working without using target but only normal target?
-				// its working because in tank state its using normal target to move instead of target???
-				Handle(&msgCheckFrontline);
-				int redOrBlue = (go->type == GameObject::SIDE_BLUE) ? 1 : -1;
-				go->normalTarget = go->nearest->pos + Vector3(redOrBlue *  2 *m_gridSize, (float)go->steps * m_gridSize, 0);
-				if ((go->normalTarget - go->pos).Length() < m_gridSize)
+				if (go->nearest != NULL)
 				{
-					go->moving = false;
+					go->sm->SetNextState("Healthy");
+					return;
 				}
-				else { //if im not there yet, continue checking
-					go->moving = true;
+				go->nearest = temp;
+				if ((go->nearest->pos - go->pos).Length() < m_gridSize * 5)
+				{
+					continue;
+				}
+				else {
+					MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
+					Handle(&msgCheckEnemy);
 				}
 			}
 		}
@@ -1076,7 +1127,7 @@ void SceneMovement_Week03::Update(double dt)
 
 		//use additive speed so i can add on whenever i want
 		go->finalMoveSpeed = (go->moveSpeed * 5) + go->supportSpeed;
-		if (go->type == GameObject::GO_RANGED) { std::cout << dir.Length() << std::endl; }
+		//if (go->type == GameObject::GO_RANGED) { std::cout << dir.Length() << std::endl; }
 		if (go->moving == true) {
 			if (dir.Length() < go->finalMoveSpeed * dt * m_speed)
 			{
@@ -1483,6 +1534,7 @@ bool SceneMovement_Week03::Handle(Message* message)
 		float nearestDistance = FLT_MAX;
 		float highestEnergy = FLT_MIN;
 
+
 		for (GameObject* go2 : m_goList)
 		{
 			if (!go2->active)
@@ -1496,6 +1548,19 @@ bool SceneMovement_Week03::Handle(Message* message)
 					nearestDistance = distance;
 					go->nearest = go2;
 				}
+			}
+			else if (messageWRU->type == MessageWRU::ALLYACTIVECOUNT && go2->side == go->side)
+			{
+				if (go2->type == GameObject::GO_SPAWNER || go2->type == GameObject::GO_MAINBASE)
+					continue;
+
+				if (go2->hiding)
+					continue;
+
+				if (go2 == go)
+					continue;
+				
+				go->alliesActiveCount++;
 			}
 			else if (messageWRU->type == MessageWRU::NEAREST_ALLY_ATTACKER && go2->type == GameObject::GO_ATTACKER && go2->side == go->side)
 			{
@@ -1523,6 +1588,7 @@ bool SceneMovement_Week03::Handle(Message* message)
 
 					if (go2->sm->GetCurrentState() == "UrgentHealing")
 						busyUrgent = true;
+					if (go2->hiding == true) continue;
 
 					// We cannot steal an urgent healer
 					// also ensures if this unit is already being healed, it wont find another healer
@@ -1547,6 +1613,7 @@ bool SceneMovement_Week03::Handle(Message* message)
 				float distance = (go->pos - go2->pos).Length();
 				if (distance < messageWRU->threshold && distance < nearestDistance)
 				{
+					if (go2->hiding == true) continue;
 					bool alreadyHealing = false;
 					for (auto go3 : m_goList)
 					{
@@ -1584,7 +1651,7 @@ bool SceneMovement_Week03::Handle(Message* message)
 			}
 			else if (messageWRU->type == MessageWRU::FURTHEST_FRONTLINE && go2->side == go->side)
 			{
-				if (go2->type != GameObject::GO_SPAWNER && go2->type != GameObject::GO_MAINBASE) {
+				if (go2->type != GameObject::GO_SPAWNER && go2->type != GameObject::GO_MAINBASE && go2->type != GameObject::GO_TANK) {
 					float distance = (go->pos - go2->pos).Length();
 					//use highestEnergy because thats just declared as FLT_MIN
 					if (distance < messageWRU->threshold && distance > highestEnergy)
@@ -1599,6 +1666,7 @@ bool SceneMovement_Week03::Handle(Message* message)
 				float distance = (go->pos - go2->pos).Length();
 				if (distance < messageWRU->threshold && distance < nearestDistance)
 				{
+					if (go2->hiding == true) continue;
 					nearestDistance = distance;
 					go->nearest = go2;
 				}

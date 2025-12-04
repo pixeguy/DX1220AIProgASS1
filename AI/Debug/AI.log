@@ -1,8 +1,8 @@
 ﻿  SceneMovement_Week03.cpp
 C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week03.cpp(63,12): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
-C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week03.cpp(1085,23): warning C4018: '<': signed/unsigned mismatch
-C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week03.cpp(1137,23): warning C4018: '<': signed/unsigned mismatch
-C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week03.cpp(1228,23): warning C4018: '<': signed/unsigned mismatch
-C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week03.cpp(1395,60): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week03.cpp(1401,44): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week03.cpp(926,23): warning C4018: '<': signed/unsigned mismatch
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week03.cpp(978,23): warning C4018: '<': signed/unsigned mismatch
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week03.cpp(1069,23): warning C4018: '<': signed/unsigned mismatch
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week03.cpp(1237,60): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week03.cpp(1243,44): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
   AI.vcxproj -> C:\Users\zhan feng\Documents\GitHub\DX1220AIProgASS1\Debug\AI.exe

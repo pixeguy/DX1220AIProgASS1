@@ -40,6 +40,30 @@ public:
 	virtual void Exit();
 };
 
+class StateSupportHurt : public State
+{
+	GameObject* m_go;
+public:
+	StateSupportHurt(const std::string& stateID, GameObject* go = NULL);
+	virtual ~StateSupportHurt();
+
+	virtual void Enter();
+	virtual void Update(double dt);
+	virtual void Exit();
+};
+
+class StateSupportHiding : public State
+{
+	GameObject* m_go;
+public:
+	StateSupportHiding(const std::string& stateID, GameObject* go = NULL);
+	virtual ~StateSupportHiding();
+
+	virtual void Enter();
+	virtual void Update(double dt);
+	virtual void Exit();
+};
+
 class StateSupportDeath : public State
 {
 	GameObject* m_go;
