@@ -22,6 +22,11 @@ struct MessageWRU : public Message
 		NEAREST_URG_SUP,
 		NEAREST_ALLY_ATTACKER,
 		ALLYACTIVECOUNT,
+		NEAREST_MECHANIC_HEAL,
+		NEAREST_ENEMY_INAREA,
+		NEAREST_OBJ,
+		ATTACKERCOUNT,
+		NEAREST_GOLDENORB,
 	};
 	MessageWRU(GameObject *goValue, SEARCH_TYPE typeValue, float thresholdValue) : go(goValue), type(typeValue), threshold(thresholdValue) {}
 	MessageWRU(GameObject* goValue, SEARCH_TYPE typeValue, float thresholdValue, float tooCloseValue) : go(goValue), type(typeValue), threshold(thresholdValue), mortarTooCloseValue(tooCloseValue) {}
@@ -118,9 +123,54 @@ struct MessageSpawnProj : public Message
 	GameObject* go;
 };
 
+struct MessageSpawnMorBomb : public Message
+{
+	MessageSpawnMorBomb(GameObject* goVal) : go(goVal) {}
+	GameObject* go;
+};
+
+struct MessageSpawnBigMorBomb : public Message
+{
+	MessageSpawnBigMorBomb(GameObject* goVal) : go(goVal) {}
+	GameObject* go;
+};
+
+struct MessageSpawnProjTank : public Message
+{
+	MessageSpawnProjTank(GameObject* goVal, GameObject* targetgo, bool rocketOrProj) : go(goVal), target(targetgo), rocketOrProj(rocketOrProj) {}
+	GameObject* go;
+	GameObject* target;
+	bool rocketOrProj;
+};
+
 struct MessageAskForAtk : public Message
 {
 	MessageAskForAtk(GameObject* goVal) : go(goVal) {}
+	GameObject* go;
+};
+
+struct MessageSpawnAttacker : public Message
+{
+	MessageSpawnAttacker(GameObject* goVal) : go(goVal) {}
+	GameObject* go;
+};
+
+struct MessageSpawnMortar : public Message
+{
+	MessageSpawnMortar(GameObject* goVal) : go(goVal) {}
+	GameObject* go;
+};
+
+struct MessageHowManyUnit : public Message
+{
+	MessageHowManyUnit(GameObject::GAMEOBJECT_TYPE type ,GameObject::SIDE side) : go_type(type), side(side){}
+	GameObject::GAMEOBJECT_TYPE go_type;
+	GameObject::SIDE side;
+};
+
+struct MessageMechanicBuild : public Message
+{
+	MessageMechanicBuild(GameObject* goVal) : go(goVal) {}
 	GameObject* go;
 };
 

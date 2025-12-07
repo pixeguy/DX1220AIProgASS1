@@ -1,10 +1,12 @@
 #include "StatesMortar.h"
 #include "SceneData.h"
+#include "PostOffice.h"
+#include "ConcreteMessages.h"
 
-
+#pragma region healthy state
 StateMortarHealthy::StateMortarHealthy(const std::string & stateID, GameObject * go)
 	: State(stateID),
-	m_go(go)
+	go(go)
 {
 }
 
@@ -14,29 +16,92 @@ StateMortarHealthy::~StateMortarHealthy()
 
 void StateMortarHealthy::Enter()
 {
-	m_go->moveSpeed = 0;
-	m_go->moving = false;
-	m_go->actionSpeed = 0.05;
-	m_go->target = m_go->pos;
-	m_go->nearest = NULL;
+	go->moveSpeed = 0;
+	go->moving = false;
+	go->actionSpeed = 0.05;
+	go->target = go->pos;
+	go->nearest = NULL;
+	go->energy = 0;
 }
 
 void StateMortarHealthy::Update(double dt)
 {
-	//m_go->moveLeft = m_go->moveRight = m_go->moveUp = m_go->moveDown = true;
-	//if (m_go->nearest)
-	//{
-	//	if (m_go->normalTarget.x > m_go->pos.x)
-	//		m_go->moveLeft = false;
-	//	else
-	//		m_go->moveRight = false;
-	//	if (m_go->normalTarget.y > m_go->pos.y)
-	//		m_go->moveDown = false;
-	//	else
-	//		m_go->moveUp = false;
-	//}
+	if (go->health < 40) {
+		go->sm->SetNextState("Panic");
+		return;
+	}
 }
 
 void StateMortarHealthy::Exit()
 {
 }
+#pragma endregion
+
+#pragma region panic state
+StateMortarPanic::StateMortarPanic(const std::string& stateID, GameObject* go)
+	: State(stateID),
+	go(go)
+{
+}
+
+StateMortarPanic::~StateMortarPanic()
+{
+}
+
+void StateMortarPanic::Enter()
+{
+	go->moveSpeed = 0;
+	go->moving = false;
+	go->actionSpeed = 0.08;
+	go->target = go->pos;
+	go->nearest = NULL;
+}
+
+void StateMortarPanic::Update(double dt)
+{
+	if (go->health <=0) {
+		go->sm->SetNextState("Death");
+		return;
+	}
+
+	if (go->health >= 50) {
+		go->sm->SetNextState("Healthy");
+		return;
+	}
+}
+
+void StateMortarPanic::Exit()
+{
+}
+#pragma endregion
+
+#pragma region Death state
+StateMortarDeath::StateMortarDeath(const std::string& stateID, GameObject* go)
+	: State(stateID),
+	go(go)
+{
+}
+
+StateMortarDeath::~StateMortarDeath()
+{
+}
+
+void StateMortarDeath::Enter()
+{
+	PostOffice::GetInstance()->Send("Scene", new MessageSpawnBigMorBomb(go));	
+	go->moveSpeed = 0;
+	go->actionSpeed = 0.3;
+	go->target = go->pos;
+	go->nearest = NULL;
+	go->active = false;
+	go->type = GameObject::GO_NONE;
+}
+
+void StateMortarDeath::Update(double dt)
+{
+}
+
+void StateMortarDeath::Exit()
+{
+}
+#pragma endregion

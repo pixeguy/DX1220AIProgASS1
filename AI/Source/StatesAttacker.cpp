@@ -16,7 +16,7 @@ StateAttackerHealthy::~StateAttackerHealthy()
 void StateAttackerHealthy::Enter()
 {
 	go->moveSpeed = 1;
-	go->actionSpeed = 0.3;
+	go->actionSpeed = 0.2;
 	go->target = go->pos;
 	go->nearest = NULL;
 	go->external = NULL;
@@ -26,12 +26,11 @@ void StateAttackerHealthy::Update(double dt)
 {
 	if(go->health <= 70)
 	{
-		//float random = Math::RandFloatMinMax(0.f, 1.f);
-		//if( random < 0.5f )
-		//	go->sm->SetNextState("StayStrong");
-		//else
-		//	go->sm->SetNextState("Flee");
-		go->sm->SetNextState("Flee");
+		float random = Math::RandFloatMinMax(0.f, 1.f);
+		if( random < 0.5f )
+			go->sm->SetNextState("StayStrong");
+		else
+			go->sm->SetNextState("Flee");
 		return;
 	}
 	go->moveLeft = go->moveRight = go->moveUp = go->moveDown = false;
@@ -94,7 +93,7 @@ StateAttackerStayStrong::~StateAttackerStayStrong()
 void StateAttackerStayStrong::Enter()
 {
 	//go->moveSpeed = 0;
-	go->actionSpeed = 0.2;
+	go->actionSpeed = 0.15;
 	//go->target = go->pos;
 	//go->nearest = NULL;
 	//go->active = false;
@@ -115,8 +114,8 @@ void StateAttackerStayStrong::Update(double dt)
 	}
 
 	float random = Math::RandFloatMinMax(0.f, 1.f); //once ive chosen to stay, have lower chance to run
-	//if (random < 0.3f)
-	//	go->sm->SetNextState("Flee");
+	if (random < 0.3f)
+		go->sm->SetNextState("Flee");
 
 	go->moveLeft = go->moveRight = go->moveUp = go->moveDown = false;
 	if (go->nearest)

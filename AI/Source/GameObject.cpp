@@ -59,14 +59,21 @@ bool GameObject::Handle(Message* message)
 		MessageAskHelp* msg = static_cast<MessageAskHelp*>(message);
 		healTarget = msg->go;
 		nearest = msg->go;
+		sm->SetNextState("Healing");
 		if (msg->go->urgent) {
 			urgent = true; //set supporters to also urgent, both urgent
+			sm->SetNextState("UrgentHealing");
 		}
+		sm->m_currState->Exit();
+		sm->m_currState = sm->m_nextState;
+		sm->m_currState->Enter();
 		return true;
 	}
 	else if (dynamic_cast<MessageAskForAtk*>(message) != nullptr)
 	{
 		MessageAskForAtk* msg = static_cast<MessageAskForAtk*>(message);
+		if(msg->go->lastAttacker == NULL)
+			return false; //no attackers to help attack
 		nearest = msg->go->lastAttacker;
 		urgent = true; //attackers always urgent when called for help
 		return true;

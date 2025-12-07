@@ -25,6 +25,11 @@ void StateSupportHealthy::Enter()
 
 void StateSupportHealthy::Update(double dt)
 {
+	if (m_go->health <= 0)
+	{
+		m_go->sm->SetNextState("Death");
+		return;
+	}
 	if (m_go->alliesActiveCount == 0)
 	{
 		m_go->sm->SetNextState("Hiding");
@@ -67,8 +72,8 @@ void StateSupportHealthy::Update(double dt)
 	}
 	if (m_go->nearest != NULL) {
 		if ((m_go->nearest->pos - m_go->pos).Length() < m_gridSize * 5) {
-			m_go->nearest->supportSpeed = 5;
-			m_go->nearest->supportActionSpeed = 0.5;
+			m_go->nearest->supportSpeed = 0.8;
+			m_go->nearest->supportActionSpeed = 0.15;
 			m_go->moving = false;
 			/*std::cout << "followed something to close" << std::endl;*/
 		}
@@ -97,14 +102,28 @@ void StateSupportDeath::Enter()
 {
 	if (m_go->nearest != NULL) {
 		m_go->nearest->supportSpeed = 0;
+		m_go->nearest->supportActionSpeed = 0;
 	}
-	m_go->type = GameObject::GO_NONE;
+	m_go->moveSpeed = 0;
+	m_go->actionSpeed = 0.3;
+	m_go->target = m_go->pos;
+	m_go->nearest = NULL;
 	m_go->active = false;
+	m_go->type = GameObject::GO_NONE;
 }
 
 void StateSupportDeath::Update(double dt)
 {
-
+	if (m_go->nearest != NULL) {
+		m_go->nearest->supportSpeed = 0;
+		m_go->nearest->supportActionSpeed = 0;
+	}
+	m_go->moveSpeed = 0;
+	m_go->actionSpeed = 0.3;
+	m_go->target = m_go->pos;
+	m_go->nearest = NULL;
+	m_go->active = false;
+	m_go->type = GameObject::GO_NONE;
 }
 
 void StateSupportDeath::Exit()
@@ -125,13 +144,17 @@ StateSupportHealing::~StateSupportHealing()
 
 void StateSupportHealing::Enter()
 {
-	m_go->moving = true;
 	m_go->moveSpeed = 1;
 	m_go->actionSpeed = 0.2;
 }
 
 void StateSupportHealing::Update(double dt)
 {
+	if (m_go->health <= 0)
+	{
+		m_go->sm->SetNextState("Death");
+		return;
+	}
 	if (m_go->alliesActiveCount == 0)
 	{
 		m_go->sm->SetNextState("Hiding");
@@ -148,6 +171,12 @@ void StateSupportHealing::Update(double dt)
 		return;
 	}
 	if (m_go->nearest->sm->GetCurrentState() == "Healthy") {
+		m_go->sm->SetNextState("Healthy");
+		m_go->healTarget = NULL;
+		return;
+	}
+	if (m_go->healTarget == NULL || m_go->healTarget->active == false)
+	{
 		m_go->sm->SetNextState("Healthy");
 		m_go->healTarget = NULL;
 		return;
@@ -179,7 +208,7 @@ void StateSupportHealing::Update(double dt)
 			m_go->moving = false;
 			if (m_go->EnergyReduce(m_go->actionSpeed))
 			{
-				m_go->nearest->health += 2;
+				m_go->nearest->health += 4;
 			}
 		}
 		else {
@@ -205,13 +234,17 @@ StateSupportUrgentHealing::~StateSupportUrgentHealing()
 
 void StateSupportUrgentHealing::Enter()
 {
-	m_go->moving = true;
 	m_go->moveSpeed = 2;
 	m_go->actionSpeed = 0.3;
 }
 
 void StateSupportUrgentHealing::Update(double dt)
 {
+	if (m_go->health <= 0)
+	{
+		m_go->sm->SetNextState("Death");
+		return;
+	}
 	if (m_go->alliesActiveCount == 0)
 	{
 		m_go->sm->SetNextState("Hiding");
@@ -229,7 +262,12 @@ void StateSupportUrgentHealing::Update(double dt)
 		m_go->sm->SetNextState("Healing");
 		return;
 	}
-
+	if (m_go->healTarget == NULL || m_go->healTarget->active == false)
+	{
+		m_go->sm->SetNextState("Healthy");
+		m_go->healTarget = NULL;
+		return;
+	}
 	m_go->moveLeft = m_go->moveRight = m_go->moveUp = m_go->moveDown = false;
 	if (m_go->nearest)
 	{
@@ -257,7 +295,7 @@ void StateSupportUrgentHealing::Update(double dt)
 			m_go->moving = false;
 			if (m_go->EnergyReduce(m_go->actionSpeed))
 			{
-				m_go->nearest->health += 2;
+				m_go->nearest->health += 8;
 			}
 		}
 		else {
@@ -283,7 +321,7 @@ StateSupportHurt::~StateSupportHurt()
 
 void StateSupportHurt::Enter()
 {
-	m_go->moveSpeed = 0.6;
+	m_go->moveSpeed = 0.8;
 	m_go->actionSpeed = 0.2;
 	m_go->target = m_go->pos;
 	m_go->nearest = NULL;
@@ -291,6 +329,11 @@ void StateSupportHurt::Enter()
 
 void StateSupportHurt::Update(double dt)
 {
+	if (m_go->health <= 0)
+	{
+		m_go->sm->SetNextState("Death");
+		return;
+	}
 	if (m_go->alliesActiveCount == 0)
 	{
 		m_go->sm->SetNextState("Hiding");
@@ -364,6 +407,11 @@ void StateSupportHiding::Enter()
 
 void StateSupportHiding::Update(double dt)
 {
+	if (m_go->health <= 0)
+	{
+		m_go->sm->SetNextState("Death");
+		return;
+	}
 	if (m_go->alliesActiveCount > 0)
 	{
 		m_go->sm->SetNextState("Healthy");
@@ -396,7 +444,7 @@ void StateSupportHiding::Update(double dt)
 			m_go->moving = false;
 			if (m_go->EnergyReduce(m_go->actionSpeed))
 			{
-				m_go->health += 0;
+				m_go->health += 5;
 				m_go->hiding = true;
 			}
 		}

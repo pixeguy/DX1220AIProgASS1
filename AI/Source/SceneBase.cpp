@@ -147,7 +147,7 @@ void SceneBase::Init()
 	meshList[GEO_SPAWNERRED]->textureID = LoadTGA("Image//RedSpawnerReversed.tga");
 	{
 		meshList[GEO_ATTACKER] = MeshBuilder::GenerateQuad("attacker", Color(1, 1, 1));
-		meshList[GEO_ATTACKER]->textureID = LoadTGA("Image//toofull.tga");
+		meshList[GEO_ATTACKER]->textureID = LoadTGA("Image//Attacker1Healthy.tga");
 		meshList[GEO_RANGED] = MeshBuilder::GenerateQuad("ranged", Color(1, 1, 1));
 		meshList[GEO_RANGED]->textureID = LoadTGA("Image//RangedFaceRight.tga");
 		meshList[GEO_RANGEDRIGHT] = MeshBuilder::GenerateQuad("ranged", Color(1, 1, 1));
@@ -162,6 +162,171 @@ void SceneBase::Init()
 		meshList[GEO_MORTAR]->textureID = LoadTGA("Image//hungry.tga");
 		meshList[GEO_MORBOMB] = MeshBuilder::GenerateQuad("support", Color(0, 1, 1));
 		meshList[GEO_MORBOMB]->textureID = LoadTGA("Image//hungry.tga");
+	}
+	{
+		// Attacker 1
+		meshList[GEO_ATTACKER1_FLEEING] = MeshBuilder::GenerateQuad("Attacker1Fleeing", Color(1, 1, 1));
+		meshList[GEO_ATTACKER1_FLEEING]->textureID = LoadTGA("Image//Attacker1Fleeing.tga");
+
+		meshList[GEO_ATTACKER1_STAY_STRONG] = MeshBuilder::GenerateQuad("Attacker1StayStrong", Color(1, 1, 1));
+		meshList[GEO_ATTACKER1_STAY_STRONG]->textureID = LoadTGA("Image//Attacker1StayStrong.tga");
+
+		meshList[GEO_ATTACKER1_NEAR_DEATH] = MeshBuilder::GenerateQuad("Attacker1NearDeath", Color(1, 1, 1));
+		meshList[GEO_ATTACKER1_NEAR_DEATH]->textureID = LoadTGA("Image//Attacker1NearDeath.tga");
+
+		meshList[GEO_ATTACKER1_HEALTHY] = MeshBuilder::GenerateQuad("Attacker1Healthy", Color(1, 1, 1));
+		meshList[GEO_ATTACKER1_HEALTHY]->textureID = LoadTGA("Image//Attacker1Healthy.tga");
+
+		meshList[GEO_ATTACKER1_HELPING] = MeshBuilder::GenerateQuad("Attacker1Helping", Color(1, 1, 1));
+		meshList[GEO_ATTACKER1_HELPING]->textureID = LoadTGA("Image//Attacker1Helping.tga");
+
+		// Attacker 2
+		meshList[GEO_ATTACKER2_HEALTHY] = MeshBuilder::GenerateQuad("Attacker2Healthy", Color(1, 1, 1));
+		meshList[GEO_ATTACKER2_HEALTHY]->textureID = LoadTGA("Image//Attacker2Healthy.tga");
+
+		meshList[GEO_ATTACKER2_FLEEING] = MeshBuilder::GenerateQuad("Attacker2Fleeing", Color(1, 1, 1));
+		meshList[GEO_ATTACKER2_FLEEING]->textureID = LoadTGA("Image//Attacker2Fleeing.tga");
+
+		meshList[GEO_ATTACKER2_STAY_STRONG] = MeshBuilder::GenerateQuad("Attacker2StayStrong", Color(1, 1, 1));
+		meshList[GEO_ATTACKER2_STAY_STRONG]->textureID = LoadTGA("Image//Attacker2StayStrong.tga");
+
+		meshList[GEO_ATTACKER2_HELPING] = MeshBuilder::GenerateQuad("Attacker2Helping", Color(1, 1, 1));
+		meshList[GEO_ATTACKER2_HELPING]->textureID = LoadTGA("Image//Attacker2Helping.tga");
+
+		meshList[GEO_ATTACKER2_NEAR_DEATH] = MeshBuilder::GenerateQuad("Attacker2NearDeath", Color(1, 1, 1));
+		meshList[GEO_ATTACKER2_NEAR_DEATH]->textureID = LoadTGA("Image//Attacker2NearDeath.tga");
+
+
+		// Range 1
+		meshList[GEO_RANGE1_NEAR_DEATH] = MeshBuilder::GenerateQuad("Range1NearDeath", Color(1, 1, 1));
+		meshList[GEO_RANGE1_NEAR_DEATH]->textureID = LoadTGA("Image//Range1NearDeath.tga");
+
+		meshList[GEO_RANGE1_HURT] = MeshBuilder::GenerateQuad("Range1Hurt", Color(1, 1, 1));
+		meshList[GEO_RANGE1_HURT]->textureID = LoadTGA("Image//Range1Hurt.tga");
+
+		meshList[GEO_RANGE1_PANIC] = MeshBuilder::GenerateQuad("Range1Panic", Color(1, 1, 1));
+		meshList[GEO_RANGE1_PANIC]->textureID = LoadTGA("Image//Range1Panic.tga");
+
+		meshList[GEO_RANGE1_HEALTHY] = MeshBuilder::GenerateQuad("Range1Healthy", Color(1, 1, 1));
+		meshList[GEO_RANGE1_HEALTHY]->textureID = LoadTGA("Image//Range1Healthy.tga");
+
+		// Range 2
+		meshList[GEO_RANGE2_NEAR_DEATH] = MeshBuilder::GenerateQuad("Range2NearDeath", Color(1, 1, 1));
+		meshList[GEO_RANGE2_NEAR_DEATH]->textureID = LoadTGA("Image//Range2NearDeath.tga");
+
+		meshList[GEO_RANGE2_PANIC] = MeshBuilder::GenerateQuad("Range2Panic", Color(1, 1, 1));
+		meshList[GEO_RANGE2_PANIC]->textureID = LoadTGA("Image//Range2Panic.tga");
+
+		meshList[GEO_RANGE2_HEALTHY] = MeshBuilder::GenerateQuad("Range2Healthy", Color(1, 1, 1));
+		meshList[GEO_RANGE2_HEALTHY]->textureID = LoadTGA("Image//Range2Healthy.tga");
+
+		meshList[GEO_RANGE2_HURT] = MeshBuilder::GenerateQuad("Range2Hurt", Color(1, 1, 1));
+		meshList[GEO_RANGE2_HURT]->textureID = LoadTGA("Image//Range2Hurt.tga");
+
+
+		// Support 1
+		meshList[GEO_SUPPORT1_HEALING] = MeshBuilder::GenerateQuad("Support1Healing", Color(1, 1, 1));
+		meshList[GEO_SUPPORT1_HEALING]->textureID = LoadTGA("Image//Support1Healing.tga");
+
+		meshList[GEO_SUPPORT1_HIDING] = MeshBuilder::GenerateQuad("Support1Hiding", Color(1, 1, 1));
+		meshList[GEO_SUPPORT1_HIDING]->textureID = LoadTGA("Image//Support1Hiding.tga");
+
+		meshList[GEO_SUPPORT1_HEALTHY] = MeshBuilder::GenerateQuad("Support1Healthy", Color(1, 1, 1));
+		meshList[GEO_SUPPORT1_HEALTHY]->textureID = LoadTGA("Image//Support1Healthy.tga");
+
+		meshList[GEO_SUPPORT1_HURT] = MeshBuilder::GenerateQuad("Support1Hurt", Color(1, 1, 1));
+		meshList[GEO_SUPPORT1_HURT]->textureID = LoadTGA("Image//Support1Hurt.tga");
+
+		meshList[GEO_SUPPORT1_URGENT_HEALING] = MeshBuilder::GenerateQuad("Support1UrgentHealing", Color(1, 1, 1));
+		meshList[GEO_SUPPORT1_URGENT_HEALING]->textureID = LoadTGA("Image//Support1UrgentHealing.tga");
+
+		// Support 2
+		meshList[GEO_SUPPORT2_HIDING] = MeshBuilder::GenerateQuad("Support2Hiding", Color(1, 1, 1));
+		meshList[GEO_SUPPORT2_HIDING]->textureID = LoadTGA("Image//Support2Hiding.tga");
+
+		meshList[GEO_SUPPORT2_URGENT_HEALING] = MeshBuilder::GenerateQuad("Support2UrgentHealing", Color(1, 1, 1));
+		meshList[GEO_SUPPORT2_URGENT_HEALING]->textureID = LoadTGA("Image//Support2UrgentHealing.tga");
+
+		meshList[GEO_SUPPORT2_HEALING] = MeshBuilder::GenerateQuad("Support2Healing", Color(1, 1, 1));
+		meshList[GEO_SUPPORT2_HEALING]->textureID = LoadTGA("Image//Support2Healing.tga");
+
+		meshList[GEO_SUPPORT2_HURT] = MeshBuilder::GenerateQuad("Support2Hurt", Color(1, 1, 1));
+		meshList[GEO_SUPPORT2_HURT]->textureID = LoadTGA("Image//Support2Hurt.tga");
+
+		meshList[GEO_SUPPORT2_HEALTHY] = MeshBuilder::GenerateQuad("Support2Healthy", Color(1, 1, 1));
+		meshList[GEO_SUPPORT2_HEALTHY]->textureID = LoadTGA("Image//Support2Healthy.tga");
+
+
+		// Mechanic 1
+		meshList[GEO_MECHANIC1_GOLD] = MeshBuilder::GenerateQuad("Mechanic1Gold", Color(1, 1, 1));
+		meshList[GEO_MECHANIC1_GOLD]->textureID = LoadTGA("Image//Mechanic1Gold.tga");
+
+		meshList[GEO_MECHANIC1_HIDING] = MeshBuilder::GenerateQuad("Mechanic1Hiding", Color(1, 1, 1));
+		meshList[GEO_MECHANIC1_HIDING]->textureID = LoadTGA("Image//Mechanic1Hiding.tga");
+
+		meshList[GEO_MECHANIC1_HEALTHY] = MeshBuilder::GenerateQuad("Mechanic1Healthy", Color(1, 1, 1));
+		meshList[GEO_MECHANIC1_HEALTHY]->textureID = LoadTGA("Image//Mechanic1Healthy.tga");
+
+		meshList[GEO_MECHANIC1_HURT] = MeshBuilder::GenerateQuad("Mechanic1Hurt", Color(1, 1, 1));
+		meshList[GEO_MECHANIC1_HURT]->textureID = LoadTGA("Image//Mechanic1Hurt.tga");
+
+		meshList[GEO_MECHANIC1_BUILDING] = MeshBuilder::GenerateQuad("Mechanic1Building", Color(1, 1, 1));
+		meshList[GEO_MECHANIC1_BUILDING]->textureID = LoadTGA("Image//Mechanic1Building.tga");
+
+		// Mechanic 2
+		meshList[GEO_MECHANIC2_HEALTHY] = MeshBuilder::GenerateQuad("Mechanic2Healthy", Color(1, 1, 1));
+		meshList[GEO_MECHANIC2_HEALTHY]->textureID = LoadTGA("Image//Mechanic2Healthy.tga");
+
+		meshList[GEO_MECHANIC2_GOLD] = MeshBuilder::GenerateQuad("Mechanic2Gold", Color(1, 1, 1));
+		meshList[GEO_MECHANIC2_GOLD]->textureID = LoadTGA("Image//Mechanic2Gold.tga");
+
+		meshList[GEO_MECHANIC2_BUILDING] = MeshBuilder::GenerateQuad("Mechanic2Building", Color(1, 1, 1));
+		meshList[GEO_MECHANIC2_BUILDING]->textureID = LoadTGA("Image//Mechanic2Building.tga");
+
+		meshList[GEO_MECHANIC2_HURT] = MeshBuilder::GenerateQuad("Mechanic2Hurt", Color(1, 1, 1));
+		meshList[GEO_MECHANIC2_HURT]->textureID = LoadTGA("Image//Mechanic2Hurt.tga");
+
+		meshList[GEO_MECHANIC2_HIDING] = MeshBuilder::GenerateQuad("Mechanic2Hiding", Color(1, 1, 1));
+		meshList[GEO_MECHANIC2_HIDING]->textureID = LoadTGA("Image//Mechanic2Hiding.tga");
+
+
+		// Tanks
+		meshList[GEO_TANK1_PANIC] = MeshBuilder::GenerateQuad("Tank1Panic", Color(1, 1, 1));
+		meshList[GEO_TANK1_PANIC]->textureID = LoadTGA("Image//Tank1Panic.tga");
+
+		meshList[GEO_TANK1_HEALTHY] = MeshBuilder::GenerateQuad("Tank1Healthy", Color(1, 1, 1));
+		meshList[GEO_TANK1_HEALTHY]->textureID = LoadTGA("Image//Tank1Healthy.tga");
+
+		meshList[GEO_TANK1_BOMB] = MeshBuilder::GenerateQuad("Tank1Bomb", Color(1, 1, 1));
+		meshList[GEO_TANK1_BOMB]->textureID = LoadTGA("Image//Tank1Bomb.tga");
+
+		meshList[GEO_TANK2_BOMB] = MeshBuilder::GenerateQuad("Tank2Bomb", Color(1, 1, 1));
+		meshList[GEO_TANK2_BOMB]->textureID = LoadTGA("Image//Tank2Bomb.tga");
+
+		meshList[GEO_TANK2_HEALTHY] = MeshBuilder::GenerateQuad("Tank2Healthy", Color(1, 1, 1));
+		meshList[GEO_TANK2_HEALTHY]->textureID = LoadTGA("Image//Tank2Healthy.tga");
+
+		meshList[GEO_TANK2_PANIC] = MeshBuilder::GenerateQuad("Tank2Panic", Color(1, 1, 1));
+		meshList[GEO_TANK2_PANIC]->textureID = LoadTGA("Image//Tank2Panic.tga");
+
+
+		// Mortars
+		meshList[GEO_MORTAR1_HEALTHY] = MeshBuilder::GenerateQuad("Mortar1Healthy", Color(1, 1, 1));
+		meshList[GEO_MORTAR1_HEALTHY]->textureID = LoadTGA("Image//Mortar1Healthy.tga");
+
+		meshList[GEO_MORTAR1_PANIC] = MeshBuilder::GenerateQuad("Mortar1Panic", Color(1, 1, 1));
+		meshList[GEO_MORTAR1_PANIC]->textureID = LoadTGA("Image//Mortar1Panic.tga");
+
+		meshList[GEO_MORTAR2_HEALTHY] = MeshBuilder::GenerateQuad("Mortar2Healthy", Color(1, 1, 1));
+		meshList[GEO_MORTAR2_HEALTHY]->textureID = LoadTGA("Image//Mortar2Healthy.tga");
+
+		meshList[GEO_MORTAR2_PANIC] = MeshBuilder::GenerateQuad("Mortar2Panic", Color(1, 1, 1));
+		meshList[GEO_MORTAR2_PANIC]->textureID = LoadTGA("Image//Mortar2Panic.tga");
+
+
+		// Golden Orb
+		meshList[GEO_GOLDENORB] = MeshBuilder::GenerateQuad("GoldenOrb", Color(1, 1, 1));
+		meshList[GEO_GOLDENORB]->textureID = LoadTGA("Image//GoldenOrb.tga");
 	}
 	meshList[GEO_TEXT]->material.kAmbient.Set(1, 0, 0);
 

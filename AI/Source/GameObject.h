@@ -35,6 +35,10 @@ struct GameObject : public ObjectBase
 		GO_MORTAR,
 		GO_PROJECTILE,
 		GO_MORBOMB,
+		GO_ROCKETS,
+		GO_BIGMORBOMB,
+		GO_SPAWNMORTARAREA,
+		GO_GOLDENORB,
 		GO_TOTAL, //must be last
 	};
 	enum STATE
@@ -87,12 +91,16 @@ struct GameObject : public ObjectBase
 	GameObject* lastAttacker = NULL;
 	GameObject* external = NULL; //for calling others
 	GameObject* external2 = NULL; //for archer calling more others
+ 
 
 	int specID; //remove later
 
+	GameObject* specialTarget = NULL;
 
 	int choice = 0;
 
+	//for tank only
+	bool panicking = false;
 	//for spawner only
 	int metalParts;
 	int woodenLogs;
@@ -106,6 +114,9 @@ struct GameObject : public ObjectBase
 
 	//for bullets
 	GameObject* owner;
+
+	//for rockets
+	std::vector<GameObject*> hits;
 
 	//for mortar bullets
 	Vector3 startPos;

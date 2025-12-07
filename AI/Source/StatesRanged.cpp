@@ -59,9 +59,14 @@ void StateRangedHealthy::Update(double dt)
 				//move away
 				//go->ignoreCurMove = true;
 				go->moving = true;
-				int redOrBlue = (go->side== GameObject::SIDE_BLUE) ? -1 : 1;
+				int redOrBlue = (go->side == GameObject::SIDE_BLUE) ? 1 : -1;
 				go->normalTarget = go->pos + Vector3(redOrBlue * 3 * m_gridSize, 0, 0);
 				go->target = go->pos + Vector3(redOrBlue * m_gridSize, 0, 0);
+				if (go->normalTarget.x < 0 || go->normalTarget.x > m_noGrid * m_gridSize || go->normalTarget.y < 0 || go->normalTarget.y > m_noGrid * m_gridSize)
+				{
+					go->normalTarget = go->pos;
+					go->target = go->pos;
+				}
 
 			}
 			else if ((go->nearest->pos - go->pos).Length() < m_gridSize * 5)
@@ -111,6 +116,7 @@ void StateRangedHurt::Update(double dt)
 	if (go->health > 90)
 	{
 		go->sm->SetNextState("Healthy");
+		return;
 	}
 	go->moveLeft = go->moveRight = go->moveUp = go->moveDown = false;
 	if (go->nearest)
@@ -139,9 +145,14 @@ void StateRangedHurt::Update(double dt)
 			if (go->countDown < m_gridSize * 3) //if target too close
 			{
 				go->moving = true;
-				int redOrBlue = (go->side== GameObject::SIDE_BLUE) ? -1 : 1;
+				int redOrBlue = (go->side == GameObject::SIDE_BLUE) ? 1 : -1;
 				go->normalTarget = go->pos + Vector3(redOrBlue * 3 * m_gridSize, 0, 0);
 				go->target = go->pos + Vector3(redOrBlue * m_gridSize, 0, 0);
+				if (go->normalTarget.x < 0 || go->normalTarget.x > m_noGrid * m_gridSize || go->normalTarget.y < 0 || go->normalTarget.y > m_noGrid * m_gridSize)
+				{
+					go->normalTarget = go->pos;
+					go->target = go->pos;
+				}
 			}
 			else if ((go->nearest->pos - go->pos).Length() < m_gridSize * 5)
 			{
@@ -192,6 +203,7 @@ void StateRangedPanic::Update(double dt)
 	if (go->health > 60)
 	{
 		go->sm->SetNextState("Hurt");
+		return;
 	}
 	go->moveLeft = go->moveRight = go->moveUp = go->moveDown = false;
 	if (go->nearest)
@@ -222,9 +234,14 @@ void StateRangedPanic::Update(double dt)
 				//std::cout << "running away!" << std::endl;
 				//move away
 				go->moving = true;
-				int redOrBlue = (go->side== GameObject::SIDE_BLUE) ? -1 : 1;
+				int redOrBlue = (go->side == GameObject::SIDE_BLUE) ? 1 : -1;
 				go->normalTarget = go->pos + Vector3(redOrBlue * 3 * m_gridSize, 0, 0);
 				go->target = go->pos + Vector3(redOrBlue * m_gridSize, 0, 0);
+				if (go->normalTarget.x < 0 || go->normalTarget.x > m_noGrid * m_gridSize || go->normalTarget.y < 0 || go->normalTarget.y > m_noGrid * m_gridSize)
+				{
+					go->normalTarget = go->pos;
+					go->target = go->pos;
+				}
 			}
 			else if ((go->nearest->pos - go->pos).Length() < m_gridSize * 5)
 			{
@@ -271,6 +288,12 @@ void StateRangedNearDeath::Update(double dt)
 	if (go->health > 40)
 	{
 		go->sm->SetNextState("Panic");
+		return;
+	}
+	if (go->health <= 0)
+	{
+		go->sm->SetNextState("Death");
+		return;
 	}
 	go->moveLeft = go->moveRight = go->moveUp = go->moveDown = false;
 	if (go->nearest)
@@ -301,9 +324,14 @@ void StateRangedNearDeath::Update(double dt)
 				//std::cout << "running away!" << std::endl;
 				//move away
 				go->moving = true;
-				int redOrBlue = (go->side== GameObject::SIDE_BLUE) ? -1 : 1;
+				int redOrBlue = (go->side== GameObject::SIDE_BLUE) ? 1 : -1;
 				go->normalTarget = go->pos + Vector3(redOrBlue * 3 * m_gridSize, 0, 0);
 				go->target = go->pos + Vector3(redOrBlue * m_gridSize, 0, 0);
+				if (go->normalTarget.x < 0 || go->normalTarget.x > m_noGrid * m_gridSize || go->normalTarget.y < 0 || go->normalTarget.y > m_noGrid * m_gridSize)
+				{
+					go->normalTarget = go->pos;
+					go->target = go->pos;
+				}
 			}
 			else if ((go->nearest->pos - go->pos).Length() < m_gridSize * 5)
 			{
@@ -321,6 +349,38 @@ void StateRangedNearDeath::Update(double dt)
 }
 
 void StateRangedNearDeath::Exit()
+{
+}
+
+#pragma endregion
+
+#pragma region death state
+StateRangedDeath::StateRangedDeath(const std::string& stateID, GameObject* go)
+	: State(stateID),
+	go(go)
+{
+}
+
+StateRangedDeath::~StateRangedDeath()
+{
+}
+
+void StateRangedDeath::Enter()
+{
+	go->moveSpeed = 0;
+	go->actionSpeed = 0.3;
+	go->target = go->pos;
+	go->nearest = NULL;
+	go->active = false;
+	go->type = GameObject::GO_NONE;
+}
+
+void StateRangedDeath::Update(double dt)
+{
+
+}
+
+void StateRangedDeath::Exit()
 {
 }
 

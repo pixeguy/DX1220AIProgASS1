@@ -52,4 +52,16 @@ public:
 	virtual void Exit();
 };
 
+class StateRangedDeath : public State
+{
+	GameObject* go;
+public:
+	StateRangedDeath(const std::string& stateID, GameObject* go = NULL);
+	virtual ~StateRangedDeath();
+
+	virtual void Enter();
+	virtual void Update(double dt);
+	virtual void Exit();
+};
+
 #endif

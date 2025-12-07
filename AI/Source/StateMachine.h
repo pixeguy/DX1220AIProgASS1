@@ -8,9 +8,9 @@
 class StateMachine
 {
 	std::map<std::string, State*> m_stateMap;
-	State *m_currState;
-	State *m_nextState;
 public:
+	State* m_currState;
+	State* m_nextState;
 	StateMachine();
 	~StateMachine();
 	void AddState(State *newState);

@@ -21,10 +21,27 @@ void StateTankHealthy::Enter()
 	go->actionSpeed = 0.2;
 	go->target = go->pos;
 	go->nearest = NULL;
+	go->moving = true;
 }
 
 void StateTankHealthy::Update(double dt)
 {
+	if (go->health < 40)
+	{
+		go->actionSpeed = 0.29f;
+		go->panicking = true;
+	}
+	else { go->actionSpeed = 0.2f; go->panicking = false;}
+
+	if(go->health <= 0)
+	{
+		float random = Math::RandFloatMinMax(0.f, 1.f);
+		if( random < 0.5f )
+			go->sm->SetNextState("Death");
+		else
+			go->sm->SetNextState("Suicide");
+			return;
+	}
 	go->moveLeft = go->moveRight = go->moveUp = go->moveDown = false;
 	if (go->nearest)
 	{
@@ -53,8 +70,11 @@ void StateTankHealthy::Update(double dt)
 			float finalActionSpeed = (go->actionSpeed * 1) + go->supportActionSpeed;
 			if (go->EnergyReduce(finalActionSpeed))
 			{
-				//PostOffice::GetInstance()->Send("Scene", new MessageSpawnFood(m_go, GameObject::GO_FISHFOOD, 2, range));
-				PostOffice::GetInstance()->Send("Scene", new MessageSpawnProj(go));
+				if (go->external2->type != GameObject::GO_MAINBASE && go->external2->type != GameObject::GO_SPAWNER) {
+					PostOffice::GetInstance()->Send("Scene", new MessageSpawnProjTank(go, go->external2, false));
+				}
+				else
+					PostOffice::GetInstance()->Send("Scene", new MessageSpawnProjTank(go, go->external2, true));
 			}
 		}
 	}
@@ -82,10 +102,26 @@ void StateTankSoloHealthy::Enter()
 	go->actionSpeed = 0.2;
 	go->target = go->pos;
 	go->nearest = NULL;
+	go->moving = true;
 }
 
 void StateTankSoloHealthy::Update(double dt)
 {
+	if (go->health < 40)
+	{
+		go->actionSpeed = 0.29f;
+		go->panicking = true;
+	}
+	else { go->actionSpeed = 0.2f; go->panicking = false; }
+	if (go->health <= 0)
+	{
+		float random = Math::RandFloatMinMax(0.f, 1.f);
+		if( random < 0.5f )
+			go->sm->SetNextState("Death");
+		else
+			go->sm->SetNextState("Suicide");
+			return;
+	}
 	go->moveLeft = go->moveRight = go->moveUp = go->moveDown = false;
 	if (go->nearest)
 	{
@@ -115,8 +151,11 @@ void StateTankSoloHealthy::Update(double dt)
 			float finalActionSpeed = (go->actionSpeed * 1) + go->supportActionSpeed;
 			if (go->EnergyReduce(finalActionSpeed))
 			{
-				//PostOffice::GetInstance()->Send("Scene", new MessageSpawnFood(m_go, GameObject::GO_FISHFOOD, 2, range));
-				PostOffice::GetInstance()->Send("Scene", new MessageSpawnProj(go));
+				if (go->nearest->type != GameObject::GO_MAINBASE && go->nearest->type != GameObject::GO_SPAWNER) {
+					PostOffice::GetInstance()->Send("Scene", new MessageSpawnProjTank(go, go->nearest, false));
+				}
+				else
+					PostOffice::GetInstance()->Send("Scene", new MessageSpawnProjTank(go, go->nearest, true));
 			}
 		}
 		else {
@@ -126,6 +165,100 @@ void StateTankSoloHealthy::Update(double dt)
 }
 
 void StateTankSoloHealthy::Exit()
+{
+}
+#pragma endregion
+
+#pragma region suicide state
+StateTankSuicide::StateTankSuicide(const std::string& stateID, GameObject* go)
+	: State(stateID),
+	go(go)
+{
+}
+
+StateTankSuicide::~StateTankSuicide()
+{
+}
+
+void StateTankSuicide::Enter()
+{
+	go->moveSpeed = 1.5;
+	go->actionSpeed = 0.2;
+	go->target = go->pos;
+	go->nearest = NULL;
+	go->countDown = 2;
+	go->moving = true;
+}
+
+void StateTankSuicide::Update(double dt)
+{
+	go->moveLeft = go->moveRight = go->moveUp = go->moveDown = false;
+	if (go->nearest)
+	{
+		float diffX = go->nearest->pos.x - go->pos.x;
+		float diffY = go->nearest->pos.y - go->pos.y;
+		if (fabs(diffX) > fabs(diffY))
+		{
+			if (diffX > 0)
+				go->moveRight = true;
+			else
+				go->moveLeft = true;
+		}
+		else
+		{
+			if (diffY > 0)
+				go->moveUp = true;
+			else
+				go->moveDown = true;
+		}
+	}
+
+	if (go->countDown > 0)
+	{
+		go->countDown -= dt;
+	}
+	else {
+		go->moveSpeed = 0;
+		go->actionSpeed = 0.3;
+		go->target = go->pos;
+		go->nearest = NULL;
+		go->active = false;
+		go->type = GameObject::GO_NONE;
+	}
+}
+
+void StateTankSuicide::Exit()
+{
+}
+#pragma endregion
+
+#pragma region death state
+StateTankDeath::StateTankDeath(const std::string& stateID, GameObject* go)
+	: State(stateID),
+	go(go)
+{
+}
+
+StateTankDeath::~StateTankDeath()
+{
+}
+
+void StateTankDeath::Enter()
+{
+	PostOffice::GetInstance()->Send("Scene", new MessageSpawnAttacker(go));
+	go->moveSpeed = 0;
+	go->actionSpeed = 0.3;
+	go->target = go->pos;
+	go->nearest = NULL;
+	go->active = false;
+	go->type = GameObject::GO_NONE;
+}
+
+void StateTankDeath::Update(double dt)
+{
+}
+
+void StateTankDeath::Exit()
 {
 }
 #pragma endregion

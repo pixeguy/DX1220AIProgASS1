@@ -57,6 +57,9 @@ void SceneMovement_Week03::Init()
 	InitSpawner(GameObject::SIDE_RED, Vector3((m_worldWidth / 4), m_worldHeight / 4, 0.f));
 	//InitSpawner(GameObject::SIDE_RED, Vector3((m_worldWidth / 4)  + 10, m_worldHeight / 4, 0.f));
 	InitSpawner(GameObject::SIDE_RED, Vector3((m_worldWidth / 4), (m_worldHeight / 4) * 3, 0.f));
+	InitMortarSpawner(GameObject::SIDE_BLUE, Vector3((m_worldWidth / 2) + m_gridSize * 3, (m_worldHeight / 2), 0.f));
+	InitMortarSpawner(GameObject::SIDE_RED, Vector3((m_worldWidth / 2) - m_gridSize * 3, (m_worldHeight / 2), 0.f));
+	//InitGoldenOrb(Vector3(m_worldWidth / 2, m_worldHeight / 2, 0.f));
 
 	PostOffice::GetInstance()->Register("Scene", this);
 
@@ -101,7 +104,19 @@ GameObject* SceneMovement_Week03::FetchGO(GameObject::GAMEOBJECT_TYPE type)
 			go->sm->AddState(new StateNone("None", "Healthy", go));
 			go->sm->AddState(new StateBuildingHealthy("Healthy", go));
 		}
+		else if (type == GameObject::GO_GOLDENORB)
+		{
+			go->sm = new StateMachine();
+			go->sm->AddState(new StateNone("None", "Healthy", go));
+			go->sm->AddState(new StateBuildingHealthy("Healthy", go));
+		}
 		else if (type == GameObject::GO_SPAWNER)
+		{
+			go->sm = new StateMachine();
+			go->sm->AddState(new StateNone("None", "Healthy", go));
+			go->sm->AddState(new StateBuildingHealthy("Healthy", go));
+		}
+		else if (type == GameObject::GO_SPAWNMORTARAREA)
 		{
 			go->sm = new StateMachine();
 			go->sm->AddState(new StateNone("None", "Healthy", go));
@@ -112,6 +127,12 @@ GameObject* SceneMovement_Week03::FetchGO(GameObject::GAMEOBJECT_TYPE type)
 			go->sm = new StateMachine();
 			go->sm->AddState(new StateNone("None", "Healthy", go));
 			go->sm->AddState(new StateMechanicHealthy("Healthy", go));
+			go->sm->AddState(new StateMechanicHealing("Healing", go));
+			go->sm->AddState(new StateMechanicBuilding("Building", go));
+			go->sm->AddState(new StateMechanicHurt("Hurt", go));
+			go->sm->AddState(new StateMechanicHiding("Hiding", go));
+			go->sm->AddState(new StateMechanicGoldenChase("GoldenChase", go));
+			go->sm->AddState(new StateMechanicDeath("Death", go));
 		}
 		else if (type == GameObject::GO_RANGED)
 		{
@@ -121,7 +142,7 @@ GameObject* SceneMovement_Week03::FetchGO(GameObject::GAMEOBJECT_TYPE type)
 			go->sm->AddState(new StateRangedHurt("Hurt", go));
 			go->sm->AddState(new StateRangedPanic("Panic", go));
 			go->sm->AddState(new StateRangedNearDeath("NearDeath", go));
-			//go->sm->AddState(new StateRangedPanic("Death", go));
+			go->sm->AddState(new StateRangedDeath("Death", go));
 		}	
 		else if (type == GameObject::GO_ATTACKER)
 		{
@@ -150,12 +171,16 @@ GameObject* SceneMovement_Week03::FetchGO(GameObject::GAMEOBJECT_TYPE type)
 			go->sm->AddState(new StateNone("None", "SoloHealthy", go));
 			go->sm->AddState(new StateTankHealthy("Healthy", go));
 			go->sm->AddState(new StateTankSoloHealthy("SoloHealthy", go));
+			go->sm->AddState(new StateTankSuicide("Suicide", go));
+			go->sm->AddState(new StateTankDeath("Death", go));
 		}
 		else if (type == GameObject::GO_MORTAR)
 		{
 			go->sm = new StateMachine();
 			go->sm->AddState(new StateNone("None", "Healthy", go));
 			go->sm->AddState(new StateMortarHealthy("Healthy", go));
+			go->sm->AddState(new StateMortarPanic("Panic", go));
+			go->sm->AddState(new StateMortarDeath("Death", go));
 		}
 	}
 	return FetchGO(type);
@@ -190,6 +215,23 @@ GameObject* SceneMovement_Week03::InitMainBase(GameObject::SIDE side, Vector3 po
 	mainBase->side = side;
 	mainBase->target = mainBase->pos;
 	mainBase->sm->SetNextState("Healthy");
+	mainBase->maxEnergy = 100;
+	mainBase->maxHealth = 100;
+	mainBase->health = 90;
+	mainBase->moving = false;
+	return mainBase;
+}
+
+GameObject* SceneMovement_Week03::InitGoldenOrb(Vector3 pos)
+{
+	GameObject* mainBase = FetchGO(GameObject::GO_GOLDENORB);
+	mainBase->pos = pos;
+	mainBase->scale = Vector3(m_gridSize * 2, m_gridSize * 2, m_gridSize * 2);
+	mainBase->target = mainBase->pos;
+	mainBase->sm->SetNextState("Healthy");
+	mainBase->maxEnergy = 100;
+	mainBase->maxHealth = 100;
+	mainBase->health = 90;
 	mainBase->moving = false;
 	return mainBase;
 }
@@ -199,6 +241,25 @@ GameObject* SceneMovement_Week03::InitSpawner(GameObject::SIDE side, Vector3 pos
 	GameObject* spawner = FetchGO(GameObject::GO_SPAWNER);
 	spawner->pos = pos;
 	spawner->scale = Vector3(m_gridSize * 2, m_gridSize * 2, m_gridSize);
+	spawner->side = side;
+	spawner->target = spawner->pos;
+	float random = Math::RandFloatMinMax(0.f, 25.f);
+	spawner->energy = random;
+	spawner->maxEnergy = 100;
+	spawner->maxHealth = 200;
+	spawner->health = 200;
+	spawner->sm->SetNextState("Healthy");
+	spawner->woodenLogs = spawner->metalParts = 0;
+	spawner->moving = false;
+	m_spawners.push_back(spawner);
+	return spawner;
+}
+
+GameObject* SceneMovement_Week03::InitMortarSpawner(GameObject::SIDE side, Vector3 pos)
+{
+	GameObject* spawner = FetchGO(GameObject::GO_SPAWNMORTARAREA);
+	spawner->pos = pos;
+	spawner->scale = Vector3(0,0,0);
 	spawner->side = side;
 	spawner->target = spawner->pos;
 	spawner->energy = 0;
@@ -277,6 +338,7 @@ GameObject* SceneMovement_Week03::SpawnUnit(GameObject::SIDE side, Vector3 pos, 
 	unit->maxHealth = 100;
 	unit->health = 100;
 	unit->maxEnergy = 10;
+	unit->energy = 0;
 
 	unit->scale = Vector3(m_gridSize, m_gridSize, m_gridSize);
 	unit->side = side;
@@ -312,6 +374,7 @@ GameObject* SceneMovement_Week03::SpawnMetalUnit(GameObject::SIDE side, Vector3 
 	unit->maxHealth = 100;
 	unit->health = 100;
 	unit->maxEnergy = 10;
+	unit->energy = 0;
 
 	unit->scale = Vector3(m_gridSize, m_gridSize, m_gridSize);
 	unit->side = side;
@@ -358,6 +421,344 @@ int SceneMovement_Week03::GetHealPriority(GameObject* target)
 
 	// Other allies
 	return 100;
+}
+
+void SceneMovement_Week03::SpawnGrid3x3(GameObject::SIDE side,
+	const Vector3& centerPos,
+	GameObject::GAMEOBJECT_TYPE type)
+{
+	float half = m_gridSize * 0.5f;
+
+	// Offsets for a 3×3 block: -1, 0, +1
+	for (int gx = -1; gx <= 1; gx++)
+	{
+		for (int gy = -1; gy <= 1; gy++)
+		{
+			float x = centerPos.x + gx * m_gridSize + half;
+			float y = centerPos.y + gy * m_gridSize + half;
+
+			Vector3 spawnPos(x, y, centerPos.z);
+
+			GameObject* unit = SpawnUnit(side, spawnPos, type);
+
+			// optional: activate, initialize, or give orders
+			// unit->moving = true;
+		}
+	}
+}
+
+Vector3 SceneMovement_Week03::SpawnMortarArea(GameObject::SIDE side)
+{
+	Vector3 center;
+	for(std::vector<GameObject*>::iterator it = m_goList.begin(); it != m_goList.end(); ++it)
+	{
+		GameObject* go = (GameObject*)*it;
+		if (!go->active)
+			continue;
+		if (go->type == GameObject::GO_SPAWNMORTARAREA && go->side == side)
+		{
+			center = go->pos;
+		}
+	}
+	float halfWidthTiles = 0.75;
+	float halfHeightTiles = 1.25;
+	// pick random tile offset within [-halfWidthTiles, +halfWidthTiles]
+	int gx = Math::RandIntMinMax(-halfWidthTiles, halfWidthTiles);
+	int gy = Math::RandIntMinMax(-halfHeightTiles, halfHeightTiles);
+
+	// convert tile offset → world space
+	float x = center.x + gx * m_gridSize + m_gridSize * 0.5f;
+	float y = center.y + gy * m_gridSize + m_gridSize * 0.5f;
+
+	return Vector3(x, y, center.z);
+}
+
+SceneMovement_Week03::ArmyStats SceneMovement_Week03::ComputeArmyStats(GameObject::SIDE mySide)
+{
+	ArmyStats stats;
+	
+	MessageHowManyUnit msg = MessageHowManyUnit(GameObject::GO_ATTACKER, mySide);
+	stats.countPerType[(int)GameObject::GO_ATTACKER] = HandleCount(&msg);
+	msg = MessageHowManyUnit(GameObject::GO_RANGED, mySide);
+	stats.countPerType[(int)GameObject::GO_RANGED] = HandleCount(&msg);
+	msg = MessageHowManyUnit(GameObject::GO_SUPPORT, mySide);
+	stats.countPerType[(int)GameObject::GO_SUPPORT] = HandleCount(&msg);
+	msg = MessageHowManyUnit(GameObject::GO_MECHANIC, mySide);
+	stats.countPerType[(int)GameObject::GO_MECHANIC] = HandleCount(&msg);
+	msg = MessageHowManyUnit(GameObject::GO_TANK, mySide);
+	stats.countPerType[(int)GameObject::GO_TANK] = HandleCount(&msg);
+	msg = MessageHowManyUnit(GameObject::GO_MORTAR, mySide);
+	stats.countPerType[(int)GameObject::GO_MORTAR] = HandleCount(&msg);
+
+	for (int i = 0; i < (int)GameObject::GO_TOTAL; ++i)
+	{
+		stats.total += stats.countPerType[i];
+	}
+
+	stats.side = mySide;
+
+	return stats;
+}
+
+void SceneMovement_Week03::CalcNeededUnits()
+{
+
+}
+
+int SceneMovement_Week03::MechanicNeedGet(GameObject* spawner)
+{
+	ArmyStats stats = ComputeArmyStats(spawner->side);
+
+	int total = stats.total; //if 0, make it atleast 1
+	if (total <= 0)
+		total = 1;
+
+	// all the current ratios
+	float rAttacker = stats.countPerType[(int)GameObject::GO_ATTACKER] / (float)total;
+	float rRanged = stats.countPerType[(int)GameObject::GO_RANGED] / (float)total;
+	float rSupport = stats.countPerType[(int)GameObject::GO_SUPPORT] / (float)total;
+	float rMech = stats.countPerType[(int)GameObject::GO_MECHANIC] / (float)total;
+	float rTank = stats.countPerType[(int)GameObject::GO_TANK] / (float)total;
+	float rMortar = stats.countPerType[(int)GameObject::GO_MORTAR] / (float)total;
+
+	// how much more i need, 0 = enough
+	//just clamping to 0
+	float needAttacker = (((0.0f) > (attackerRatio - rAttacker)) ? (0.0f) : (attackerRatio - rAttacker));
+	float needRanged = (((0.0f) > (rangedRatio - rRanged)) ? (0.0f) : (rangedRatio - rRanged));
+	float needSupport = (((0.0f) > (supportRatio - rSupport)) ? (0.0f) : (supportRatio - rSupport));
+	float needMech = (((0.0f) > (mechanicRatio - rMech)) ? (0.0f) : (mechanicRatio - rMech));
+	float needTank = (((0.0f) > (tankRatio - rTank)) ? (0.0f) : (tankRatio - rTank));
+	float needMortar = (((0.0f) > (mortarRatio - rMortar)) ? (0.0f) : (mortarRatio - rMortar));
+
+	//find avg need
+	float woodNeed = (needAttacker + needRanged + needSupport + needMech) / 4.0f;
+	float metalNeed = (needTank + needMortar) / 2.0f;
+
+	// ---- Also look at current stock, so we don't overcap one resource ----
+	int woodStock = spawner->woodenLogs;
+	int metalStock = spawner->metalParts;
+
+	if(metalStock > highMetalThreshold && woodStock < highWoodThreshold)
+		return 1;
+	if (woodStock > highWoodThreshold && metalStock < highMetalThreshold)
+		return 2;
+
+	// If one resource is low while the other is okay, force that
+	if (woodStock < lowWoodThreshold && metalStock > lowMetalThreshold)
+		return 1;
+
+	if (metalStock < lowMetalThreshold && woodStock > lowWoodThreshold)
+		return 2;
+
+	//if both needs are 0, then balance
+	if (woodNeed <= 0.001f && metalNeed <= 0.001f)
+	{
+		if (woodStock < metalStock)
+			return 1;
+		else
+			return 2;
+	}
+	// Otherwise, pick the resource with higher "need"
+	if (woodNeed >= metalNeed)
+		return 1;
+	else
+		return 2;
+
+	return 0;
+}
+
+bool SceneMovement_Week03::DecideSpawn(GameObject* spawner)
+{
+	ArmyStats stats = ComputeArmyStats(spawner->side);
+
+	int total = stats.total; //if 0, make it atleast 1
+	if (total <= 0)
+		total = 1;
+
+	// all the current ratios
+	float rAttacker = stats.countPerType[(int)GameObject::GO_ATTACKER] / (float)total;
+	float rRanged = stats.countPerType[(int)GameObject::GO_RANGED] / (float)total;
+	float rSupport = stats.countPerType[(int)GameObject::GO_SUPPORT] / (float)total;
+	float rMech = stats.countPerType[(int)GameObject::GO_MECHANIC] / (float)total;
+	float rTank = stats.countPerType[(int)GameObject::GO_TANK] / (float)total;
+	float rMortar = stats.countPerType[(int)GameObject::GO_MORTAR] / (float)total;
+
+	// how much more i need, 0 = enough
+	//just clamping to 0
+	float needAttacker = (((0.0f) > (attackerRatio - rAttacker)) ? (0.0f) : (attackerRatio - rAttacker));
+	float needRanged = (((0.0f) > (rangedRatio - rRanged)) ? (0.0f) : (rangedRatio - rRanged));
+	float needSupport = (((0.0f) > (supportRatio - rSupport)) ? (0.0f) : (supportRatio - rSupport));
+	float needMech = (((0.0f) > (mechanicRatio - rMech)) ? (0.0f) : (mechanicRatio - rMech));
+	float needTank = (((0.0f) > (tankRatio - rTank)) ? (0.0f) : (tankRatio - rTank));
+	float needMortar = (((0.0f) > (mortarRatio - rMortar)) ? (0.0f) : (mortarRatio - rMortar));
+
+	//special cases
+	if (spawner->woodenLogs < lowWoodThreshold || spawner->metalParts < lowMetalThreshold)
+	{
+		needMech += 0.2f;
+	}
+
+	// Helper (can be put at top of file or as a static function)
+	auto TypeName = [](GameObject::GAMEOBJECT_TYPE t) -> const char*
+		{
+			switch (t)
+			{
+			case GameObject::GO_ATTACKER: return "ATTACKER";
+			case GameObject::GO_RANGED:   return "RANGED";
+			case GameObject::GO_SUPPORT:  return "SUPPORT";
+			case GameObject::GO_MECHANIC: return "MECHANIC";
+			case GameObject::GO_TANK:     return "TANK";
+			case GameObject::GO_MORTAR:   return "MORTAR";
+			default:                      return "UNKNOWN";
+			}
+		};
+
+	// scores for debug; start with "invalid" value
+	float attackerScore = -99999.0f;
+	float rangedScore = -99999.0f;
+	float supportScore = -99999.0f;
+	float mechanicScore = -99999.0f;
+	float tankScore = -99999.0f;
+	float mortarScore = -99999.0f;
+
+	GameObject::GAMEOBJECT_TYPE bestType = GameObject::GO_ATTACKER;
+	float bestScore = -99999.0f;
+
+	// ATTACKER (wood)
+	if (spawner->woodenLogs >= costAttacker)
+	{
+		float costNorm = costAttacker / maxCost;
+		float score = needAttacker * 10.0f - costWeight * costNorm;
+		attackerScore = score;
+
+		if (score > bestScore)
+		{
+			bestScore = score;
+			bestType = GameObject::GO_ATTACKER;
+		}
+	}
+
+	// RANGED (wood)
+	if (spawner->woodenLogs >= costRanged)
+	{
+		float costNorm = costRanged / maxCost;
+		float score = needRanged * 10.0f - costWeight * costNorm;
+		rangedScore = score;
+
+		if (score > bestScore)
+		{
+			bestScore = score;
+			bestType = GameObject::GO_RANGED;
+		}
+	}
+
+	// SUPPORT (wood)
+	if (spawner->woodenLogs >= costSupport)
+	{
+		float costNorm = costSupport / maxCost;
+		float score = needSupport * 10.0f - costWeight * costNorm;
+		supportScore = score;
+
+		if (score > bestScore)
+		{
+			bestScore = score;
+			bestType = GameObject::GO_SUPPORT;
+		}
+	}
+
+	// MECHANIC (wood)
+	if (spawner->woodenLogs >= costMech)
+	{
+		float costNorm = costMech / maxCost;
+		float score = needMech * 10.0f - costWeight * costNorm;
+		mechanicScore = score;
+
+		if (score > bestScore)
+		{
+			bestScore = score;
+			bestType = GameObject::GO_MECHANIC;
+		}
+	}
+
+	// TANK (metal)
+	if (spawner->metalParts >= costTank)
+	{
+		float costNorm = costTank / maxCost;
+		float score = needTank * 10.0f - costWeight * costNorm;
+		tankScore = score;
+
+		if (score > bestScore)
+		{
+			bestScore = score;
+			bestType = GameObject::GO_TANK;
+		}
+	}
+
+	// MORTAR (metal)
+	if (spawner->metalParts >= costMortar)
+	{
+		float costNorm = costMortar / maxCost;
+		float score = needMortar * 10.0f - costWeight * costNorm;
+		mortarScore = score;
+
+		if (score > bestScore)
+		{
+			bestScore = score;
+			bestType = GameObject::GO_MORTAR;
+		}
+	}
+
+	// If nothing was affordable
+	if (bestScore <= -99998.0f)
+	{
+		return false;
+	}
+
+	// Debug: print all scores + chosen type
+	//std::cout << "Scores: "
+	//	<< "A:" << attackerScore
+	//	<< " R:" << rangedScore
+	//	<< " S:" << supportScore
+	//	<< " Me:" << mechanicScore
+	//	<< " T:" << tankScore
+	//	<< " Mo:" << mortarScore
+	//	<< " | Wood:" << spawner->woodenLogs
+	//	<< " Metal:" << spawner->metalParts
+	//	<< " | Chosen: " << TypeName(bestType)
+	//	<< " (bestScore=" << bestScore << ")"
+	//	<< std::endl << std::endl;
+
+	Vector3 randomPos = RandomPointInRing(spawner->pos, 3.75, 10);
+	switch (bestType)
+	{
+	case GameObject::GO_ATTACKER: spawner->woodenLogs -= costAttacker; break;
+	case GameObject::GO_RANGED:   spawner->woodenLogs -= costRanged;   break;
+	case GameObject::GO_SUPPORT:  spawner->woodenLogs -= costSupport;  break;
+	case GameObject::GO_MECHANIC: spawner->woodenLogs -= costMech;     break;
+	case GameObject::GO_TANK:     spawner->metalParts -= costTank;     break;
+	case GameObject::GO_MORTAR:   spawner->metalParts -= costMortar;   break;
+	default: break;
+	}
+
+	if (bestType == GameObject::GO_ATTACKER ||
+		bestType == GameObject::GO_RANGED ||
+		bestType == GameObject::GO_SUPPORT ||
+		bestType == GameObject::GO_MECHANIC)
+	{
+		SpawnUnit(spawner->side, randomPos, bestType);
+	}
+	// Metal-based units → SpawnMetalUnit
+	else if (bestType == GameObject::GO_TANK)
+	{
+		SpawnMetalUnit(spawner->side, randomPos, bestType);
+	}	
+	else if (bestType == GameObject::GO_MORTAR)
+	{
+		std::cout << "SPAWNING MORTARRRRR" << std::endl;
+		MessageMechanicBuild msg = MessageMechanicBuild(spawner);
+		Handle(&msg);
+	}
+	return true;
 }
 
 void SceneMovement_Week03::Update(double dt)
@@ -445,7 +846,7 @@ void SceneMovement_Week03::Update(double dt)
 			GameObject* go = (GameObject*)*it;
 			if (!go->active)
 				continue;
-			if (go->type == GameObject::GO_ATTACKER)
+			if (go->type == GameObject::GO_MECHANIC)
 			{
 				if (go->specID == 1) {
 					found = true;
@@ -456,11 +857,13 @@ void SceneMovement_Week03::Update(double dt)
 
 		if (!found)
 		{
-			Vector3 randomPos = RandomPointInRing(m_spawners[2]->pos, 3.75, 10);
-			GameObject* uni1 = SpawnUnit(GameObject::SIDE_RED, randomPos, GameObject::GO_ATTACKER);
+			Vector3 randomPos = RandomPointInRing(m_spawners[0]->pos, 3.75, 10);
+			GameObject* uni1 = SpawnUnit(GameObject::SIDE_BLUE, randomPos, GameObject::GO_MECHANIC);
 			uni1->specID = 1;
-			ref = uni1;
 		}
+		//Vector3 randomPos = RandomPointInRing(m_spawners[2]->pos, 3.75, 10);
+		//SpawnGrid3x3(GameObject::SIDE_RED, randomPos, GameObject::GO_ATTACKER);
+
 	}
 	else if (bVState && !Application::IsKeyPressed('V'))
 	{
@@ -496,7 +899,7 @@ void SceneMovement_Week03::Update(double dt)
 			GameObject* go = (GameObject*)*it;
 			if (!go->active)
 				continue;
-			if (go->type == GameObject::GO_TANK)
+			if (go->type == GameObject::GO_MECHANIC)
 			{
 				if (go->specID == 2) {
 					found = true;
@@ -507,8 +910,8 @@ void SceneMovement_Week03::Update(double dt)
 
 		if (!found)
 		{
-			Vector3 randomPos = RandomPointInRing(m_spawners[0]->pos, 3.75, 10);
-			GameObject* uni1 = SpawnMetalUnit(GameObject::SIDE_BLUE, randomPos, GameObject::GO_TANK);
+			Vector3 randomPos = RandomPointInRing(m_spawners[2]->pos, 3.75, 10);
+			GameObject* uni1 = SpawnUnit(GameObject::SIDE_RED, randomPos, GameObject::GO_MECHANIC);
 			uni1->specID = 2;
 		}
 	}
@@ -521,8 +924,9 @@ void SceneMovement_Week03::Update(double dt)
 	{
 		bGState = true;
 
-		Vector3 randomPos = RandomPointInRing(m_spawners[0]->pos, 3.75, 10);
-		SpawnUnit(GameObject::SIDE_BLUE, randomPos, GameObject::GO_RANGED);
+		//Vector3 randomPos = RandomPointInRing(m_spawners[2]->pos, 3.75, 10);
+		//GameObject* uni3 = SpawnUnit(GameObject::SIDE_RED, randomPos, GameObject::GO_ATTACKER);
+		//ref = uni3;
 	}
 	else if (bGState && !Application::IsKeyPressed('G'))
 	{
@@ -530,9 +934,8 @@ void SceneMovement_Week03::Update(double dt)
 	}
 
 	//StateMachine
-	for (std::vector<GameObject*>::iterator it = m_goList.begin(); it != m_goList.end(); ++it)
-	{
-		GameObject* go = (GameObject*)*it;
+	for (int i = 0; i < m_goList.size(); i++) {
+		GameObject* go = m_goList[i];
 		if (!go->active)
 			continue;
 		if (go->sm)
@@ -562,11 +965,58 @@ void SceneMovement_Week03::Update(double dt)
 		}
 		else if (go->type == GameObject::GO_MECHANIC)
 		{
+			//std::cout << "MECHANIC STATE: " << go->sm->GetCurrentState() << std::endl;
 			if (go->sm->GetCurrentState() == "Healthy")
 			{
+				MessageWRU msgCheckSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200.0f);
+				Handle(&msgCheckSpawner);
+				if (go->nearest->type == GameObject::GO_SPAWNER) {
+					go->choice = MechanicNeedGet(go->nearest);
+				}
+				else { go->choice = 0; }
+			}
+
+			if(go->sm->GetCurrentState() == "Hurt")
+			{
+				MessageWRU nearestSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200);
+				Handle(&nearestSpawner);
+				MessageWRU msgNeedSup = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_FREE_SUP, 200.0f);
+				Handle(&msgNeedSup);
+				if (go->external != NULL) {
+					if (go->external->active) {
+						MessageAskHelp msgAskHelp = MessageAskHelp(go);
+						go->external->Handle(&msgAskHelp);
+					}
+				}
+			}
+			go->steps = 0;
+			GameObject* temp = go->nearest;
+			MessageWRU nearestSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200);
+			Handle(&nearestSpawner);
+			MessageWRU amtOfAtk = MessageWRU(go, MessageWRU::SEARCH_TYPE::ATTACKERCOUNT, 200);
+			Handle(&amtOfAtk);
+			go->nearest = temp;
+			if (go->sm->GetCurrentState() == "Hiding")
+			{
+				MessageWRU nearestSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200);
+				Handle(&nearestSpawner);
+			}
+
+			if (go->sm->GetCurrentState() == "Building")
+			{
+				if (go->normalTarget == Vector3(0, 0, 0))
+					go->normalTarget = SpawnMortarArea(go->side);
+			}
+
+			MessageWRU goldenOrb = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_GOLDENORB, 500.0f);
+			Handle(&goldenOrb);
+			if (go->sm->GetCurrentState() == "GoldenChase")
+			{
+				GameObject* temp = go->nearest;
 				MessageWRU msgCheckSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 50.0f);
 				Handle(&msgCheckSpawner);
-				//healthy code is in mechanic state file;
+				go->external2 = go->nearest;
+				go->nearest = temp;
 			}
 		}
 		else if (go->type == GameObject::GO_RANGED)
@@ -706,6 +1156,20 @@ void SceneMovement_Week03::Update(double dt)
 			}
 			else if (go->sm->GetCurrentState() == "Flee") {
 
+				int step = go->steps;
+				go->steps = 0;
+				GameObject* temp = go->nearest;
+				MessageWRU nearestSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200);
+				Handle(&nearestSpawner);
+				MessageWRU amtOfAtk = MessageWRU(go, MessageWRU::SEARCH_TYPE::ATTACKERCOUNT, 200);
+				Handle(&amtOfAtk);
+				if (go->steps > 1) //if atleast 2 attacking my base while im behind
+				{
+					go->sm->SetNextState("StayStrong");
+				}
+				go->steps = step;
+				go->nearest = temp;
+
 				//find nearest free support
 				MessageWRU msgNeedSup = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_FREE_SUP, 200.0f);
 				Handle(&msgNeedSup);
@@ -755,6 +1219,21 @@ void SceneMovement_Week03::Update(double dt)
 				}
 			}
 			else if (go->sm->GetCurrentState() == "NearDeath") {
+
+				int step = go->steps;
+				go->steps = 0;
+				GameObject* temp = go->nearest;
+				MessageWRU nearestSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200);
+				Handle(&nearestSpawner);
+				MessageWRU amtOfAtk = MessageWRU(go, MessageWRU::SEARCH_TYPE::ATTACKERCOUNT, 200);
+				Handle(&amtOfAtk);
+				if (go->steps > 1) //if atleast 2 attacking my base while im behind
+				{
+					go->sm->SetNextState("StayStrong");
+				}
+				go->steps = step;
+				go->nearest = temp;
+
 				//find nearest free support
 				MessageWRU msgNeedSup = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_URG_SUP, 200.0f);
 				Handle(&msgNeedSup);
@@ -775,26 +1254,34 @@ void SceneMovement_Week03::Update(double dt)
 		}
 		else if (go->type == GameObject::GO_SUPPORT) 
 		{
-			std::cout << "Supporter State: " << go->sm->GetCurrentState() << std::endl;
+			//std::cout << "Supporter State: " << go->sm->GetCurrentState() << std::endl;
 
 			go->alliesActiveCount = 0;
 			MessageWRU allyCount = MessageWRU(go, MessageWRU::SEARCH_TYPE::ALLYACTIVECOUNT, 500);
 			Handle(&allyCount);
 
+			go->external = go->nearest; // external is to store my past frame target for support
 			if (go->sm->GetCurrentState() == "Healthy") {
 				if (go->nearest == NULL || go->nearest->active == false) {
-					MessageWRU nearestAllyNoSup = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ALLY_NOSUP, 40);
+					MessageWRU nearestAllyNoSup = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ALLY_NOSUP, 200);
 					Handle(&nearestAllyNoSup);
 				}
 			}
-			else if (go->sm->GetCurrentState() == "Hurt" || go->sm->GetCurrentState() == "Hiding") {
+			if (go->external != NULL) {
+				if (go->external != go->nearest)
+				{
+					go->external->supportActionSpeed = 0;
+					go->external->supportSpeed = 0;
+				}
+			}
+			if (go->sm->GetCurrentState() == "Hurt" || go->sm->GetCurrentState() == "Hiding") {
 				MessageWRU nearestSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200);
 				Handle(&nearestSpawner);
 			}
 		}
 		else if (go->type == GameObject::GO_TANK)
 		{
-			//std::cout << "TANK STATE: " << go->sm->GetCurrentState() << std::endl;
+			//std::cout << "TANK STATE: " << go->nearest << std::endl;
 			if (go->sm->GetCurrentState() == "Healthy") {
 				if (go->external2 == NULL || go->external2->active == false) {
 					GameObject* temp = go->nearest;
@@ -808,21 +1295,18 @@ void SceneMovement_Week03::Update(double dt)
 					MessageWRU msgCheckFrontline = MessageWRU(go, MessageWRU::SEARCH_TYPE::FURTHEST_FRONTLINE, 200);
 					Handle(&msgCheckFrontline);
 					go->steps = Math::RandIntMinMax(-2, 2);
-					//int redOrBlue = (go->type == GameObject::SIDE_BLUE) ? 1 : -1;
-					//go->normalTarget = go->nearest->pos + Vector3(redOrBlue * m_gridSize,go->steps * m_gridSize,0);
+					if(go->nearest == NULL)
+					{
+						go->sm->SetNextState("SoloHealthy");
+						return; // or handle “no frontline found” however you want
+					}
 				}
 				else
 				{
 					MessageWRU msgCheckFrontline = MessageWRU(go, MessageWRU::SEARCH_TYPE::FURTHEST_FRONTLINE, 200);
 					Handle(&msgCheckFrontline);
 					int redOrBlue = (go->side == GameObject::SIDE_BLUE) ? -1 : 1;
-					if (go->nearest == NULL || go->nearest->active == false)
-					{
-						go->sm->SetNextState("SoloHealthy");
-						return; // or handle “no frontline found” however you want
-					}
-					go->normalTarget = go->nearest->pos + Vector3(redOrBlue * m_gridSize * 1.5f, (float)go->steps * m_gridSize, 0);
-					//std::cout << redOrBlue * m_gridSize << std::endl;
+					go->normalTarget = go->nearest->pos + Vector3(redOrBlue * m_gridSize * 1.85f, (float)go->steps * m_gridSize, 0);
 					if ((go->normalTarget - go->pos).Length() < m_gridSize)
 					{
 						go->moving = false;
@@ -856,30 +1340,55 @@ void SceneMovement_Week03::Update(double dt)
 					Handle(&msgCheckEnemy);
 				}
 			}
+			else if (go->sm->GetCurrentState() == "Suicide")
+			{
+				MessageWRU msgCheckObj = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_OBJ, 200.0f);
+				Handle(&msgCheckObj);
+				if (go->countDown <= 0)
+				{
+					MessageWRU msgAreaDamage = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY_INAREA, 1.5f);
+					Handle(&msgAreaDamage);
+					for (auto& target : go->hits)
+					{
+						target->health -= 20;
+						target->lastAttacker = go;
+					}
+				}
+			}
+
+			if (go->panicking)
+			{
+				MessageWRU msgCheckMech = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_MECHANIC_HEAL, 200.0f);
+				Handle(&msgCheckMech);
+				if (go->external != NULL) {
+					if (go->external->active) {
+						MessageAskHelp msgAskHelp = MessageAskHelp(go);
+						go->external->Handle(&msgAskHelp);
+					}
+				}
+			}
 		}
 		else if (go->type == GameObject::GO_MORTAR)
 		{
-			if (go->nearest == NULL || go->nearest->active == false)
-			{
-				MessageWRU nearestMortarEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_MORTAR_ENEMY, 35,10);
-				Handle(&nearestMortarEnemy);
-			}
-			else
+			MessageWRU nearestMortarEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_MORTAR_ENEMY, 35,10);
+			Handle(&nearestMortarEnemy);
+			if(go->nearest != NULL)
 			{
 				float finalActionSpeed = (go->actionSpeed * 1) + go->supportActionSpeed;
 				if (go->EnergyReduce(finalActionSpeed))
 				{
-					GameObject* projectile = FetchProj(GameObject::GO_MORBOMB);
-					projectile->type = GameObject::GO_MORBOMB;
-					projectile->pos = go->pos;
-					projectile->scale = Vector3(m_gridSize / 4, m_gridSize / 4, m_gridSize / 4);
-
-					projectile->target = go->nearest->pos;//use nearest as proj target object
-					projectile->nearest = go->nearest; 
-					projectile->moveSpeed = 15.f;
-					projectile->side = go->side;
-					projectile->startPos = projectile->pos;
-					projectile->owner = go;
+					PostOffice::GetInstance()->Send("Scene", new MessageSpawnMorBomb(go));
+				}
+			}
+			if (go->sm->GetCurrentState() == "Panic")
+			{
+				MessageWRU msgCheckMech = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_MECHANIC_HEAL, 200.0f);
+				Handle(&msgCheckMech);
+				if (go->external != NULL) {
+					if (go->external->active) {
+						MessageAskHelp msgAskHelp = MessageAskHelp(go);
+						go->external->Handle(&msgAskHelp);
+					}
 				}
 			}
 		}
@@ -891,127 +1400,20 @@ void SceneMovement_Week03::Update(double dt)
 	{
 		GameObject* spawner = *it;
 
-		spawner->energy += 1; // dont wanna use EnergyReduce function, i want energy to stop at max
-		GameObject::SIDE side = spawner->side;
+		spawner->energy += 0.2; // dont wanna use EnergyReduce function, i want energy to stop at max
 
-
-		//deep nested code ahead !!! BEWARE !!! i lazy recode it lol
-
-		//spawner uses random number if both materials have enough, to spawn random wooden or metal unit
-		// if spawner doesnt have enough of both, it will use whichever is enough else no spawn at all
-		// if spawner cant find a mechanic at all spawn mechanic first , if not enough wood for mechanic then just spawn metal
 		if (spawner->energy >= spawner->maxEnergy)
 		{
-			spawner->energy = spawner->maxEnergy;
-			float randomNumber = -1;
-			bool spawnWoodUnit = false;
-			if (spawner->woodenLogs > 2 && spawner->metalParts > 2)
+			if (DecideSpawn(spawner))
 			{
-				randomNumber = Math::RandFloatMinMax(0.f, 100.f);
-			}
-			//spawn units
-			if (randomNumber > -1)
-			{
-				if (randomNumber < 50)
-				{
-					spawnWoodUnit = true;
-				}
-				else if (randomNumber >= 50) // spawn metal units
-				{
-					spawnWoodUnit = false;
-				}
-
-
-				bool haveMechanic = false;
-				for (int i = 0; i < m_goList.size(); i++)
-				{
-					if (m_goList[i]->type == GameObject::GO_MECHANIC)
-					{
-						haveMechanic = true;
-						break;
-					}
-				}
-
-				//if no mechanics, dont care about random, just spawn mechanic, if not enough wood for mechanic, then just spawn metal
-				if (!haveMechanic) {
-					if (spawner->woodenLogs > 2) {
-						Vector3 randomPos = RandomPointInRing(spawner->pos, 3.75, 10.f);
-						SpawnUnit(side, randomPos, GameObject::GO_MECHANIC);
-					}
-					else if (spawner->metalParts > 2) {
-						Vector3 randomPos = RandomPointInRing(spawner->pos, 3.75, 10.f);
-						SpawnMetalUnit(side, randomPos, GameObject::GO_RANGED); //spawn random unit
-
-						spawner->energy = 0;
-						spawner->metalParts -= 2;
-						std::cout << "Spawned MetalUnit Logs: " << spawner->woodenLogs << "  Metal: " << spawner->metalParts << std::endl;
-					}
-				}
-				else {
-					if (spawnWoodUnit)
-					{
-						if (spawner->woodenLogs > 2) {
-							Vector3 randomPos = RandomPointInRing(spawner->pos, 3.75, 10.f);
-							SpawnUnit(side, randomPos, GameObject::GO_RANGED);
-
-							spawner->energy = 0;
-							spawner->woodenLogs -= 2;
-							std::cout << "Spawned WoodUnit Logs: " << spawner->woodenLogs << "  Metal: " << spawner->metalParts << std::endl;
-						}
-					}
-					else // spawn metal units
-					{
-						if (spawner->metalParts > 2) {
-							Vector3 randomPos = RandomPointInRing(spawner->pos, 3.75, 10.f);
-							SpawnMetalUnit(side, randomPos); //spawn random unit
-
-							spawner->energy = 0;
-							spawner->metalParts -= 2;
-							std::cout << "Spawned MetalUnit Logs: " << spawner->woodenLogs << "  Metal: " << spawner->metalParts << std::endl;
-						}
-					}
-				}
+				spawner->energy = 0;
 			}
 			else
 			{
-				bool haveMechanic = false;
-				for (int i = 0; i < m_goList.size(); i++)
-				{
-					if (m_goList[i]->type == GameObject::GO_MECHANIC)
-					{
-						haveMechanic = true;
-						break;
-					}
-				}
-
-				if (spawner->woodenLogs > 2)
-				{
-					if (!haveMechanic) {
-						Vector3 randomPos = RandomPointInRing(spawner->pos, 3.75, 10.f);
-						SpawnUnit(side, randomPos, GameObject::GO_MECHANIC);
-					}
-					else
-					{
-						Vector3 randomPos = RandomPointInRing(spawner->pos, 3.75, 10.f);
-						SpawnUnit(side, randomPos, GameObject::GO_RANGED);
-					}
-					spawner->energy = 0;
-					spawner->woodenLogs -= 2;
-					std::cout << "Spawned NotRandom WOoden Logs: " << spawner->woodenLogs << "  Metal: " << spawner->metalParts << std::endl;
-				}
-				else if (spawner->metalParts > 2)// spawn metal units
-				{
-					Vector3 randomPos = RandomPointInRing(spawner->pos, 3.75, 10.f);
-					SpawnMetalUnit(side, randomPos); //spawn random unit
-
-					spawner->energy = 0;
-					spawner->metalParts -= 2;
-					std::cout << "Spawned NotRandom Metal Logs: " << spawner->woodenLogs << "  Metal: " << spawner->metalParts << std::endl;
-				}
-				
+				spawner->energy = spawner->maxEnergy;
 			}
 		}
-
+		
 		//debug spawner materials
 		if (spawner->woodenLogs != 0)
 		{
@@ -1049,11 +1451,45 @@ void SceneMovement_Week03::Update(double dt)
 				}
 			}
 		}
-		else if (proj->type == GameObject::GO_MORBOMB) {
+		else if (proj->type == GameObject::GO_ROCKETS) {
+
+			MessageWRU msgCheckEnemy = MessageWRU(proj, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 50.0f);
+			Handle(&msgCheckEnemy);
+			if (proj->nearest != NULL) {
+				float distance = (proj->target - proj->pos).Length();
+				float closestDistance = (proj->nearest->pos - proj->pos).Length();
+
+				if (closestDistance < proj->nearest->scale.x) { //if it hits something while flying
+					proj->health = 0;
+					proj->type = GameObject::GO_NONE;
+					proj->active = false;
+					proj->hits.clear();
+					proj->pos = proj->nearest->pos; //set pos to target pos for area damage search
+					MessageWRU msgAreaDamage = MessageWRU(proj, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY_INAREA, 1.5f);
+					Handle(&msgAreaDamage);
+					for(auto& target : proj->hits)
+					{
+						target->health -= 10;
+						target->lastAttacker = proj->owner;
+					}
+				}
+				if (distance <= 0.001)
+				{
+					proj->health = 0;
+					proj->type = GameObject::GO_NONE;
+					proj->active = false;
+				}
+			}
+		}
+		else if (proj->type == GameObject::GO_MORBOMB || proj->type == GameObject::GO_BIGMORBOMB) {
 			if (proj->nearest != NULL) {
 
 				Vector3 startScale = Vector3(m_gridSize / 4, m_gridSize / 4, m_gridSize / 4);
 				Vector3 maxScale = Vector3(m_gridSize, m_gridSize, m_gridSize); // at arc peak
+				if (proj->type == GameObject::GO_BIGMORBOMB) {
+					startScale *= 1.2;
+					maxScale *= 1.2;
+				}
 				float totalDist = (proj->target - proj->startPos).Length();
 				float travelledDist = (proj->pos - proj->startPos).Length();
 				float t = Math::Clamp(travelledDist / totalDist, 0.f, 1.f);
@@ -1064,23 +1500,22 @@ void SceneMovement_Week03::Update(double dt)
 				if (distance <= 0.001)
 				{
 					proj->health = 0;
-					proj->type = GameObject::GO_NONE;
 					proj->active = false;
-					for(int i = 0; i < m_goList.size(); ++i) //find all units within the hit Point
-					{
-						GameObject* go = m_goList[i];
-						if (!go->active)
-							continue;
-						if (go->side != proj->side)
-						{
-							float distanceToBomb = (go->pos - proj->pos).Length();
-							if (distanceToBomb < go->scale.x)
-							{
-								go->health -= 5;
-								go->lastAttacker = proj->owner;
-							}
-						}
+					MessageWRU msgAreaDamage = MessageWRU(proj, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY_INAREA, 2.5f);
+					if (proj->type == GameObject::GO_BIGMORBOMB) {
+						msgAreaDamage = MessageWRU(proj, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY_INAREA, 2.5f);
 					}
+					else {
+						msgAreaDamage = MessageWRU(proj, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY_INAREA, 1.5f);
+					}
+					Handle(&msgAreaDamage);
+					for (auto& target : proj->hits)
+					{
+						target->health -= 15;
+						target->lastAttacker = proj->owner;
+					}
+
+					proj->type = GameObject::GO_NONE;
 				}
 			}
 		}
@@ -1190,21 +1625,84 @@ void SceneMovement_Week03::Update(double dt)
 	}
 
 	//Counting objects
-	int objectCount = 0;
-	m_numGO[GameObject::GO_FISH] = m_numGO[GameObject::GO_SHARK] = m_numGO[GameObject::GO_FISHFOOD] = 0;
-	MessageCheckActive msgCheckActive = MessageCheckActive();
-	MessageCheckFish msgCheckFish = MessageCheckFish();
-	MessageCheckFood msgCheckFood = MessageCheckFood();
-	MessageCheckShark msgCheckShark = MessageCheckShark();
-	for (GameObject* go : m_goList)
+	CountingGO();
+	gameStateString = GameState();
+}
+
+void SceneMovement_Week03::CountingGO()
+{
+	m_numGO[GameObject::GO_ATTACKER] = 0;
+	m_numGO[GameObject::GO_RANGED] = 0;
+	m_numGO[GameObject::GO_SUPPORT] = 0;
+	m_numGO[GameObject::GO_MECHANIC] = 0;
+	m_numGO[GameObject::GO_TANK] = 0;
+	m_numGO[GameObject::GO_MORTAR] = 0;
+
+	// ---------- ATTACKER ----------
 	{
-		objectCount += static_cast<int>(go->Handle(&msgCheckActive));
-		m_numGO[GameObject::GO_FISH] += static_cast<int>(go->Handle(&msgCheckFish));
-		m_numGO[GameObject::GO_FISHFOOD] += static_cast<int>(go->Handle(&msgCheckFood));
-		m_numGO[GameObject::GO_SHARK] += static_cast<int>(go->Handle(&msgCheckShark));
+		MessageHowManyUnit msgAttackerBlue(GameObject::GO_ATTACKER, GameObject::SIDE_BLUE);
+		MessageHowManyUnit msgAttackerRed(GameObject::GO_ATTACKER, GameObject::SIDE_RED);
+
+		int blueAttacker = HandleCount(&msgAttackerBlue);
+		int redAttacker = HandleCount(&msgAttackerRed);
+
+		m_numGO[GameObject::GO_ATTACKER] = blueAttacker + redAttacker;
 	}
-	SceneData::GetInstance()->SetObjectCount(objectCount);
-	SceneData::GetInstance()->SetFishCount(m_numGO[GameObject::GO_FISH]);
+
+	// ---------- RANGED ----------
+	{
+		MessageHowManyUnit msgRangedBlue(GameObject::GO_RANGED, GameObject::SIDE_BLUE);
+		MessageHowManyUnit msgRangedRed(GameObject::GO_RANGED, GameObject::SIDE_RED);
+
+		int blueRanged = HandleCount(&msgRangedBlue);
+		int redRanged = HandleCount(&msgRangedRed);
+
+		m_numGO[GameObject::GO_RANGED] = blueRanged + redRanged;
+	}
+
+	// ---------- SUPPORT ----------
+	{
+		MessageHowManyUnit msgSupportBlue(GameObject::GO_SUPPORT, GameObject::SIDE_BLUE);
+		MessageHowManyUnit msgSupportRed(GameObject::GO_SUPPORT, GameObject::SIDE_RED);
+
+		int blueSupport = HandleCount(&msgSupportBlue);
+		int redSupport = HandleCount(&msgSupportRed);
+
+		m_numGO[GameObject::GO_SUPPORT] = blueSupport + redSupport;
+	}
+
+	// ---------- MECHANIC ----------
+	{
+		MessageHowManyUnit msgMechBlue(GameObject::GO_MECHANIC, GameObject::SIDE_BLUE);
+		MessageHowManyUnit msgMechRed(GameObject::GO_MECHANIC, GameObject::SIDE_RED);
+
+		int blueMech = HandleCount(&msgMechBlue);
+		int redMech = HandleCount(&msgMechRed);
+
+		m_numGO[GameObject::GO_MECHANIC] = blueMech + redMech;
+	}
+
+	// ---------- TANK ----------
+	{
+		MessageHowManyUnit msgTankBlue(GameObject::GO_TANK, GameObject::SIDE_BLUE);
+		MessageHowManyUnit msgTankRed(GameObject::GO_TANK, GameObject::SIDE_RED);
+
+		int blueTank = HandleCount(&msgTankBlue);
+		int redTank = HandleCount(&msgTankRed);
+
+		m_numGO[GameObject::GO_TANK] = blueTank + redTank;
+	}
+
+	// ---------- MORTAR ----------
+	{
+		MessageHowManyUnit msgMortarBlue(GameObject::GO_MORTAR, GameObject::SIDE_BLUE);
+		MessageHowManyUnit msgMortarRed(GameObject::GO_MORTAR, GameObject::SIDE_RED);
+
+		int blueMortar = HandleCount(&msgMortarBlue);
+		int redMortar = HandleCount(&msgMortarRed);
+
+		m_numGO[GameObject::GO_MORTAR] = blueMortar + redMortar;
+	}
 }
 
 void SceneMovement_Week03::RenderGOBar(GameObject* go, float vertScale)
@@ -1246,103 +1744,73 @@ void SceneMovement_Week03::RenderGOBar(GameObject* go, float vertScale)
 	modelStack.PopMatrix();
 }
 
+void SceneMovement_Week03::RenderGOBar(GameObject* go, float vertScale, Vector3 pos)
+{
+	float healthRatio = go->health / go->maxHealth;
+	float energyRatio = go->energy / go->maxEnergy;
+	float barWidth = go->scale.x / 1.8f;
+	float barHeight = go->scale.y / vertScale;
+
+	// draw the health (shrinks left -> right)
+	modelStack.PushMatrix();
+	// shift left edge fixed: move half the reduced width to the left
+	float offsetX = -(barWidth * (1.f - healthRatio));
+	modelStack.Translate(pos.x + offsetX, pos.y - 3.5f, zOffset);
+	modelStack.Scale(barWidth * healthRatio, barHeight, go->scale.z);
+	RenderMesh(meshList[GEO_CUBE], false);
+	modelStack.PopMatrix();
+
+	// draw the background (max health)
+	modelStack.PushMatrix();
+	modelStack.Translate(pos.x, pos.y - 3.5f, zOffset);
+	modelStack.Scale(barWidth, barHeight, go->scale.z);
+	RenderMesh(meshList[GEO_MAXCUBE], false);
+	modelStack.PopMatrix();
+
+
+	modelStack.PushMatrix();
+	// shift left edge fixed: move half the reduced width to the left
+	float energyoffsetX = -(barWidth * (1.f - energyRatio));
+	modelStack.Translate(pos.x + energyoffsetX, pos.y - 4.9, zOffset);
+	modelStack.Scale(barWidth * energyRatio, barHeight, go->scale.z);
+	RenderMesh(meshList[GEO_ENERGYCUBE], false);
+	modelStack.PopMatrix();
+
+	modelStack.PushMatrix();
+	modelStack.Translate(pos.x, pos.y - 4.9, zOffset);
+	modelStack.Scale(barWidth, barHeight, go->scale.z);
+	RenderMesh(meshList[GEO_MAXENERGYCUBE], false);
+	modelStack.PopMatrix();
+}
+
 void SceneMovement_Week03::RenderGO(GameObject* go)
 {
 	std::ostringstream ss;
 	switch (go->type)
 	{
-	case GameObject::GO_BALL:
-		modelStack.PushMatrix();
-		modelStack.Translate(go->pos.x, go->pos.y, go->pos.z);
-		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
-		RenderMesh(meshList[GEO_BALL], false);
-
-		ss.str("");
-		ss.precision(3);
-		ss << go->id;
-		RenderText(meshList[GEO_TEXT], ss.str(), Color(0, 0, 0));
-		modelStack.PopMatrix();
-		break;
-	case GameObject::GO_FISH:
-		modelStack.PushMatrix();
-		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
-		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
-
-		if (go->sm)
-		{
-			if (go->sm->GetCurrentState() == "TooFull")
-				RenderMesh(meshList[GEO_TOOFULL], false);
-			else if (go->sm->GetCurrentState() == "Full")
-				RenderMesh(meshList[GEO_FULL], false);
-			else if (go->sm->GetCurrentState() == "Hungry")
-				RenderMesh(meshList[GEO_HUNGRY], false);
-			else
-				RenderMesh(meshList[GEO_DEAD], false);
-		}
-
-		// Exercise Week 4
-		modelStack.PushMatrix();
-		ss.precision(3);
-		ss << "[" << go->pos.x << ", " << go->pos.y << "]";
-		modelStack.Scale(0.5f, 0.5f, 0.5f);
-		modelStack.Translate(-SceneData::GetInstance()->GetGridSize() / 4, SceneData::GetInstance()->GetGridSize() / 4, 0);
-		RenderText(meshList[GEO_TEXT], ss.str(), Color(0, 0, 0));
-		modelStack.PopMatrix();
-
-		// Exercise Week 4
-		modelStack.PushMatrix();
-		ss.str("");
-		ss.precision(3);
-		ss << go->energy;
-		modelStack.Scale(0.5f, 0.5f, 0.5f);
-		modelStack.Translate(0, -SceneData::GetInstance()->GetGridSize() / 4, 0);
-		RenderText(meshList[GEO_TEXT], ss.str(), Color(0, 0, 0));
-		// Exercise Week 4
-		modelStack.PopMatrix();
-		modelStack.PopMatrix();
-		break;
-	case GameObject::GO_SHARK:
-		modelStack.PushMatrix();
-		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
-		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
-
-		if (go->sm)
-		{
-			if (go->sm->GetCurrentState() == "Crazy")
-				RenderMesh(meshList[GEO_CRAZY], false);
-			else if (go->sm->GetCurrentState() == "Happy")
-				RenderMesh(meshList[GEO_HAPPY], false);
-			else
-				RenderMesh(meshList[GEO_SHARK], false);
-		}
-		modelStack.PushMatrix();
-		ss.str("");
-		ss.precision(3);
-		ss << "[" << go->pos.x << ", " << go->pos.y << "]";
-		modelStack.Scale(0.5f, 0.5f, 0.5f);
-		modelStack.Translate(-SceneData::GetInstance()->GetGridSize() / 4, -SceneData::GetInstance()->GetGridSize() / 4, 0);
-		RenderText(meshList[GEO_TEXT], ss.str(), Color(0, 0, 0));
-		modelStack.PopMatrix();
-		// Exercise Week 4
-
-		modelStack.PopMatrix();
-		break;
-	case GameObject::GO_FISHFOOD:
-		modelStack.PushMatrix();
-		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
-		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
-		RenderMesh(meshList[GEO_FISHFOOD], false);
-		// Exercise Week 4
-		modelStack.PushMatrix();
-		ss << "[" << go->pos.x << ", " << go->pos.y << "]";
-		modelStack.Scale(0.5f, 0.5f, 0.5f);
-		modelStack.Translate(-SceneData::GetInstance()->GetGridSize() / 4, -SceneData::GetInstance()->GetGridSize() / 4, 0);
-		RenderText(meshList[GEO_TEXT], ss.str(), Color(0, 0, 0));
-		modelStack.PopMatrix();		modelStack.PopMatrix();
-		break;
 	case GameObject::GO_MAINBASE:
 		modelStack.PushMatrix();
 		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
+		modelStack.Rotate(180, 0, 0, 1);
+		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
+		if (go->side == GameObject::SIDE_RED)
+			RenderMesh(meshList[GEO_BASERED], false);
+		else
+			RenderMesh(meshList[GEO_BASEBLUE], false);
+		modelStack.PopMatrix();
+		RenderGOBar(go, 14);
+
+		modelStack.PushMatrix();
+		if (go->side == GameObject::SIDE_RED)
+		{
+			modelStack.Translate(132.5, 90, zOffset);
+			RenderGOBar(go, 14, Vector3(0,-1.5,0));
+		}
+		else
+		{
+			modelStack.Translate(132.5, 50, zOffset);
+			RenderGOBar(go, 14, Vector3(0, -1.5, 0));
+		}
 		modelStack.Rotate(180, 0, 0, 1);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
 		if (go->side == GameObject::SIDE_RED)
@@ -1364,60 +1832,154 @@ void SceneMovement_Week03::RenderGO(GameObject* go)
 		modelStack.PopMatrix();
 
 		modelStack.PushMatrix();
-		modelStack.Translate(go->pos.x, go->pos.y, zOffset + 0.001f); // small offset to prevent z-fighting
+		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
 		modelStack.Scale(7.5 * 2, 7.5 * 2, 1); // radius (scale by 2 for diameter)
 		RenderMesh(meshList[GEO_CIRCLE], false);
 		modelStack.PopMatrix();
 
 		modelStack.PushMatrix();
-		modelStack.Translate(go->pos.x, go->pos.y, zOffset + 0.001f); // small offset to prevent z-fighting
+		modelStack.Translate(go->pos.x, go->pos.y, zOffset); 
 		modelStack.Scale(20 * 2, 20 * 2, 1); // radius (scale by 2 for diameter)
 		RenderMesh(meshList[GEO_CIRCLE], false);
 		modelStack.PopMatrix();
 		RenderGOBar(go, 14);
+
+
+		modelStack.PushMatrix();
+		if (go->side == GameObject::SIDE_RED)
+		{
+			if (go->pos.y < m_worldHeight/2)
+			{
+				modelStack.Translate(go->pos.x + 125, go->pos.y+ 65, zOffset);
+			}
+			else {
+				modelStack.Translate(go->pos.x + 90, go->pos.y+15, zOffset);
+			}
+			RenderGOBar(go, 14, Vector3(0, -1.5, 0));
+
+		}
+		else
+		{
+			if (go->pos.y < m_worldHeight / 2)
+			{
+				modelStack.Translate(go->pos.x + 75, go->pos.y + 25, zOffset);
+			}
+			else {
+				modelStack.Translate(go->pos.x + 40, go->pos.y - 25, zOffset);
+			}
+			RenderGOBar(go, 14, Vector3(0, -1.5, 0));
+		}
+
+		ss.str("");
+		ss.clear();
+		ss << "W:" << go->woodenLogs << " M:" << go->metalParts;
+
+		modelStack.PushMatrix();
+		modelStack.Translate(-4.5, 6, zOffset);
+		modelStack.Scale(5, 5, 5);
+		RenderText(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0));
+		modelStack.PopMatrix();
+
+		modelStack.Rotate(180, 0, 0, 1);
+		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
+		if (go->side == GameObject::SIDE_RED)
+			RenderMesh(meshList[GEO_SPAWNERRED], false);
+		else
+			RenderMesh(meshList[GEO_SPAWNERBLUE], false);
+		modelStack.PopMatrix();
+		RenderGOBar(go, 14);
 		break;
 	case GameObject::GO_ATTACKER:
-		modelStack.PushMatrix();
-		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
-		//modelStack.Rotate(180, 0, 0, 1);
-		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
-		RenderMesh(meshList[GEO_ATTACKER], false);
-		modelStack.PopMatrix();
-		RenderGOBar(go, 7);
-		break;
-	case GameObject::GO_RANGED:
+	{
+		std::string state = go->sm->GetCurrentState();
+		if (state == "Dead") break;
+
+		bool isBlue = (go->side == GameObject::SIDE_BLUE);
+		GEOMETRY_TYPE geo;
+
+		if (state == "Flee")
+			geo = isBlue ? GEO_ATTACKER1_FLEEING : GEO_ATTACKER2_FLEEING;
+		else if (state == "StayStrong")
+			geo = isBlue ? GEO_ATTACKER1_STAY_STRONG : GEO_ATTACKER2_STAY_STRONG;
+		else if (state == "NearDeath")
+			geo = isBlue ? GEO_ATTACKER1_NEAR_DEATH : GEO_ATTACKER2_NEAR_DEATH;
+		else if (state == "Helping")
+			geo = isBlue ? GEO_ATTACKER1_HELPING : GEO_ATTACKER2_HELPING;
+		else
+			geo = isBlue ? GEO_ATTACKER1_HEALTHY : GEO_ATTACKER2_HEALTHY;
+
 		modelStack.PushMatrix();
 		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
 		modelStack.Rotate(180, 0, 0, 1);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
-		if (go->moveLeft)
-			RenderMesh(meshList[GEO_RANGED], false);
-		else
-			RenderMesh(meshList[GEO_RANGEDRIGHT], false);
+		RenderMesh(meshList[geo], false);
 		modelStack.PopMatrix();
-
 		RenderGOBar(go, 7);
 		break;
+	}
+	case GameObject::GO_RANGED:
+	{
+		std::string state = go->sm->GetCurrentState();
+		if (state == "Death") break;
+
+		bool isBlue = (go->side == GameObject::SIDE_BLUE);
+		GEOMETRY_TYPE geo;
+
+		if (state == "NearDeath")
+			geo = isBlue ? GEO_RANGE1_NEAR_DEATH : GEO_RANGE2_NEAR_DEATH;
+		else if (state == "Panic")
+			geo = isBlue ? GEO_RANGE1_PANIC : GEO_RANGE2_PANIC;
+		else if (state == "Hurt")
+			geo = isBlue ? GEO_RANGE1_HURT : GEO_RANGE2_HURT;
+		else
+			geo = isBlue ? GEO_RANGE1_HEALTHY : GEO_RANGE2_HEALTHY;
+
+		modelStack.PushMatrix();
+		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
+		modelStack.Rotate(180, 0, 0, 1);
+		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
+		RenderMesh(meshList[geo], false);
+		modelStack.PopMatrix();
+		RenderGOBar(go, 7);
+		break;
+	}
 	case GameObject::GO_SUPPORT:
+	{
+		std::string state = go->sm->GetCurrentState();
+		if (state == "Death") break;
+
+		bool isBlue = (go->side == GameObject::SIDE_BLUE);
+		GEOMETRY_TYPE geo;
+
+		if (state == "UrgentHealing")
+			geo = isBlue ? GEO_SUPPORT1_URGENT_HEALING : GEO_SUPPORT2_URGENT_HEALING;
+		else if (state == "Healing")
+			geo = isBlue ? GEO_SUPPORT1_HEALING : GEO_SUPPORT2_HEALING;
+		else if (state == "Hiding")
+			geo = isBlue ? GEO_SUPPORT1_HIDING : GEO_SUPPORT2_HIDING;
+		else if (state == "Hurt")
+			geo = isBlue ? GEO_SUPPORT1_HURT : GEO_SUPPORT2_HURT;
+		else
+			geo = isBlue ? GEO_SUPPORT1_HEALTHY : GEO_SUPPORT2_HEALTHY;
+
+		modelStack.PushMatrix();
+		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
+		modelStack.Rotate(180, 0, 0, 1);
+		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
+		RenderMesh(meshList[geo], false);
+		modelStack.PopMatrix();
+		RenderGOBar(go, 7);
+		break;
+	}
+	case GameObject::GO_PROJECTILE:
 		modelStack.PushMatrix();
 		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
 		//modelStack.Rotate(180, 0, 0, 1);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
-		if (go->moveLeft)
-			RenderMesh(meshList[GEO_RANGED], false);
-		else
-			RenderMesh(meshList[GEO_RANGEDRIGHT], false);
+		RenderMesh(meshList[GEO_SUPPORT], false);
 		modelStack.PopMatrix();
-		RenderGOBar(go, 7);
-
-		modelStack.PushMatrix();
-		modelStack.Translate(go->pos.x, go->pos.y, zOffset + 0.001f); // small offset to prevent z-fighting
-		modelStack.Scale(68 * 2, 68 * 2, 1); // radius (scale by 2 for diameter)
-		RenderMesh(meshList[GEO_CIRCLE], false);
-		modelStack.PopMatrix();
-
 		break;
-	case GameObject::GO_PROJECTILE:
+	case GameObject::GO_ROCKETS:
 		modelStack.PushMatrix();
 		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
 		//modelStack.Rotate(180, 0, 0, 1);
@@ -1433,41 +1995,86 @@ void SceneMovement_Week03::RenderGO(GameObject* go)
 		RenderMesh(meshList[GEO_SUPPORT], false);
 		modelStack.PopMatrix();
 		break;
+	case GameObject::GO_BIGMORBOMB:
+		modelStack.PushMatrix();
+		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
+		//modelStack.Rotate(180, 0, 0, 1);
+		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
+		RenderMesh(meshList[GEO_SUPPORT], false);
+		modelStack.PopMatrix();
+		break;
 	case GameObject::GO_MECHANIC:
+	{
+		std::string state = go->sm->GetCurrentState();
+		if (state == "Death") break;
+
+		bool isBlue = (go->side == GameObject::SIDE_BLUE);
+		GEOMETRY_TYPE geo;
+
+		if (state == "GoldenChase")
+			geo = isBlue ? GEO_MECHANIC1_GOLD : GEO_MECHANIC2_GOLD;
+		else if (state == "Building")
+			geo = isBlue ? GEO_MECHANIC1_BUILDING : GEO_MECHANIC2_BUILDING;
+		else if (state == "Hiding")
+			geo = isBlue ? GEO_MECHANIC1_HIDING : GEO_MECHANIC2_HIDING;
+		else if (state == "Hurt")
+			geo = isBlue ? GEO_MECHANIC1_HURT : GEO_MECHANIC2_HURT;
+		else
+			geo = isBlue ? GEO_MECHANIC1_HEALTHY : GEO_MECHANIC2_HEALTHY;
+
 		modelStack.PushMatrix();
 		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
 		modelStack.Rotate(180, 0, 0, 1);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
-		if (go->moveLeft)
-			RenderMesh(meshList[GEO_RANGED], false);
-		else
-			RenderMesh(meshList[GEO_RANGEDRIGHT], false);
+		RenderMesh(meshList[geo], false);
 		modelStack.PopMatrix();
 		RenderGOBar(go, 7);
 		break;
+	}
 	case GameObject::GO_TANK:
+	{
+		std::string state = go->sm->GetCurrentState();
+		if (state == "Death") break;
+
+		bool isBlue = (go->side == GameObject::SIDE_BLUE);
+		GEOMETRY_TYPE geo = GEO_TANK1_HEALTHY;
+
+		if (state == "Suicide")
+			geo = isBlue ? GEO_TANK1_BOMB : GEO_TANK2_BOMB;
+		else if (go->panicking)
+			geo = isBlue ? GEO_TANK1_PANIC : GEO_TANK2_PANIC;
+		else
+			geo = isBlue ? GEO_TANK1_HEALTHY : GEO_TANK2_HEALTHY;
+
 		modelStack.PushMatrix();
 		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
 		modelStack.Rotate(180, 0, 0, 1);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
-		if (go->moveLeft)
-			RenderMesh(meshList[GEO_TANK], false);
-		else
-			RenderMesh(meshList[GEO_TANK], false);
+		RenderMesh(meshList[geo], false);
 		modelStack.PopMatrix();
 		RenderGOBar(go, 7);
 		break;
+	}
 	case GameObject::GO_MORTAR:
+	{
+		std::string state = go->sm->GetCurrentState();
+		if (state == "Death") break;
+
+		bool isBlue = (go->side == GameObject::SIDE_BLUE);
+		GEOMETRY_TYPE geo = isBlue ? GEO_MORTAR1_HEALTHY : GEO_MORTAR2_HEALTHY;
+
+		if (state == "Panic")
+			geo = isBlue ? GEO_MORTAR1_PANIC : GEO_MORTAR2_PANIC;
+
 		modelStack.PushMatrix();
 		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
 		modelStack.Rotate(180, 0, 0, 1);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
-		if (go->moveLeft)
-			RenderMesh(meshList[GEO_MORTAR], false);
-		else
-			RenderMesh(meshList[GEO_MORTAR], false);
+		RenderMesh(meshList[geo], false);
 		modelStack.PopMatrix();
 		RenderGOBar(go, 7);
+		break;
+
 
 		//modelStack.PushMatrix();
 		//modelStack.Translate(go->pos.x, go->pos.y, zOffset + 0.001f); // small offset to prevent z-fighting
@@ -1480,13 +2087,79 @@ void SceneMovement_Week03::RenderGO(GameObject* go)
 		//modelStack.Scale(70 * 2, 70 * 2, 1); // radius (scale by 2 for diameter)
 		//RenderMesh(meshList[GEO_CIRCLE], false);
 		//modelStack.PopMatrix();
+		//break;
+	}
+	case GameObject::GO_GOLDENORB:
+		modelStack.PushMatrix();
+		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
+		modelStack.Rotate(180, 0, 0, 1);
+		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
+		if (go->moveLeft)
+			RenderMesh(meshList[GEO_MORTAR], false);
+		else
+			RenderMesh(meshList[GEO_MORTAR], false);
+		modelStack.PopMatrix();
+		RenderGOBar(go, 7);
 		break;
+	//case GameObject::GO_SPAWNMORTARAREA:
+	//	float width = m_gridSize * 1.5;   
+	//	float height = m_gridSize * 2.5;
+
+	//	modelStack.PushMatrix();
+	//	modelStack.Translate(go->pos.x, go->pos.y, zOffset);
+
+	//	// Scale the rectangle according to your width/height settings
+	//	modelStack.Scale(width, height, 1.f);
+
+	//	// Render a flat quad with yellow color
+	//	RenderMesh(meshList[GEO_CUBE], false);
+
+	//	modelStack.PopMatrix();
+	//	break;
 	}
 }
 
+int SceneMovement_Week03::HandleCount(Message* message)
+{
+	MessageHowManyUnit* msgHowMany = dynamic_cast<MessageHowManyUnit*>(message);
+	if (msgHowMany) {
+		GameObject::GAMEOBJECT_TYPE type = msgHowMany->go_type;
+		int count = 0;
+		for (GameObject* go2 : m_goList)
+		{
+			if (!go2->active)
+				continue;
+			if(go2->type == type && go2->side == msgHowMany->side)
+			{
+				count++;
+			}
+		}
+		return count;
+	}
+	return -1;
+}
 
 bool SceneMovement_Week03::Handle(Message* message)
 {
+	MessageMechanicBuild* msgMechBuild = dynamic_cast<MessageMechanicBuild*>(message);
+	if (msgMechBuild) {
+		for (GameObject* go2 : m_goList)
+		{
+			if (!go2->active)
+				continue;
+			if (go2->type != GameObject::GO_MECHANIC)
+				continue;
+			if (go2->sm->GetCurrentState() != "Healthy" && go2->sm->GetCurrentState() != "Hurt")
+				continue;
+			if (go2->nearest != msgMechBuild->go)
+				continue;
+			if (go2->side != msgMechBuild->go->side)
+				continue;
+			go2->sm->SetNextState("Building");
+			return true;
+		}
+	}
+
 	MessageSpawnProj* msgSpawnProj = dynamic_cast<MessageSpawnProj*>(message);
 	if (msgSpawnProj) {
 
@@ -1504,6 +2177,73 @@ bool SceneMovement_Week03::Handle(Message* message)
 		projectile->owner = msgSpawnProj->go;
 	}
 
+	MessageSpawnMorBomb* msgSpawnMorBomb = dynamic_cast<MessageSpawnMorBomb*>(message);
+	if (msgSpawnMorBomb) {
+		GameObject* projectile = FetchProj(GameObject::GO_MORBOMB);
+		projectile->type = GameObject::GO_MORBOMB;
+		projectile->pos = msgSpawnMorBomb->go->pos;
+		projectile->scale = Vector3(m_gridSize / 4, m_gridSize / 4, m_gridSize / 4);
+
+		projectile->target = msgSpawnMorBomb->go->nearest->pos;//use nearest as proj target object
+		projectile->nearest = msgSpawnMorBomb->go->nearest;
+		projectile->moveSpeed = 15.f;
+		projectile->side = msgSpawnMorBomb->go->side;
+		projectile->startPos = projectile->pos;
+		projectile->owner = msgSpawnMorBomb->go;
+	}
+
+	MessageSpawnBigMorBomb* msgSpawnBigMorBomb = dynamic_cast<MessageSpawnBigMorBomb*>(message);
+	if (msgSpawnBigMorBomb) {
+		GameObject* projectile = FetchProj(GameObject::GO_BIGMORBOMB);
+		projectile->type = GameObject::GO_BIGMORBOMB;
+		projectile->pos = msgSpawnBigMorBomb->go->pos;
+		projectile->scale = Vector3(m_gridSize / 4, m_gridSize / 4, m_gridSize / 4);
+		projectile->scale *= 1.2f;
+
+		projectile->target = msgSpawnBigMorBomb->go->nearest->pos;//use nearest as proj target object
+		projectile->nearest = msgSpawnBigMorBomb->go->nearest;
+		projectile->moveSpeed = 15.f;
+		projectile->side = msgSpawnBigMorBomb->go->side;
+		projectile->startPos = projectile->pos;
+		projectile->owner = msgSpawnBigMorBomb->go;
+	}
+
+	MessageSpawnProjTank* msgSpawnProj2 = dynamic_cast<MessageSpawnProjTank*>(message);
+	if (msgSpawnProj2) {
+		GameObject* projectile = NULL;
+		if (msgSpawnProj2->rocketOrProj) {
+			projectile = FetchProj(GameObject::GO_ROCKETS);
+			projectile->type = GameObject::GO_ROCKETS;
+			//std::cout << "Spawning Rocket" << std::endl;
+		}
+		else
+		{
+			projectile = FetchProj(GameObject::GO_PROJECTILE);
+			projectile->type = GameObject::GO_PROJECTILE;
+			//std::cout << "Spawning Projectile" << std::endl;
+		}
+		projectile->pos = msgSpawnProj2->go->pos;
+		projectile->scale = Vector3(m_gridSize / 4, m_gridSize / 4, m_gridSize / 4);
+
+		Vector3 dir = (msgSpawnProj2->target->pos - msgSpawnProj2->go->pos).Normalized();
+		float overshootDistance = 100.0f;
+		projectile->target = msgSpawnProj2->target->pos + dir * overshootDistance;
+		projectile->nearest = msgSpawnProj2->target; //use nearest as proj target object
+		projectile->moveSpeed = 20.f;
+		projectile->side = msgSpawnProj2->go->side;
+		projectile->owner = msgSpawnProj2->go;
+	}
+
+	MessageSpawnAttacker* msgSpawnAtk = dynamic_cast<MessageSpawnAttacker*>(message);
+	if (msgSpawnAtk) {
+		SpawnUnit(msgSpawnAtk->go->side, msgSpawnAtk->go->pos, GameObject::GO_ATTACKER);
+	}
+
+	MessageSpawnMortar* msgSpawnMor = dynamic_cast<MessageSpawnMortar*>(message);
+	if (msgSpawnMor) {
+		SpawnMetalUnit(msgSpawnMor->go->side, msgSpawnMor->go->pos, GameObject::GO_MORTAR);
+	}
+
 
 
 	MessageWRU* messageWRU = dynamic_cast<MessageWRU*>(message);
@@ -1514,6 +2254,10 @@ bool SceneMovement_Week03::Handle(Message* message)
 			MessageWRU::NEAREST_FREE_SUP,
 			MessageWRU::NEAREST_URG_SUP,
 			MessageWRU::NEAREST_ALLY_ATTACKER,
+			MessageWRU::NEAREST_MECHANIC_HEAL,
+			MessageWRU::ALLYACTIVECOUNT,
+			MessageWRU::ATTACKERCOUNT,
+			MessageWRU::NEAREST_GOLDENORB,
 		};
 		bool keepNearest = false;
 		// Loop through the array
@@ -1549,9 +2293,32 @@ bool SceneMovement_Week03::Handle(Message* message)
 					go->nearest = go2;
 				}
 			}
+			else if (messageWRU->type == MessageWRU::NEAREST_GOLDENORB && go2->type == GameObject::GO_GOLDENORB)
+			{
+				go->specialTarget = go2;
+			}
+			else if (messageWRU->type == MessageWRU::ATTACKERCOUNT && go2->side != go->side)
+			{
+				if (go2->nearest == go->nearest)
+				{
+					go->steps++;
+				}
+			}
+			else if (messageWRU->type == MessageWRU::NEAREST_OBJ && go->side != go2->side)
+			{
+				if(go2->type == GameObject::GO_SPAWNER || go2->type == GameObject::GO_MAINBASE)
+				{
+					float distance = (go->pos - go2->pos).Length();
+					if (distance < messageWRU->threshold && distance < nearestDistance)
+					{
+						nearestDistance = distance;
+						go->nearest = go2;
+					}
+				}
+			}
 			else if (messageWRU->type == MessageWRU::ALLYACTIVECOUNT && go2->side == go->side)
 			{
-				if (go2->type == GameObject::GO_SPAWNER || go2->type == GameObject::GO_MAINBASE)
+				if (go2->type == GameObject::GO_SPAWNER || go2->type == GameObject::GO_MAINBASE || go2->type == GameObject::GO_GOLDENORB)
 					continue;
 
 				if (go2->hiding)
@@ -1561,6 +2328,15 @@ bool SceneMovement_Week03::Handle(Message* message)
 					continue;
 				
 				go->alliesActiveCount++;
+			}
+			else if (messageWRU->type == MessageWRU::NEAREST_ENEMY_INAREA && go2->side != go->side)
+			{
+				float distance = (go->pos - go2->pos).Length();
+				if (distance < m_gridSize * messageWRU->threshold)
+				{
+					go->hits.push_back(go2);
+				}
+				
 			}
 			else if (messageWRU->type == MessageWRU::NEAREST_ALLY_ATTACKER && go2->type == GameObject::GO_ATTACKER && go2->side == go->side)
 			{
@@ -1589,6 +2365,7 @@ bool SceneMovement_Week03::Handle(Message* message)
 					if (go2->sm->GetCurrentState() == "UrgentHealing")
 						busyUrgent = true;
 					if (go2->hiding == true) continue;
+					if (go2->sm->GetCurrentState() != "Healthy") continue;
 
 					// We cannot steal an urgent healer
 					// also ensures if this unit is already being healed, it wont find another healer
@@ -1619,6 +2396,7 @@ bool SceneMovement_Week03::Handle(Message* message)
 					{
 						if (!go3->active) continue;
 						if (go3->type != GameObject::GO_SUPPORT) continue;
+						if (go3->sm->GetCurrentState() != "Healthy") continue;
 						if (go3->sm->GetCurrentState() != "Healing") continue;
 
 						if (go3->nearest == go)
@@ -1630,8 +2408,42 @@ bool SceneMovement_Week03::Handle(Message* message)
 
 					if (!alreadyHealing)
 					{
-						int pri = GetHealPriority(go);     // <--- new
-						if (pri > bestPriority || (pri == bestPriority && distance < nearestDistance)) // tie-breaker
+						int pri = GetHealPriority(go);     
+						if (pri > bestPriority || (pri == bestPriority && distance < nearestDistance)) // tiebreaker
+						{
+							bestPriority = pri;
+							nearestDistance = distance;
+							go->external = go2;
+						}
+					}
+				}
+			}
+			else if (messageWRU->type == MessageWRU::NEAREST_MECHANIC_HEAL && go2->type == GameObject::GO_MECHANIC && go2->side == go->side)
+			{
+				int bestPriority = -999;
+
+				float distance = (go->pos - go2->pos).Length();
+				if (distance < messageWRU->threshold && distance < nearestDistance)
+				{
+					if (go2->hiding == true) continue;
+					bool alreadyHealing = false;
+					for (auto go3 : m_goList)
+					{
+						if (!go3->active) continue;
+						if (go3->type != GameObject::GO_MECHANIC) continue;
+						if (go3->sm->GetCurrentState() != "Healthy") continue;
+						if (go3->sm->GetCurrentState() != "Healing") continue;
+
+						if (go3->nearest == go)
+						{
+							alreadyHealing = true;
+							break;
+						}
+					}
+					if (!alreadyHealing)
+					{
+						int pri = GetHealPriority(go);    
+						if (pri > bestPriority || (pri == bestPriority && distance < nearestDistance)) // tiebreaker
 						{
 							bestPriority = pri;
 							nearestDistance = distance;
@@ -1651,18 +2463,44 @@ bool SceneMovement_Week03::Handle(Message* message)
 			}
 			else if (messageWRU->type == MessageWRU::FURTHEST_FRONTLINE && go2->side == go->side)
 			{
-				if (go2->type != GameObject::GO_SPAWNER && go2->type != GameObject::GO_MAINBASE && go2->type != GameObject::GO_TANK) {
+				if (go2->type != GameObject::GO_SPAWNER && go2->type != GameObject::GO_MAINBASE && go2->type != GameObject::GO_GOLDENORB && go2->type != GameObject::GO_TANK && go2->type != GameObject::GO_SPAWNMORTARAREA) {
+
 					float distance = (go->pos - go2->pos).Length();
-					//use highestEnergy because thats just declared as FLT_MIN
-					if (distance < messageWRU->threshold && distance > highestEnergy)
+					if (distance > messageWRU->threshold)
+						continue;
+
+					// side start positions (replace 0.f / 600.f with your actual values/constants)
+					float RED_START_X = 0.0f;
+					float BLUE_START_X = 600.0f;
+
+					float frontValue = 0.0f;
+
+					if (go->side == GameObject::SIDE_BLUE)
 					{
-						highestEnergy = distance;
-						go->nearest = go2;
+						// how far BLUE has moved from 600 towards 0 (positive when they push left)
+						frontValue = BLUE_START_X - go2->pos.x;
+					}
+					else // assume RED
+					{
+						// how far RED has moved from 0 towards +X
+						frontValue = go2->pos.x - RED_START_X;
+					}
+
+					// Optional: if somehow behind their own start line, ignore
+					if (frontValue <= 0.0f)
+						continue;
+
+					if (frontValue > highestEnergy)
+					{
+						highestEnergy = frontValue;
+						go->nearest = go2;   // furthest advanced ally on this side
 					}
 				}
 			}
 			else if (messageWRU->type == MessageWRU::NEAREST_ENEMY && go2->side != go->side)
 			{
+				if (go2->type == GameObject::GO_SPAWNMORTARAREA) continue;
+				if (go2->type == GameObject::GO_GOLDENORB) continue;
 				float distance = (go->pos - go2->pos).Length();
 				if (distance < messageWRU->threshold && distance < nearestDistance)
 				{
@@ -1674,7 +2512,7 @@ bool SceneMovement_Week03::Handle(Message* message)
 			else if (messageWRU->type == MessageWRU::NEAREST_ALLY_NOSUP && go2->side == go->side)
 			{
 				if (go2 != go) {
-					if (go2->type != GameObject::GO_SPAWNER && go2->type != GameObject::GO_MAINBASE && go2->type != GameObject::GO_SUPPORT) {
+					if (go2->type != GameObject::GO_SPAWNER && go2->type != GameObject::GO_MAINBASE && go2->type != GameObject::GO_GOLDENORB && go2->type != GameObject::GO_SPAWNMORTARAREA && go2->type != GameObject::GO_SUPPORT) {
 						float distance = (go->pos - go2->pos).Length();
 						bool alreadySupported = false;
 
@@ -1746,6 +2584,171 @@ bool SceneMovement_Week03::Handle(Message* message)
 	return false;
 }
 
+void SceneMovement_Week03::RenderDebugGO(GameObject::SIDE side, float y)
+{
+	bool isBlue = (side == GameObject::SIDE_BLUE);
+
+	float spacing = m_gridSize * 1.5f;   // distance between icons
+	float x = 112.5;   // starting X position
+	float iconSize = m_gridSize;          // size of each icon
+	float z = 5.0f;                // draw in front of BG
+
+	GEOMETRY_TYPE geo;
+	std::ostringstream ss;
+
+	// small vertical offset for text under the icon
+	float textOffsetY = iconSize * 0.8f;
+
+	// 1) ATTACKER
+	{
+		float iconX = x + 1.25;
+
+		geo = isBlue ? GEO_ATTACKER1_HEALTHY : GEO_ATTACKER2_HEALTHY;
+		modelStack.PushMatrix();
+		modelStack.Translate(x, y, z);
+		modelStack.Rotate(180, 0, 0, 1);
+		modelStack.Scale(iconSize, iconSize, iconSize);
+		RenderMesh(meshList[geo], false);
+		modelStack.PopMatrix();
+
+		// number under icon
+		ss.str("");
+		ss.clear();
+		ss << m_numGO[GameObject::GO_ATTACKER];
+
+		modelStack.PushMatrix();
+		modelStack.Translate(iconX, y - textOffsetY, z);
+		modelStack.Scale(5, 5, 5);
+		RenderText(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0));
+		modelStack.PopMatrix();
+
+		x += spacing;
+	}
+
+	// 2) RANGED
+	{
+		float iconX = x + 1.25;
+
+		geo = isBlue ? GEO_RANGE1_HEALTHY : GEO_RANGE2_HEALTHY;
+		modelStack.PushMatrix();
+		modelStack.Translate(x, y, z);
+		modelStack.Rotate(180, 0, 0, 1);
+		modelStack.Scale(iconSize, iconSize, iconSize);
+		RenderMesh(meshList[geo], false);
+		modelStack.PopMatrix();
+
+		ss.str("");
+		ss.clear();
+		ss << m_numGO[GameObject::GO_RANGED];
+
+		modelStack.PushMatrix();
+		modelStack.Translate(iconX, y - textOffsetY, z);
+		modelStack.Scale(5, 5, 5);
+		RenderText(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0));
+		modelStack.PopMatrix();
+
+		x += spacing;
+	}
+
+	// 3) SUPPORT
+	{
+		float iconX = x + 1.25;
+
+		geo = isBlue ? GEO_SUPPORT1_HEALTHY : GEO_SUPPORT2_HEALTHY;
+		modelStack.PushMatrix();
+		modelStack.Translate(x, y, z);
+		modelStack.Rotate(180, 0, 0, 1);
+		modelStack.Scale(iconSize, iconSize, iconSize);
+		RenderMesh(meshList[geo], false);
+		modelStack.PopMatrix();
+
+		ss.str("");
+		ss.clear();
+		ss << m_numGO[GameObject::GO_SUPPORT];
+
+		modelStack.PushMatrix();
+		modelStack.Translate(iconX, y - textOffsetY, z);
+		modelStack.Scale(5, 5, 5);
+		RenderText(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0));
+		modelStack.PopMatrix();
+
+		x += spacing;
+	}
+
+	// 4) MECHANIC
+	{
+		float iconX = x + 1.25;
+
+		geo = isBlue ? GEO_MECHANIC1_HEALTHY : GEO_MECHANIC2_HEALTHY;
+		modelStack.PushMatrix();
+		modelStack.Translate(x, y, z);
+		modelStack.Rotate(180, 0, 0, 1);
+		modelStack.Scale(iconSize, iconSize, iconSize);
+		RenderMesh(meshList[geo], false);
+		modelStack.PopMatrix();
+
+		ss.str("");
+		ss.clear();
+		ss << m_numGO[GameObject::GO_MECHANIC];
+
+		modelStack.PushMatrix();
+		modelStack.Translate(iconX, y - textOffsetY, z);
+		modelStack.Scale(5, 5, 5);
+		RenderText(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0));
+		modelStack.PopMatrix();
+
+		x += spacing;
+	}
+
+	// 5) TANK
+	{
+		float iconX = x + 1.25;
+
+		geo = isBlue ? GEO_TANK1_HEALTHY : GEO_TANK2_HEALTHY;
+		modelStack.PushMatrix();
+		modelStack.Translate(x, y, z);
+		modelStack.Rotate(180, 0, 0, 1);
+		modelStack.Scale(iconSize, iconSize, iconSize);
+		RenderMesh(meshList[geo], false);
+		modelStack.PopMatrix();
+
+		ss.str("");
+		ss.clear();
+		ss << m_numGO[GameObject::GO_TANK];
+
+		modelStack.PushMatrix();
+		modelStack.Translate(iconX, y - textOffsetY, z);
+		modelStack.Scale(5, 5, 5);
+		RenderText(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0));
+		modelStack.PopMatrix();
+
+		x += spacing;
+	}
+
+	// 6) MORTAR
+	{
+		float iconX = x + 1.25;
+
+		geo = isBlue ? GEO_MORTAR1_HEALTHY : GEO_MORTAR2_HEALTHY;
+		modelStack.PushMatrix();
+		modelStack.Translate(x, y, z);
+		modelStack.Rotate(180, 0, 0, 1);
+		modelStack.Scale(iconSize, iconSize, iconSize);
+		RenderMesh(meshList[geo], false);
+		modelStack.PopMatrix();
+
+		ss.str("");
+		ss.clear();
+		ss << m_numGO[GameObject::GO_MORTAR];
+
+		modelStack.PushMatrix();
+		modelStack.Translate(iconX, y - textOffsetY, z);
+		modelStack.Scale(5, 5, 5);
+		RenderText(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0));
+		modelStack.PopMatrix();
+	}
+}
+
 void SceneMovement_Week03::Render()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1792,35 +2795,97 @@ void SceneMovement_Week03::Render()
 			RenderGO(go);
 		}
 	}
+	RenderDebugGO(GameObject::SIDE_BLUE, 35);
+	RenderDebugGO(GameObject::SIDE_RED,75);
 	//On screen text
 
 	std::ostringstream ss;
-	ss.precision(3);
-	ss << "Speed:" << m_speed;
-	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 3, 50, 6);
+	ss << "Match In Progress";
+	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 3, 49, 10);
 
 	ss.str("");
-	ss.precision(5);
-	ss << "FPS:" << fps;
-	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 3, 50, 3);
+	ss << gameStateString;
+	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 3, 49, 7.5);
+}
 
-	ss.str("");
-	ss << "Count:" << SceneData::GetInstance()->GetObjectCount();
-	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 3, 50, 9);
+std::string SceneMovement_Week03::GameState()
+{
+	GameObject* m_mainBaseBlue = NULL;
+	GameObject* m_mainBaseRed = NULL;
 
-	ss.str("");
-	ss << "Fishes:" << m_numGO[GameObject::GO_FISH];
-	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 3, 50, 18);
+	GameObject* m_blueSpawners[2] = { NULL, NULL };
+	GameObject* m_redSpawners[2] = { NULL, NULL };
 
-	ss.str("");
-	ss << "Shark:" << m_numGO[GameObject::GO_SHARK];
-	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 3, 50, 15);
+	//finding objectives
+	{
+		int blueIndex = 0;
+		int redIndex = 0;
 
-	ss.str("");
-	ss << "Food:" << m_numGO[GameObject::GO_FISHFOOD];
-	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 3, 50, 12);
+		for (int i = 0; i < (int)m_goList.size(); i++)
+		{
+			GameObject* go = m_goList[i];
+			if (!go)
+				continue;
+			if (!go->active)
+				continue;
 
-	RenderTextOnScreen(meshList[GEO_TEXT], "Aquarium", Color(0, 1, 0), 3, 50, 0);
+			// --- MAIN BASES ---
+			if (go->type == GameObject::GO_MAINBASE)
+			{
+				if (go->side == GameObject::SIDE_BLUE)
+					m_mainBaseBlue = go;
+				else if (go->side == GameObject::SIDE_RED)
+					m_mainBaseRed = go;
+			}
+			// --- SPAWNERS ---
+			else if (go->type == GameObject::GO_SPAWNER)
+			{
+				if (go->side == GameObject::SIDE_BLUE)
+				{
+					if (blueIndex < 2)
+					{
+						m_blueSpawners[blueIndex] = go;
+						blueIndex++;
+					}
+				}
+				else if (go->side == GameObject::SIDE_RED)
+				{
+					if (redIndex < 2)
+					{
+						m_redSpawners[redIndex] = go;
+						redIndex++;
+					}
+				}
+			}
+		}
+	}
+
+	float redSpawnerHealth = m_redSpawners[0]->health + m_redSpawners[1]->health;
+	float blueSpawnerHealth = m_blueSpawners[0]->health + m_blueSpawners[1]->health;
+
+	float redBasePer = m_mainBaseRed->health / m_mainBaseRed->maxHealth;
+	float blueBasePer = m_mainBaseBlue->health / m_mainBaseBlue->maxHealth;
+	if (redBasePer == 1 && blueBasePer == 1)
+	{
+		if (redSpawnerHealth > blueSpawnerHealth)
+			return "Red Side is Winning";
+		else if (blueSpawnerHealth > redSpawnerHealth)
+			return "Blue Side is Winning";
+		else if (redSpawnerHealth == blueSpawnerHealth)
+			return "The Game is Tied Currently";
+	}
+	else if (redBasePer > blueBasePer)
+	{
+		return "Red Side is Winning";
+	}
+	else if (blueBasePer > redBasePer)
+	{ 
+		return "Blue Side is Winning";
+	}
+	else if (blueBasePer == redBasePer)
+	{
+		return "The Game is Tied Currently";
+	}
 }
 
 void SceneMovement_Week03::Exit()

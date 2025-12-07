@@ -28,4 +28,29 @@ public:
 	virtual void Exit();
 };
 
+class StateTankSuicide : public State
+{
+	GameObject* go;
+public:
+	StateTankSuicide(const std::string& stateID, GameObject* go = NULL);
+	virtual ~StateTankSuicide();
+
+	virtual void Enter();
+	virtual void Update(double dt);
+	virtual void Exit();
+};
+
+class StateTankDeath : public State
+{
+	GameObject* go;
+public:
+	StateTankDeath(const std::string& stateID, GameObject* go = NULL);
+	virtual ~StateTankDeath();
+
+	virtual void Enter();
+	virtual void Update(double dt);
+	virtual void Exit();
+};
+
+
 #endif
