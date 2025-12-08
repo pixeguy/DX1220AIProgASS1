@@ -59,6 +59,8 @@ public:
 	ArmyStats ComputeArmyStats(GameObject::SIDE mySide);
 	bool DecideSpawn(GameObject* spawner);
 
+	float timeCounter = 0;
+
 	// material thresholds
 	const int lowWoodThreshold = 4; 
 	const int lowMetalThreshold = 4;
@@ -98,6 +100,8 @@ protected:
 	float m_gridOffset;
 	float m_hourOfTheDay;
 	int m_numGO[GameObject::GO_TOTAL] = { 0 };
+	int m_numBlueGO[GameObject::GO_TOTAL] = { 0 };
+	int m_numRedGO[GameObject::GO_TOTAL] = { 0 };
 	float zOffset;
 };
 

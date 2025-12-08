@@ -217,7 +217,7 @@ GameObject* SceneMovement_Week03::InitMainBase(GameObject::SIDE side, Vector3 po
 	mainBase->sm->SetNextState("Healthy");
 	mainBase->maxEnergy = 100;
 	mainBase->maxHealth = 100;
-	mainBase->health = 90;
+	mainBase->health = 100;
 	mainBase->moving = false;
 	return mainBase;
 }
@@ -230,8 +230,8 @@ GameObject* SceneMovement_Week03::InitGoldenOrb(Vector3 pos)
 	mainBase->target = mainBase->pos;
 	mainBase->sm->SetNextState("Healthy");
 	mainBase->maxEnergy = 100;
-	mainBase->maxHealth = 100;
-	mainBase->health = 90;
+	mainBase->maxHealth = 200;
+	mainBase->health = 200;
 	mainBase->moving = false;
 	return mainBase;
 }
@@ -970,10 +970,12 @@ void SceneMovement_Week03::Update(double dt)
 			{
 				MessageWRU msgCheckSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200.0f);
 				Handle(&msgCheckSpawner);
-				if (go->nearest->type == GameObject::GO_SPAWNER) {
-					go->choice = MechanicNeedGet(go->nearest);
+				if (go->nearest != NULL || go->nearest->active) {
+					if (go->nearest->type == GameObject::GO_SPAWNER) {
+						go->choice = MechanicNeedGet(go->nearest);
+					}
+					else { go->choice = 0; }
 				}
-				else { go->choice = 0; }
 			}
 
 			if(go->sm->GetCurrentState() == "Hurt")
@@ -1626,81 +1628,118 @@ void SceneMovement_Week03::Update(double dt)
 
 	//Counting objects
 	CountingGO();
+	if (timeCounter <= 300)
+	{
+		timeCounter += dt;
+	}
 	gameStateString = GameState();
+	if (gameStateString == "Red Side Wins!" || gameStateString == "Blue Side Wins!")
+	{ }//what am i suppose to do when the game ends idk?
+
+
+}
+std::string GetTimeString(float timeCounter)
+{
+	int totalSeconds = static_cast<int>(timeCounter);
+
+	// clamp between 0 and 5 minutes
+	if (totalSeconds < 0)
+		totalSeconds = 0;
+	if (totalSeconds > 5 * 60)
+		totalSeconds = 5 * 60;
+
+	int minutes = totalSeconds / 60;
+	int seconds = totalSeconds % 60;
+
+	std::string result = std::to_string(minutes);
+	result += ":";
+
+	// manual zero-padding for seconds
+	if (seconds < 10)
+		result += "0";
+
+	result += std::to_string(seconds);
+
+	return result; // e.g. "0:05", "1:23", "5:00"
 }
 
 void SceneMovement_Week03::CountingGO()
 {
-	m_numGO[GameObject::GO_ATTACKER] = 0;
-	m_numGO[GameObject::GO_RANGED] = 0;
-	m_numGO[GameObject::GO_SUPPORT] = 0;
-	m_numGO[GameObject::GO_MECHANIC] = 0;
-	m_numGO[GameObject::GO_TANK] = 0;
-	m_numGO[GameObject::GO_MORTAR] = 0;
-
 	// ---------- ATTACKER ----------
 	{
-		MessageHowManyUnit msgAttackerBlue(GameObject::GO_ATTACKER, GameObject::SIDE_BLUE);
-		MessageHowManyUnit msgAttackerRed(GameObject::GO_ATTACKER, GameObject::SIDE_RED);
+		MessageHowManyUnit msgBlue(GameObject::GO_ATTACKER, GameObject::SIDE_BLUE);
+		MessageHowManyUnit msgRed(GameObject::GO_ATTACKER, GameObject::SIDE_RED);
 
-		int blueAttacker = HandleCount(&msgAttackerBlue);
-		int redAttacker = HandleCount(&msgAttackerRed);
+		int blueAttacker = HandleCount(&msgBlue);
+		int redAttacker = HandleCount(&msgRed);
 
+		m_numBlueGO[GameObject::GO_ATTACKER] = blueAttacker;
+		m_numRedGO[GameObject::GO_ATTACKER] = redAttacker;
 		m_numGO[GameObject::GO_ATTACKER] = blueAttacker + redAttacker;
 	}
 
 	// ---------- RANGED ----------
 	{
-		MessageHowManyUnit msgRangedBlue(GameObject::GO_RANGED, GameObject::SIDE_BLUE);
-		MessageHowManyUnit msgRangedRed(GameObject::GO_RANGED, GameObject::SIDE_RED);
+		MessageHowManyUnit msgBlue(GameObject::GO_RANGED, GameObject::SIDE_BLUE);
+		MessageHowManyUnit msgRed(GameObject::GO_RANGED, GameObject::SIDE_RED);
 
-		int blueRanged = HandleCount(&msgRangedBlue);
-		int redRanged = HandleCount(&msgRangedRed);
+		int blueRanged = HandleCount(&msgBlue);
+		int redRanged = HandleCount(&msgRed);
 
+		m_numBlueGO[GameObject::GO_RANGED] = blueRanged;
+		m_numRedGO[GameObject::GO_RANGED] = redRanged;
 		m_numGO[GameObject::GO_RANGED] = blueRanged + redRanged;
 	}
 
 	// ---------- SUPPORT ----------
 	{
-		MessageHowManyUnit msgSupportBlue(GameObject::GO_SUPPORT, GameObject::SIDE_BLUE);
-		MessageHowManyUnit msgSupportRed(GameObject::GO_SUPPORT, GameObject::SIDE_RED);
+		MessageHowManyUnit msgBlue(GameObject::GO_SUPPORT, GameObject::SIDE_BLUE);
+		MessageHowManyUnit msgRed(GameObject::GO_SUPPORT, GameObject::SIDE_RED);
 
-		int blueSupport = HandleCount(&msgSupportBlue);
-		int redSupport = HandleCount(&msgSupportRed);
+		int blueSupport = HandleCount(&msgBlue);
+		int redSupport = HandleCount(&msgRed);
 
+		m_numBlueGO[GameObject::GO_SUPPORT] = blueSupport;
+		m_numRedGO[GameObject::GO_SUPPORT] = redSupport;
 		m_numGO[GameObject::GO_SUPPORT] = blueSupport + redSupport;
 	}
 
 	// ---------- MECHANIC ----------
 	{
-		MessageHowManyUnit msgMechBlue(GameObject::GO_MECHANIC, GameObject::SIDE_BLUE);
-		MessageHowManyUnit msgMechRed(GameObject::GO_MECHANIC, GameObject::SIDE_RED);
+		MessageHowManyUnit msgBlue(GameObject::GO_MECHANIC, GameObject::SIDE_BLUE);
+		MessageHowManyUnit msgRed(GameObject::GO_MECHANIC, GameObject::SIDE_RED);
 
-		int blueMech = HandleCount(&msgMechBlue);
-		int redMech = HandleCount(&msgMechRed);
+		int blueMech = HandleCount(&msgBlue);
+		int redMech = HandleCount(&msgRed);
 
+		m_numBlueGO[GameObject::GO_MECHANIC] = blueMech;
+		m_numRedGO[GameObject::GO_MECHANIC] = redMech;
 		m_numGO[GameObject::GO_MECHANIC] = blueMech + redMech;
 	}
 
 	// ---------- TANK ----------
 	{
-		MessageHowManyUnit msgTankBlue(GameObject::GO_TANK, GameObject::SIDE_BLUE);
-		MessageHowManyUnit msgTankRed(GameObject::GO_TANK, GameObject::SIDE_RED);
+		MessageHowManyUnit msgBlue(GameObject::GO_TANK, GameObject::SIDE_BLUE);
+		MessageHowManyUnit msgRed(GameObject::GO_TANK, GameObject::SIDE_RED);
 
-		int blueTank = HandleCount(&msgTankBlue);
-		int redTank = HandleCount(&msgTankRed);
+		int blueTank = HandleCount(&msgBlue);
+		int redTank = HandleCount(&msgRed);
 
+		m_numBlueGO[GameObject::GO_TANK] = blueTank;
+		m_numRedGO[GameObject::GO_TANK] = redTank;
 		m_numGO[GameObject::GO_TANK] = blueTank + redTank;
 	}
 
 	// ---------- MORTAR ----------
 	{
-		MessageHowManyUnit msgMortarBlue(GameObject::GO_MORTAR, GameObject::SIDE_BLUE);
-		MessageHowManyUnit msgMortarRed(GameObject::GO_MORTAR, GameObject::SIDE_RED);
+		MessageHowManyUnit msgBlue(GameObject::GO_MORTAR, GameObject::SIDE_BLUE);
+		MessageHowManyUnit msgRed(GameObject::GO_MORTAR, GameObject::SIDE_RED);
 
-		int blueMortar = HandleCount(&msgMortarBlue);
-		int redMortar = HandleCount(&msgMortarRed);
+		int blueMortar = HandleCount(&msgBlue);
+		int redMortar = HandleCount(&msgRed);
 
+		m_numBlueGO[GameObject::GO_MORTAR] = blueMortar;
+		m_numRedGO[GameObject::GO_MORTAR] = redMortar;
 		m_numGO[GameObject::GO_MORTAR] = blueMortar + redMortar;
 	}
 }
@@ -2589,9 +2628,9 @@ void SceneMovement_Week03::RenderDebugGO(GameObject::SIDE side, float y)
 	bool isBlue = (side == GameObject::SIDE_BLUE);
 
 	float spacing = m_gridSize * 1.5f;   // distance between icons
-	float x = 112.5;   // starting X position
-	float iconSize = m_gridSize;          // size of each icon
-	float z = 5.0f;                // draw in front of BG
+	float x = 112.5;                     // starting X position
+	float iconSize = m_gridSize;         // size of each icon
+	float z = 5.0f;                      // draw in front of BG
 
 	GEOMETRY_TYPE geo;
 	std::ostringstream ss;
@@ -2601,7 +2640,7 @@ void SceneMovement_Week03::RenderDebugGO(GameObject::SIDE side, float y)
 
 	// 1) ATTACKER
 	{
-		float iconX = x + 1.25;
+		float iconX = x + 1.25f;
 
 		geo = isBlue ? GEO_ATTACKER1_HEALTHY : GEO_ATTACKER2_HEALTHY;
 		modelStack.PushMatrix();
@@ -2614,7 +2653,9 @@ void SceneMovement_Week03::RenderDebugGO(GameObject::SIDE side, float y)
 		// number under icon
 		ss.str("");
 		ss.clear();
-		ss << m_numGO[GameObject::GO_ATTACKER];
+		ss << (isBlue
+			? m_numBlueGO[GameObject::GO_ATTACKER]
+			: m_numRedGO[GameObject::GO_ATTACKER]);
 
 		modelStack.PushMatrix();
 		modelStack.Translate(iconX, y - textOffsetY, z);
@@ -2627,7 +2668,7 @@ void SceneMovement_Week03::RenderDebugGO(GameObject::SIDE side, float y)
 
 	// 2) RANGED
 	{
-		float iconX = x + 1.25;
+		float iconX = x + 1.25f;
 
 		geo = isBlue ? GEO_RANGE1_HEALTHY : GEO_RANGE2_HEALTHY;
 		modelStack.PushMatrix();
@@ -2639,7 +2680,9 @@ void SceneMovement_Week03::RenderDebugGO(GameObject::SIDE side, float y)
 
 		ss.str("");
 		ss.clear();
-		ss << m_numGO[GameObject::GO_RANGED];
+		ss << (isBlue
+			? m_numBlueGO[GameObject::GO_RANGED]
+			: m_numRedGO[GameObject::GO_RANGED]);
 
 		modelStack.PushMatrix();
 		modelStack.Translate(iconX, y - textOffsetY, z);
@@ -2652,7 +2695,7 @@ void SceneMovement_Week03::RenderDebugGO(GameObject::SIDE side, float y)
 
 	// 3) SUPPORT
 	{
-		float iconX = x + 1.25;
+		float iconX = x + 1.25f;
 
 		geo = isBlue ? GEO_SUPPORT1_HEALTHY : GEO_SUPPORT2_HEALTHY;
 		modelStack.PushMatrix();
@@ -2664,7 +2707,9 @@ void SceneMovement_Week03::RenderDebugGO(GameObject::SIDE side, float y)
 
 		ss.str("");
 		ss.clear();
-		ss << m_numGO[GameObject::GO_SUPPORT];
+		ss << (isBlue
+			? m_numBlueGO[GameObject::GO_SUPPORT]
+			: m_numRedGO[GameObject::GO_SUPPORT]);
 
 		modelStack.PushMatrix();
 		modelStack.Translate(iconX, y - textOffsetY, z);
@@ -2677,7 +2722,7 @@ void SceneMovement_Week03::RenderDebugGO(GameObject::SIDE side, float y)
 
 	// 4) MECHANIC
 	{
-		float iconX = x + 1.25;
+		float iconX = x + 1.25f;
 
 		geo = isBlue ? GEO_MECHANIC1_HEALTHY : GEO_MECHANIC2_HEALTHY;
 		modelStack.PushMatrix();
@@ -2689,7 +2734,9 @@ void SceneMovement_Week03::RenderDebugGO(GameObject::SIDE side, float y)
 
 		ss.str("");
 		ss.clear();
-		ss << m_numGO[GameObject::GO_MECHANIC];
+		ss << (isBlue
+			? m_numBlueGO[GameObject::GO_MECHANIC]
+			: m_numRedGO[GameObject::GO_MECHANIC]);
 
 		modelStack.PushMatrix();
 		modelStack.Translate(iconX, y - textOffsetY, z);
@@ -2702,7 +2749,7 @@ void SceneMovement_Week03::RenderDebugGO(GameObject::SIDE side, float y)
 
 	// 5) TANK
 	{
-		float iconX = x + 1.25;
+		float iconX = x + 1.25f;
 
 		geo = isBlue ? GEO_TANK1_HEALTHY : GEO_TANK2_HEALTHY;
 		modelStack.PushMatrix();
@@ -2714,7 +2761,9 @@ void SceneMovement_Week03::RenderDebugGO(GameObject::SIDE side, float y)
 
 		ss.str("");
 		ss.clear();
-		ss << m_numGO[GameObject::GO_TANK];
+		ss << (isBlue
+			? m_numBlueGO[GameObject::GO_TANK]
+			: m_numRedGO[GameObject::GO_TANK]);
 
 		modelStack.PushMatrix();
 		modelStack.Translate(iconX, y - textOffsetY, z);
@@ -2727,7 +2776,7 @@ void SceneMovement_Week03::RenderDebugGO(GameObject::SIDE side, float y)
 
 	// 6) MORTAR
 	{
-		float iconX = x + 1.25;
+		float iconX = x + 1.25f;
 
 		geo = isBlue ? GEO_MORTAR1_HEALTHY : GEO_MORTAR2_HEALTHY;
 		modelStack.PushMatrix();
@@ -2739,7 +2788,9 @@ void SceneMovement_Week03::RenderDebugGO(GameObject::SIDE side, float y)
 
 		ss.str("");
 		ss.clear();
-		ss << m_numGO[GameObject::GO_MORTAR];
+		ss << (isBlue
+			? m_numBlueGO[GameObject::GO_MORTAR]
+			: m_numRedGO[GameObject::GO_MORTAR]);
 
 		modelStack.PushMatrix();
 		modelStack.Translate(iconX, y - textOffsetY, z);
@@ -2806,6 +2857,10 @@ void SceneMovement_Week03::Render()
 	ss.str("");
 	ss << gameStateString;
 	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 3, 49, 7.5);
+
+	ss.str("");
+	ss << GetTimeString(timeCounter);
+	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 3, 49, 5);
 }
 
 std::string SceneMovement_Week03::GameState()
@@ -2860,11 +2915,62 @@ std::string SceneMovement_Week03::GameState()
 		}
 	}
 
-	float redSpawnerHealth = m_redSpawners[0]->health + m_redSpawners[1]->health;
-	float blueSpawnerHealth = m_blueSpawners[0]->health + m_blueSpawners[1]->health;
+	float redSpawnerHealth = 0.0f;
+	float blueSpawnerHealth = 0.0f;
 
-	float redBasePer = m_mainBaseRed->health / m_mainBaseRed->maxHealth;
-	float blueBasePer = m_mainBaseBlue->health / m_mainBaseBlue->maxHealth;
+	if (m_redSpawners[0])
+		redSpawnerHealth += m_redSpawners[0]->health;
+	if (m_redSpawners[1])
+		redSpawnerHealth += m_redSpawners[1]->health;
+
+	if (m_blueSpawners[0])
+		blueSpawnerHealth += m_blueSpawners[0]->health;
+	if (m_blueSpawners[1])
+		blueSpawnerHealth += m_blueSpawners[1]->health;
+
+	float redBasePer = 0.0f;
+	float blueBasePer = 0.0f;
+
+	if (m_mainBaseRed && m_mainBaseRed->maxHealth > 0.0f)
+		redBasePer = m_mainBaseRed->health / m_mainBaseRed->maxHealth;
+
+	if (m_mainBaseBlue && m_mainBaseBlue->maxHealth > 0.0f)
+		blueBasePer = m_mainBaseBlue->health / m_mainBaseBlue->maxHealth;
+
+	if (timeCounter >= 300)
+	{
+		if (redBasePer == 1 && blueBasePer == 1)
+		{
+			if (redSpawnerHealth > blueSpawnerHealth)
+				return "Red Side Wins!";
+			else if (blueSpawnerHealth > redSpawnerHealth)
+				return "Blue Side Wins!";
+			else if (redSpawnerHealth == blueSpawnerHealth)
+				return "The Game is Tied Currently";
+		}
+		else if (redBasePer > blueBasePer)
+		{
+			return "Red Side Wins!";
+		}
+		else if (blueBasePer > redBasePer)
+		{
+			return "Blue Side Wins!";
+		}
+		else if (blueBasePer == redBasePer)
+		{
+			return "The Game is Tied Currently";
+		}
+	}
+
+	if (redBasePer <= 0)
+	{
+		return "Red Side Wins!";
+	}
+	else if (blueBasePer <= 0)
+	{
+		return "Blue Side Wins!";
+	}
+
 	if (redBasePer == 1 && blueBasePer == 1)
 	{
 		if (redSpawnerHealth > blueSpawnerHealth)
