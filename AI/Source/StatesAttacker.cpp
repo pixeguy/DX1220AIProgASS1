@@ -94,6 +94,7 @@ void StateAttackerStayStrong::Enter()
 {
 	//go->moveSpeed = 0;
 	go->actionSpeed = 0.15;
+	m_rollTimer = 0;
 	//go->target = go->pos;
 	//go->nearest = NULL;
 	//go->active = false;
@@ -113,9 +114,21 @@ void StateAttackerStayStrong::Update(double dt)
 		return;
 	}
 
-	float random = Math::RandFloatMinMax(0.f, 1.f); //once ive chosen to stay, have lower chance to run
-	if (random < 0.3f)
-		go->sm->SetNextState("Flee");
+	// roll once every N seconds
+	static const float kRollInterval = 1.0f; // try fleeing once per second
+	m_rollTimer += (float)dt;
+
+	if (m_rollTimer >= kRollInterval)
+	{
+		m_rollTimer -= kRollInterval; // keep it stable if dt spikes
+
+		float r = Math::RandFloatMinMax(0.f, 1.f);
+		if (r < 0.3f)                 // 30% per roll interval
+		{
+			go->sm->SetNextState("Flee");
+			return;
+		}
+	}
 
 	go->moveLeft = go->moveRight = go->moveUp = go->moveDown = false;
 	if (go->nearest)
@@ -305,6 +318,9 @@ void StateAttackerNearDeath::Update(double dt)
 	if(go->health <= 0)
 	{
 		go->sm->SetNextState("Dead");
+		go->sm->m_currState->Exit();
+		go->sm->m_currState = go->sm->m_nextState;
+		go->sm->m_currState->Enter();
 		return;
 	}
 	if(go->health > 40)

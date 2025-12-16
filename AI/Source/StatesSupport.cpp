@@ -28,6 +28,9 @@ void StateSupportHealthy::Update(double dt)
 	if (m_go->health <= 0)
 	{
 		m_go->sm->SetNextState("Death");
+		m_go->sm->m_currState->Exit();
+		m_go->sm->m_currState = m_go->sm->m_nextState;
+		m_go->sm->m_currState->Enter();
 		return;
 	}
 	if (m_go->alliesActiveCount == 0)
@@ -153,6 +156,9 @@ void StateSupportHealing::Update(double dt)
 	if (m_go->health <= 0)
 	{
 		m_go->sm->SetNextState("Death");
+		m_go->sm->m_currState->Exit();
+		m_go->sm->m_currState = m_go->sm->m_nextState;
+		m_go->sm->m_currState->Enter();
 		return;
 	}
 	if (m_go->alliesActiveCount == 0)
@@ -243,6 +249,9 @@ void StateSupportUrgentHealing::Update(double dt)
 	if (m_go->health <= 0)
 	{
 		m_go->sm->SetNextState("Death");
+		m_go->sm->m_currState->Exit();
+		m_go->sm->m_currState = m_go->sm->m_nextState;
+		m_go->sm->m_currState->Enter();
 		return;
 	}
 	if (m_go->alliesActiveCount == 0)
@@ -265,6 +274,7 @@ void StateSupportUrgentHealing::Update(double dt)
 	if (m_go->healTarget == NULL || m_go->healTarget->active == false)
 	{
 		m_go->sm->SetNextState("Healthy");
+		m_go->urgent = false;
 		m_go->healTarget = NULL;
 		return;
 	}
@@ -332,6 +342,9 @@ void StateSupportHurt::Update(double dt)
 	if (m_go->health <= 0)
 	{
 		m_go->sm->SetNextState("Death");
+		m_go->sm->m_currState->Exit();
+		m_go->sm->m_currState = m_go->sm->m_nextState;
+		m_go->sm->m_currState->Enter();
 		return;
 	}
 	if (m_go->alliesActiveCount == 0)
@@ -410,6 +423,9 @@ void StateSupportHiding::Update(double dt)
 	if (m_go->health <= 0)
 	{
 		m_go->sm->SetNextState("Death");
+		m_go->sm->m_currState->Exit();
+		m_go->sm->m_currState = m_go->sm->m_nextState;
+		m_go->sm->m_currState->Enter();
 		return;
 	}
 	if (m_go->alliesActiveCount > 0)

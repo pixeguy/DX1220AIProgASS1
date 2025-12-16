@@ -83,107 +83,109 @@ bool Application::LoadScene()
 	int choice; // Variable to store user's menu choice
 
 	do {
+
+		m_scene = new SceneMovement_Week03(); bContinue = false;
 		// Display the menu options
-		std::cout << "--- Main Menu : Choose the scene to run ---" << std::endl;
-		std::cout << "1.  Week 1A. SceneTicTacToe" << std::endl;
-		std::cout << "2.  Week 1B. SceneMovement_Week01" << std::endl;
-		std::cout << "3.  Week 2.  SceneMovement_Week02" << std::endl;
-		std::cout << "4.  Week 3.  SceneMovement_Week03" << std::endl;
-		std::cout << "5.  Week 4.  SceneMovement_Week04" << std::endl;
-		std::cout << "6.  Week 5.  SceneMovement_Week05" << std::endl;
-		std::cout << "7.  Week 6A. SceneKnight" << std::endl;
-		std::cout << "8.  Week 6B. SceneQueen" << std::endl;
-		std::cout << "9.  Week 7.  SceneMaze" << std::endl;
-		std::cout << "10. Week 8.  SceneTurn" << std::endl;
-		std::cout << "11. Week 9.  SceneGraph_Week09" << std::endl;
-		std::cout << "12. Week 12. SceneGraph_Week12" << std::endl;
-		std::cout << "13. Week 13. SceneHex" << std::endl;
-		std::cout << "14. Week 14. SceneReversi" << std::endl;
-		std::cout << "15. Week 16. SceneFlappyBird" << std::endl;
-		std::cout << "0. Exit" << std::endl;
-		std::cout << "Enter your choice: ";
+		//std::cout << "--- Main Menu : Choose the scene to run ---" << std::endl;
+		//std::cout << "1.  Week 1A. SceneTicTacToe" << std::endl;
+		//std::cout << "2.  Week 1B. SceneMovement_Week01" << std::endl;
+		//std::cout << "3.  Week 2.  SceneMovement_Week02" << std::endl;
+		//std::cout << "4.  Week 3.  SceneMovement_Week03" << std::endl;
+		//std::cout << "5.  Week 4.  SceneMovement_Week04" << std::endl;
+		//std::cout << "6.  Week 5.  SceneMovement_Week05" << std::endl;
+		//std::cout << "7.  Week 6A. SceneKnight" << std::endl;
+		//std::cout << "8.  Week 6B. SceneQueen" << std::endl;
+		//std::cout << "9.  Week 7.  SceneMaze" << std::endl;
+		//std::cout << "10. Week 8.  SceneTurn" << std::endl;
+		//std::cout << "11. Week 9.  SceneGraph_Week09" << std::endl;
+		//std::cout << "12. Week 12. SceneGraph_Week12" << std::endl;
+		//std::cout << "13. Week 13. SceneHex" << std::endl;
+		//std::cout << "14. Week 14. SceneReversi" << std::endl;
+		//std::cout << "15. Week 16. SceneFlappyBird" << std::endl;
+		//std::cout << "0. Exit" << std::endl;
+		//std::cout << "Enter your choice: ";
 
 		// Get user input
-		std::cin >> choice;
+		//std::cin >> choice;
 
 		// Process the user's choice
-		switch (choice) {
-		case 1:
-			std::cout << "You selected SceneTicTacToe.\n";
-			m_scene = new SceneMovement_Week999();
-			bContinue = false;
-			break;
-		case 2:
-			std::cout << "You selected SceneMovement_Week01.\n";
-			m_scene = new SceneMovement_Week01();
-			bContinue = false;
-			break;
-		case 3:
-			std::cout << "You selected SceneMovement_Week02.\n";
-			m_scene = new SceneMovement_Week02();
-			bContinue = false;
-			break;
-		case 4:
-			std::cout << "You selected SceneMovement_Week03.\n";
-			m_scene = new SceneMovement_Week03();
-			bContinue = false;
-			break;
-		case 5:
-			std::cout << "You selected SceneMovement_Week04.\n";
-			m_scene = new SceneMovement_Week04();
-			bContinue = false;
-			break;
-		case 6:
-			std::cout << "You selected SceneMovement_Week05.\n";
-			bContinue = false;
-			break;
-		case 7:
-			std::cout << "You selected SceneKnight.\n";
-			bContinue = false;
-			break;
-		case 8:
-			std::cout << "You selected SceneQueen.\n";
-			bContinue = false;
-			break;
-		case 9:
-			std::cout << "You selected SceneMaze.\n";
-			bContinue = false;
-			break;
-		case 10:
-			std::cout << "You selected SceneTurn.\n";
-			bContinue = false;
-			break;
-		case 11:
-			std::cout << "You selected SceneGraph_Week09.\n";
-			bContinue = false;
-			break;
-		case 12:
-			std::cout << "You selected SceneGraph_Week12.\n";
-			bContinue = false;
-			break;
-		case 13:
-			std::cout << "You selected SceneHex.\n";
-			bContinue = false;
-			break;
-		case 14:
-			std::cout << "You selected SceneReversi.\n";
-			bContinue = false;
-			break;
-		case 15:
-			std::cout << "You selected SceneFlappyBird.\n";
-			bContinue = false;
-			break;
-		case 0:
-			std::cout << "You selected quitting this application.\n";
-			return false;
-			break;
-		default:
-			std::cout << "Invalid choice. Please try again.\n";
-			// Clear error flags and ignore remaining input in the buffer
-			std::cin.clear();
-			std::cin.ignore(10000, '\n');
-			break;
-		}
+		//switch (choice) {
+		//case 1:
+		//	std::cout << "You selected SceneTicTacToe.\n";
+		//	m_scene = new SceneMovement_Week999();
+		//	bContinue = false;
+		//	break;
+		//case 2:
+		//	std::cout << "You selected SceneMovement_Week01.\n";
+		//	m_scene = new SceneMovement_Week01();
+		//	bContinue = false;
+		//	break;
+		//case 3:
+		//	std::cout << "You selected SceneMovement_Week02.\n";
+		//	m_scene = new SceneMovement_Week02();
+		//	bContinue = false;
+		//	break;
+		//case 4:
+		//	std::cout << "You selected SceneMovement_Week03.\n";
+		//	m_scene = new SceneMovement_Week03();
+		//	bContinue = false;
+		//	break;
+		//case 5:
+		//	std::cout << "You selected SceneMovement_Week04.\n";
+		//	m_scene = new SceneMovement_Week04();
+		//	bContinue = false;
+		//	break;
+		//case 6:
+		//	std::cout << "You selected SceneMovement_Week05.\n";
+		//	bContinue = false;
+		//	break;
+		//case 7:
+		//	std::cout << "You selected SceneKnight.\n";
+		//	bContinue = false;
+		//	break;
+		//case 8:
+		//	std::cout << "You selected SceneQueen.\n";
+		//	bContinue = false;
+		//	break;
+		//case 9:
+		//	std::cout << "You selected SceneMaze.\n";
+		//	bContinue = false;
+		//	break;
+		//case 10:
+		//	std::cout << "You selected SceneTurn.\n";
+		//	bContinue = false;
+		//	break;
+		//case 11:
+		//	std::cout << "You selected SceneGraph_Week09.\n";
+		//	bContinue = false;
+		//	break;
+		//case 12:
+		//	std::cout << "You selected SceneGraph_Week12.\n";
+		//	bContinue = false;
+		//	break;
+		//case 13:
+		//	std::cout << "You selected SceneHex.\n";
+		//	bContinue = false;
+		//	break;
+		//case 14:
+		//	std::cout << "You selected SceneReversi.\n";
+		//	bContinue = false;
+		//	break;
+		//case 15:
+		//	std::cout << "You selected SceneFlappyBird.\n";
+		//	bContinue = false;
+		//	break;
+		//case 0:
+		//	std::cout << "You selected quitting this application.\n";
+		//	return false;
+		//	break;
+		//default:
+		//	std::cout << "Invalid choice. Please try again.\n";
+		//	// Clear error flags and ignore remaining input in the buffer
+		//	std::cin.clear();
+		//	std::cin.ignore(10000, '\n');
+		//	break;
+		//}
 	} while (bContinue == true); // Loop until bContinue != true
 
 	return true;

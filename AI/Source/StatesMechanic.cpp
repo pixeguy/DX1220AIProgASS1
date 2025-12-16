@@ -515,6 +515,17 @@ void StateMechanicGoldenChase::Update(double dt)
 				}
 				if (!chasingPhase)
 				{
+					if (go->choice != 0)
+					{
+						if (go->choice == 1)
+						{
+							go->nearest->woodenLogs++;
+						}
+						else if (go->choice == 2)
+						{
+							go->nearest->metalParts++;
+						}
+					}
 					go->nearest = go->specialTarget;
 				}
 				chasingPhase = !chasingPhase;

@@ -90,6 +90,9 @@ public:
 	const int costMortar = 5;
 	const float costWeight = 1.0f; // tweak this later
 
+	bool gamePlaying = false;
+	bool goldenEvent = false;
+
 protected:
 	std::vector<GameObject*> m_projList;
 	std::vector<GameObject*> m_spawners;

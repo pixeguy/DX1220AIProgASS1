@@ -22,6 +22,7 @@ class StateAttackerStayStrong : public State
 public:
 	StateAttackerStayStrong(const std::string& stateID, GameObject* go = NULL);
 	virtual ~StateAttackerStayStrong();
+	float m_rollTimer;
 
 	virtual void Enter();
 	virtual void Update(double dt);

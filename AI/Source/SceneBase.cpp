@@ -327,6 +327,13 @@ void SceneBase::Init()
 		// Golden Orb
 		meshList[GEO_GOLDENORB] = MeshBuilder::GenerateQuad("GoldenOrb", Color(1, 1, 1));
 		meshList[GEO_GOLDENORB]->textureID = LoadTGA("Image//GoldenOrb.tga");
+
+		//Bullets
+		meshList[GEO_BULLET1] = MeshBuilder::GenerateQuad("Bullet1", Color(1, 1, 1));
+		meshList[GEO_BULLET1]->textureID = LoadTGA("Image//Bullet1.tga");
+
+		meshList[GEO_BULLET2] = MeshBuilder::GenerateQuad("Bullet2", Color(1, 1, 1));
+		meshList[GEO_BULLET2]->textureID = LoadTGA("Image//Bullet2.tga");
 	}
 	meshList[GEO_TEXT]->material.kAmbient.Set(1, 0, 0);
 

@@ -1,19 +1,5 @@
-﻿  Application.cpp
-  SceneMovement_Week03.cpp
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week03.cpp(66,12): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week03.cpp(466,48): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week03.cpp(466,31): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week03.cpp(467,49): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week03.cpp(467,31): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week03.cpp(937,20): warning C4018: '<': signed/unsigned mismatch
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week03.cpp(1405,22): warning C4305: '+=': truncation from 'double' to 'float'
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week03.cpp(1492,20): warning C4305: 'argument': truncation from 'double' to 'float'
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week03.cpp(1493,18): warning C4305: 'argument': truncation from 'double' to 'float'
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week03.cpp(1633,18): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week03.cpp(1774,60): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week03.cpp(1780,44): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week03.cpp(1813,52): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week03.cpp(1819,36): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-  Generating Code...
-E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week03.cpp(2995,1): warning C4715: 'SceneMovement_Week03::GameState': not all control paths return a value
+﻿  StatesAttacker.cpp
+E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\StatesAttacker.cpp(19,20): warning C4305: '=': truncation from 'double' to 'float'
+E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\StatesAttacker.cpp(96,20): warning C4305: '=': truncation from 'double' to 'float'
+E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\StatesAttacker.cpp(430,20): warning C4305: '=': truncation from 'double' to 'float'
   AI.vcxproj -> E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\Debug\AI.exe

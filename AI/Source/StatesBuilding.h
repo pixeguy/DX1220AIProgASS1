@@ -16,4 +16,16 @@ public:
 	virtual void Exit();
 };
 
+class StateBuildingDeath : public State
+{
+	GameObject* m_go;
+public:
+	StateBuildingDeath(const std::string& stateID, GameObject* go = NULL);
+	virtual ~StateBuildingDeath();
+
+	virtual void Enter();
+	virtual void Update(double dt);
+	virtual void Exit();
+};
+
 #endif

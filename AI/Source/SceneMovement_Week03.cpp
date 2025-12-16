@@ -61,6 +61,8 @@ void SceneMovement_Week03::Init()
 	InitMortarSpawner(GameObject::SIDE_RED, Vector3((m_worldWidth / 2) - m_gridSize * 3, (m_worldHeight / 2), 0.f));
 	//InitGoldenOrb(Vector3(m_worldWidth / 2, m_worldHeight / 2, 0.f));
 
+	gamePlaying = false;
+
 	PostOffice::GetInstance()->Register("Scene", this);
 
 	srand(time(NULL));
@@ -109,12 +111,14 @@ GameObject* SceneMovement_Week03::FetchGO(GameObject::GAMEOBJECT_TYPE type)
 			go->sm = new StateMachine();
 			go->sm->AddState(new StateNone("None", "Healthy", go));
 			go->sm->AddState(new StateBuildingHealthy("Healthy", go));
+			go->sm->AddState(new StateBuildingDeath("Death", go));
 		}
 		else if (type == GameObject::GO_SPAWNER)
 		{
 			go->sm = new StateMachine();
 			go->sm->AddState(new StateNone("None", "Healthy", go));
 			go->sm->AddState(new StateBuildingHealthy("Healthy", go));
+			go->sm->AddState(new StateBuildingDeath("Death", go));
 		}
 		else if (type == GameObject::GO_SPAWNMORTARAREA)
 		{
@@ -754,7 +758,6 @@ bool SceneMovement_Week03::DecideSpawn(GameObject* spawner)
 	}	
 	else if (bestType == GameObject::GO_MORTAR)
 	{
-		std::cout << "SPAWNING MORTARRRRR" << std::endl;
 		MessageMechanicBuild msg = MessageMechanicBuild(spawner);
 		Handle(&msg);
 	}
@@ -823,14 +826,17 @@ void SceneMovement_Week03::Update(double dt)
 	if (!bSpaceState && Application::IsKeyPressed(VK_SPACE))
 	{
 		bSpaceState = true;
-		GameObject* go = FetchGO(GameObject::GO_FISH);
-		go->scale.Set(m_gridSize, m_gridSize, m_gridSize);
-		go->pos.Set(m_gridOffset + Math::RandIntMinMax(0, m_noGrid - 1) * m_gridSize, m_gridOffset + Math::RandIntMinMax(0, m_noGrid - 1) * m_gridSize, 0);
-		go->target = go->pos;
-		go->steps = 0;
-		go->energy = 10.f;
-		go->nearest = NULL;
-		go->sm->SetNextState("Full");
+		if (!gamePlaying) {
+			Vector3 randomPos = RandomPointInRing(m_spawners[0]->pos, 3.75, 10);
+			GameObject* uni1 = SpawnUnit(GameObject::SIDE_BLUE, randomPos, GameObject::GO_MECHANIC);
+			randomPos = RandomPointInRing(m_spawners[1]->pos, 3.75, 10);
+			uni1 = SpawnUnit(GameObject::SIDE_BLUE, randomPos, GameObject::GO_MECHANIC);
+			randomPos = RandomPointInRing(m_spawners[2]->pos, 3.75, 10);
+			uni1 = SpawnUnit(GameObject::SIDE_RED, randomPos, GameObject::GO_MECHANIC);
+			randomPos = RandomPointInRing(m_spawners[3]->pos, 3.75, 10);
+			uni1 = SpawnUnit(GameObject::SIDE_RED, randomPos, GameObject::GO_MECHANIC);
+			gamePlaying = true;
+		}
 	}
 	else if (bSpaceState && !Application::IsKeyPressed(VK_SPACE))
 	{
@@ -840,27 +846,7 @@ void SceneMovement_Week03::Update(double dt)
 	if (!bVState && Application::IsKeyPressed('V'))
 	{
 		bVState = true;
-		bool found = false;
-		for (std::vector<GameObject*>::iterator it = m_goList.begin(); it != m_goList.end(); ++it)
-		{
-			GameObject* go = (GameObject*)*it;
-			if (!go->active)
-				continue;
-			if (go->type == GameObject::GO_MECHANIC)
-			{
-				if (go->specID == 1) {
-					found = true;
-					go->health -= 10;
-				}
-			}
-		}
 
-		if (!found)
-		{
-			Vector3 randomPos = RandomPointInRing(m_spawners[0]->pos, 3.75, 10);
-			GameObject* uni1 = SpawnUnit(GameObject::SIDE_BLUE, randomPos, GameObject::GO_MECHANIC);
-			uni1->specID = 1;
-		}
 		//Vector3 randomPos = RandomPointInRing(m_spawners[2]->pos, 3.75, 10);
 		//SpawnGrid3x3(GameObject::SIDE_RED, randomPos, GameObject::GO_ATTACKER);
 
@@ -869,25 +855,18 @@ void SceneMovement_Week03::Update(double dt)
 	{
 		bVState = false;
 	}
-	static bool bBState = false;
-	if (!bBState && Application::IsKeyPressed('B'))
-	{
-		bBState = true;
-	}
-	else if (bBState && !Application::IsKeyPressed('B'))
-	{
-		bBState = false;
-		for (std::vector<GameObject*>::iterator it = m_goList.begin(); it != m_goList.end(); ++it)
-		{
-			GameObject* go = (GameObject*)*it;
-			if (!go->active)
-				continue;
-			if (go->type == GameObject::GO_ATTACKER)
-			{
-				go->health -= 10;
-			}
-		}
-	}
+	//static bool bRState = false;
+	//if (!bRState && Application::IsKeyPressed('R'))
+	//{
+	//	bRState = true;
+	//}
+	//else if (bRState && !Application::IsKeyPressed('R'))
+	//{
+	//	bRState = false;
+	//	Exit();
+	//	Init();
+	//	return;
+	//}
 	static bool bFState = false;
 	if (!bFState && Application::IsKeyPressed('F'))
 	{
@@ -933,6 +912,32 @@ void SceneMovement_Week03::Update(double dt)
 		bGState = false;
 	}
 
+	if (timeCounter >= 300) { gamePlaying = false; }
+	if (!gamePlaying) return;
+
+	static float checkTimer = 0.0f;
+
+	if (timeCounter >= 30 && !goldenEvent)
+	{
+		checkTimer += dt;                 // dt = seconds per frame
+		if (checkTimer >= 1.0f)           // check once per second
+		{
+			checkTimer -= 1.0f;
+
+			float r = Math::RandFloatMinMax(0.f, 1.f);
+			if (r < 0.05f)
+			{
+				InitGoldenOrb(Vector3(m_worldWidth * 0.5f, m_worldHeight * 0.5f, 0.f));
+				goldenEvent = true;
+			}
+		}
+		if (timeCounter >= 80 && !goldenEvent) //force spawn if too long
+		{
+			InitGoldenOrb(Vector3(m_worldWidth * 0.5f, m_worldHeight * 0.5f, 0.f));
+			goldenEvent = true;
+		}
+	}
+
 	//StateMachine
 	for (int i = 0; i < m_goList.size(); i++) {
 		GameObject* go = m_goList[i];
@@ -957,9 +962,15 @@ void SceneMovement_Week03::Update(double dt)
 				GameObject* go2 = (GameObject*)*it2;
 				if (!go2->active)
 					continue;
-				if (go->sm->GetCurrentState() == "Healthy")
+				if (go->sm->GetCurrentState() == "Death")
 				{
-
+					MessageWRU msgAreaDamage = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY_INAREA, 1.5f);
+					Handle(&msgAreaDamage);
+					for (auto& target : go->hits)
+					{
+						target->health -= 20;
+						target->lastAttacker = go;
+					}
 				}
 			}
 		}
@@ -970,7 +981,7 @@ void SceneMovement_Week03::Update(double dt)
 			{
 				MessageWRU msgCheckSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200.0f);
 				Handle(&msgCheckSpawner);
-				if (go->nearest != NULL || go->nearest->active) {
+				if (go->nearest != nullptr || go->nearest->active) {
 					if (go->nearest->type == GameObject::GO_SPAWNER) {
 						go->choice = MechanicNeedGet(go->nearest);
 					}
@@ -1017,6 +1028,12 @@ void SceneMovement_Week03::Update(double dt)
 				GameObject* temp = go->nearest;
 				MessageWRU msgCheckSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 50.0f);
 				Handle(&msgCheckSpawner);
+				if (go->nearest != nullptr || go->nearest->active) {
+					if (go->nearest->type == GameObject::GO_SPAWNER) {
+						go->choice = MechanicNeedGet(go->nearest);
+					}
+					else { go->choice = 0; }
+				}
 				go->external2 = go->nearest;
 				go->nearest = temp;
 			}
@@ -1547,8 +1564,6 @@ void SceneMovement_Week03::Update(double dt)
 				continue;
 			if (go->health <= 0) {
 
-				go->type = GameObject::GO_NONE;
-				go->active = false;
 				--m_objectCount;
 			}
 		}
@@ -1634,7 +1649,9 @@ void SceneMovement_Week03::Update(double dt)
 	}
 	gameStateString = GameState();
 	if (gameStateString == "Red Side Wins!" || gameStateString == "Blue Side Wins!")
-	{ }//what am i suppose to do when the game ends idk?
+	{
+		gamePlaying = false;
+	}
 
 
 }
@@ -1833,9 +1850,9 @@ void SceneMovement_Week03::RenderGO(GameObject* go)
 		modelStack.Rotate(180, 0, 0, 1);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
 		if (go->side == GameObject::SIDE_RED)
-			RenderMesh(meshList[GEO_BASERED], false);
-		else
 			RenderMesh(meshList[GEO_BASEBLUE], false);
+		else
+			RenderMesh(meshList[GEO_BASERED], false);
 		modelStack.PopMatrix();
 		RenderGOBar(go, 14);
 
@@ -1843,7 +1860,7 @@ void SceneMovement_Week03::RenderGO(GameObject* go)
 		if (go->side == GameObject::SIDE_RED)
 		{
 			modelStack.Translate(132.5, 90, zOffset);
-			RenderGOBar(go, 14, Vector3(0,-1.5,0));
+			RenderGOBar(go, 14, Vector3(0, -1.5, 0));
 		}
 		else
 		{
@@ -1853,9 +1870,9 @@ void SceneMovement_Week03::RenderGO(GameObject* go)
 		modelStack.Rotate(180, 0, 0, 1);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
 		if (go->side == GameObject::SIDE_RED)
-			RenderMesh(meshList[GEO_BASERED], false);
-		else
 			RenderMesh(meshList[GEO_BASEBLUE], false);
+		else
+			RenderMesh(meshList[GEO_BASERED], false);
 		modelStack.PopMatrix();
 		RenderGOBar(go, 14);
 		break;
@@ -1865,9 +1882,9 @@ void SceneMovement_Week03::RenderGO(GameObject* go)
 		//modelStack.Rotate(180, 0, 0, 1);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
 		if (go->side == GameObject::SIDE_RED)
-			RenderMesh(meshList[GEO_SPAWNERRED], false);
-		else
 			RenderMesh(meshList[GEO_SPAWNERBLUE], false);
+		else
+			RenderMesh(meshList[GEO_SPAWNERRED], false);
 		modelStack.PopMatrix();
 
 		modelStack.PushMatrix();
@@ -1877,8 +1894,8 @@ void SceneMovement_Week03::RenderGO(GameObject* go)
 		modelStack.PopMatrix();
 
 		modelStack.PushMatrix();
-		modelStack.Translate(go->pos.x, go->pos.y, zOffset); 
-		modelStack.Scale(20 * 2, 20 * 2, 1); // radius (scale by 2 for diameter)
+		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
+		modelStack.Scale(25 * 2, 25 * 2, 1); // radius (scale by 2 for diameter)
 		RenderMesh(meshList[GEO_CIRCLE], false);
 		modelStack.PopMatrix();
 		RenderGOBar(go, 14);
@@ -1887,12 +1904,12 @@ void SceneMovement_Week03::RenderGO(GameObject* go)
 		modelStack.PushMatrix();
 		if (go->side == GameObject::SIDE_RED)
 		{
-			if (go->pos.y < m_worldHeight/2)
+			if (go->pos.y < m_worldHeight / 2)
 			{
-				modelStack.Translate(go->pos.x + 125, go->pos.y+ 65, zOffset);
+				modelStack.Translate(go->pos.x + 125, go->pos.y + 65, zOffset);
 			}
 			else {
-				modelStack.Translate(go->pos.x + 90, go->pos.y+15, zOffset);
+				modelStack.Translate(go->pos.x + 90, go->pos.y + 15, zOffset);
 			}
 			RenderGOBar(go, 14, Vector3(0, -1.5, 0));
 
@@ -1922,9 +1939,9 @@ void SceneMovement_Week03::RenderGO(GameObject* go)
 		modelStack.Rotate(180, 0, 0, 1);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
 		if (go->side == GameObject::SIDE_RED)
-			RenderMesh(meshList[GEO_SPAWNERRED], false);
-		else
 			RenderMesh(meshList[GEO_SPAWNERBLUE], false);
+		else
+			RenderMesh(meshList[GEO_SPAWNERRED], false);
 		modelStack.PopMatrix();
 		RenderGOBar(go, 14);
 		break;
@@ -2011,37 +2028,58 @@ void SceneMovement_Week03::RenderGO(GameObject* go)
 		break;
 	}
 	case GameObject::GO_PROJECTILE:
+	{
 		modelStack.PushMatrix();
 		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
 		//modelStack.Rotate(180, 0, 0, 1);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
-		RenderMesh(meshList[GEO_SUPPORT], false);
+		bool isBlue = (go->side == GameObject::SIDE_BLUE);
+		GEOMETRY_TYPE geo;
+		geo = isBlue ? GEO_BULLET1 : GEO_BULLET2;
+		RenderMesh(meshList[geo], false);
 		modelStack.PopMatrix();
 		break;
+	}
 	case GameObject::GO_ROCKETS:
+	{
 		modelStack.PushMatrix();
 		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
 		//modelStack.Rotate(180, 0, 0, 1);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
-		RenderMesh(meshList[GEO_SUPPORT], false);
+		bool isBlue = (go->side == GameObject::SIDE_BLUE);
+		GEOMETRY_TYPE geo;
+		geo = isBlue ? GEO_BULLET1 : GEO_BULLET2;
+		RenderMesh(meshList[geo], false);
 		modelStack.PopMatrix();
 		break;
+	}
 	case GameObject::GO_MORBOMB:
+	{
 		modelStack.PushMatrix();
 		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
 		//modelStack.Rotate(180, 0, 0, 1);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
-		RenderMesh(meshList[GEO_SUPPORT], false);
+		bool isBlue = (go->side == GameObject::SIDE_BLUE);
+		GEOMETRY_TYPE geo;
+		geo = isBlue ? GEO_BULLET1 : GEO_BULLET2;
+		RenderMesh(meshList[geo], false);
 		modelStack.PopMatrix();
 		break;
+	}
 	case GameObject::GO_BIGMORBOMB:
+	{
 		modelStack.PushMatrix();
 		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
 		//modelStack.Rotate(180, 0, 0, 1);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
-		RenderMesh(meshList[GEO_SUPPORT], false);
+
+		bool isBlue = (go->side == GameObject::SIDE_BLUE);
+		GEOMETRY_TYPE geo;
+		geo = isBlue ? GEO_BULLET1 : GEO_BULLET2;
+		RenderMesh(meshList[geo], false);
 		modelStack.PopMatrix();
 		break;
+	}
 	case GameObject::GO_MECHANIC:
 	{
 		std::string state = go->sm->GetCurrentState();
@@ -2133,10 +2171,7 @@ void SceneMovement_Week03::RenderGO(GameObject* go)
 		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
 		modelStack.Rotate(180, 0, 0, 1);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
-		if (go->moveLeft)
-			RenderMesh(meshList[GEO_MORTAR], false);
-		else
-			RenderMesh(meshList[GEO_MORTAR], false);
+		RenderMesh(meshList[GEO_GOLDENORB], false);
 		modelStack.PopMatrix();
 		RenderGOBar(go, 7);
 		break;
@@ -2861,6 +2896,16 @@ void SceneMovement_Week03::Render()
 	ss.str("");
 	ss << GetTimeString(timeCounter);
 	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 3, 49, 5);
+
+	std::string input;
+	if (!gamePlaying)
+	{
+		if (timeCounter < 1) { input = "Press Space To Start"; }
+		else { input = "Press Escape To End"; }
+	}
+	ss.str("");
+	ss << input;
+	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 3, 49, 2.5);
 }
 
 std::string SceneMovement_Week03::GameState()
@@ -2942,19 +2987,19 @@ std::string SceneMovement_Week03::GameState()
 		if (redBasePer == 1 && blueBasePer == 1)
 		{
 			if (redSpawnerHealth > blueSpawnerHealth)
-				return "Red Side Wins!";
-			else if (blueSpawnerHealth > redSpawnerHealth)
 				return "Blue Side Wins!";
+			else if (blueSpawnerHealth > redSpawnerHealth)
+				return "Red Side Wins!";
 			else if (redSpawnerHealth == blueSpawnerHealth)
 				return "The Game is Tied Currently";
 		}
 		else if (redBasePer > blueBasePer)
 		{
-			return "Red Side Wins!";
+			return "Blue Side Wins!";
 		}
 		else if (blueBasePer > redBasePer)
 		{
-			return "Blue Side Wins!";
+			return "Red Side Wins!";
 		}
 		else if (blueBasePer == redBasePer)
 		{
@@ -2974,19 +3019,19 @@ std::string SceneMovement_Week03::GameState()
 	if (redBasePer == 1 && blueBasePer == 1)
 	{
 		if (redSpawnerHealth > blueSpawnerHealth)
-			return "Red Side is Winning";
-		else if (blueSpawnerHealth > redSpawnerHealth)
 			return "Blue Side is Winning";
+		else if (blueSpawnerHealth > redSpawnerHealth)
+			return "Red Side is Winning";
 		else if (redSpawnerHealth == blueSpawnerHealth)
 			return "The Game is Tied Currently";
 	}
 	else if (redBasePer > blueBasePer)
 	{
-		return "Red Side is Winning";
+		return "Blue Side is Winning";
 	}
 	else if (blueBasePer > redBasePer)
 	{ 
-		return "Blue Side is Winning";
+		return "Red Side is Winning";
 	}
 	else if (blueBasePer == redBasePer)
 	{
@@ -3009,4 +3054,5 @@ void SceneMovement_Week03::Exit()
 		delete m_ghost;
 		m_ghost = NULL;
 	}
+	timeCounter = 0;
 }
