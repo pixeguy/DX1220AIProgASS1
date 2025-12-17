@@ -220,8 +220,8 @@ GameObject* SceneMovement_Week03::InitMainBase(GameObject::SIDE side, Vector3 po
 	mainBase->target = mainBase->pos;
 	mainBase->sm->SetNextState("Healthy");
 	mainBase->maxEnergy = 100;
-	mainBase->maxHealth = 100;
-	mainBase->health = 100;
+	mainBase->maxHealth = 700;
+	mainBase->health = 700;
 	mainBase->moving = false;
 	return mainBase;
 }
@@ -234,8 +234,8 @@ GameObject* SceneMovement_Week03::InitGoldenOrb(Vector3 pos)
 	mainBase->target = mainBase->pos;
 	mainBase->sm->SetNextState("Healthy");
 	mainBase->maxEnergy = 100;
-	mainBase->maxHealth = 200;
-	mainBase->health = 200;
+	mainBase->maxHealth = 400;
+	mainBase->health = 400;
 	mainBase->moving = false;
 	return mainBase;
 }
@@ -250,8 +250,8 @@ GameObject* SceneMovement_Week03::InitSpawner(GameObject::SIDE side, Vector3 pos
 	float random = Math::RandFloatMinMax(0.f, 25.f);
 	spawner->energy = random;
 	spawner->maxEnergy = 100;
-	spawner->maxHealth = 200;
-	spawner->health = 200;
+	spawner->maxHealth = 550;
+	spawner->health = 550;
 	spawner->sm->SetNextState("Healthy");
 	spawner->woodenLogs = spawner->metalParts = 0;
 	spawner->moving = false;
@@ -339,8 +339,8 @@ GameObject* SceneMovement_Week03::SpawnUnit(GameObject::SIDE side, Vector3 pos, 
 
 	// i need to set a blank state first, in order to access the Enter() of the first actual state
 	unit->sm->SetNextState("None");
-	unit->maxHealth = 100;
-	unit->health = 100;
+	unit->maxHealth = 200;
+	unit->health = 200;
 	unit->maxEnergy = 10;
 	unit->energy = 0;
 
@@ -375,8 +375,8 @@ GameObject* SceneMovement_Week03::SpawnMetalUnit(GameObject::SIDE side, Vector3 
 	}
 
 	unit->sm->SetNextState("None");
-	unit->maxHealth = 100;
-	unit->health = 100;
+	unit->maxHealth = 270;
+	unit->health = 270;
 	unit->maxEnergy = 10;
 	unit->energy = 0;
 
@@ -981,11 +981,14 @@ void SceneMovement_Week03::Update(double dt)
 			{
 				MessageWRU msgCheckSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200.0f);
 				Handle(&msgCheckSpawner);
-				if (go->nearest != nullptr || go->nearest->active) {
-					if (go->nearest->type == GameObject::GO_SPAWNER) {
-						go->choice = MechanicNeedGet(go->nearest);
+				if (go->nearest != nullptr) {
+					if (go->nearest->active)
+					{
+						if (go->nearest->type == GameObject::GO_SPAWNER) {
+							go->choice = MechanicNeedGet(go->nearest);
+						}
+						else { go->choice = 0; }
 					}
-					else { go->choice = 0; }
 				}
 			}
 
@@ -1028,12 +1031,16 @@ void SceneMovement_Week03::Update(double dt)
 				GameObject* temp = go->nearest;
 				MessageWRU msgCheckSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 50.0f);
 				Handle(&msgCheckSpawner);
-				if (go->nearest != nullptr || go->nearest->active) {
-					if (go->nearest->type == GameObject::GO_SPAWNER) {
-						go->choice = MechanicNeedGet(go->nearest);
+
+				if (go->nearest != nullptr) {
+					if (go->nearest->active) {
+						if (go->nearest->type == GameObject::GO_SPAWNER) {
+							go->choice = MechanicNeedGet(go->nearest);
+						}
+						else { go->choice = 0; }
 					}
-					else { go->choice = 0; }
 				}
+				else { go->choice = 0; }
 				go->external2 = go->nearest;
 				go->nearest = temp;
 			}
@@ -1936,7 +1943,6 @@ void SceneMovement_Week03::RenderGO(GameObject* go)
 		RenderText(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0));
 		modelStack.PopMatrix();
 
-		modelStack.Rotate(180, 0, 0, 1);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
 		if (go->side == GameObject::SIDE_RED)
 			RenderMesh(meshList[GEO_SPAWNERBLUE], false);
@@ -2531,6 +2537,8 @@ bool SceneMovement_Week03::Handle(Message* message)
 				float distance = (go->pos - go2->pos).Length();
 				if (distance < messageWRU->threshold && distance > messageWRU->mortarTooCloseValue && distance < nearestDistance)
 				{
+					if (go2->type == GameObject::GO_SPAWNMORTARAREA) continue;
+					if (go2->type == GameObject::GO_GOLDENORB) continue;
 					nearestDistance = distance;
 					go->nearest = go2;
 				}

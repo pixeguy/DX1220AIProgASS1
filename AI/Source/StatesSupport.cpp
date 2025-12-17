@@ -75,8 +75,8 @@ void StateSupportHealthy::Update(double dt)
 	}
 	if (m_go->nearest != NULL) {
 		if ((m_go->nearest->pos - m_go->pos).Length() < m_gridSize * 5) {
-			m_go->nearest->supportSpeed = 0.8;
-			m_go->nearest->supportActionSpeed = 0.15;
+			m_go->nearest->supportSpeed = 0.4;
+			m_go->nearest->supportActionSpeed = 0.08;
 			m_go->moving = false;
 			/*std::cout << "followed something to close" << std::endl;*/
 		}
