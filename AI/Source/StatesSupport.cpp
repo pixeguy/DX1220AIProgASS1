@@ -214,7 +214,7 @@ void StateSupportHealing::Update(double dt)
 			m_go->moving = false;
 			if (m_go->EnergyReduce(m_go->actionSpeed))
 			{
-				m_go->nearest->health += 4;
+				m_go->nearest->health += 6;
 			}
 		}
 		else {
@@ -305,7 +305,7 @@ void StateSupportUrgentHealing::Update(double dt)
 			m_go->moving = false;
 			if (m_go->EnergyReduce(m_go->actionSpeed))
 			{
-				m_go->nearest->health += 8;
+				m_go->nearest->health += 10;
 			}
 		}
 		else {

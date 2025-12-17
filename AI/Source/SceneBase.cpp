@@ -115,28 +115,28 @@ void SceneBase::Init()
 	meshList[GEO_TEXT]->textureID = LoadTGA("Image//calibri.tga");
 	meshList[GEO_BG] = MeshBuilder::GenerateQuad("bg", Color(1, 1, 1));
 	meshList[GEO_BG]->textureID = LoadTGA("Image//grid20.tga");
-	meshList[GEO_TICTACTOE] = MeshBuilder::GenerateQuad("tictactoe", Color(1, 1, 1));
-	meshList[GEO_TICTACTOE]->textureID = LoadTGA("Image//tictactoe.tga");
-	meshList[GEO_CROSS] = MeshBuilder::GenerateQuad("cross", Color(1, 1, 1));
-	meshList[GEO_CROSS]->textureID = LoadTGA("Image//cross.tga");
+	//meshList[GEO_TICTACTOE] = MeshBuilder::GenerateQuad("tictactoe", Color(1, 1, 1));
+	//meshList[GEO_TICTACTOE]->textureID = LoadTGA("Image//tictactoe.tga");
+	//meshList[GEO_CROSS] = MeshBuilder::GenerateQuad("cross", Color(1, 1, 1));
+	//meshList[GEO_CROSS]->textureID = LoadTGA("Image//cross.tga");
 	meshList[GEO_CIRCLE] = MeshBuilder::GenerateQuad("circle", Color(1, 1, 1));
 	meshList[GEO_CIRCLE]->textureID = LoadTGA("Image//circle.tga");
-	meshList[GEO_TOOFULL] = MeshBuilder::GenerateQuad("toofull", Color(1, 1, 1));
-	meshList[GEO_TOOFULL]->textureID = LoadTGA("Image//toofull.tga");
-	meshList[GEO_FULL] = MeshBuilder::GenerateQuad("full", Color(1, 1, 1));
-	meshList[GEO_FULL]->textureID = LoadTGA("Image//full.tga");
-	meshList[GEO_HUNGRY] = MeshBuilder::GenerateQuad("hungry", Color(1, 1, 1));
-	meshList[GEO_HUNGRY]->textureID = LoadTGA("Image//hungry.tga");
-	meshList[GEO_DEAD] = MeshBuilder::GenerateQuad("dead", Color(1, 1, 1));
-	meshList[GEO_DEAD]->textureID = LoadTGA("Image//dead.tga");
-	meshList[GEO_SHARK] = MeshBuilder::GenerateQuad("shark", Color(1, 1, 1));
-	meshList[GEO_SHARK]->textureID = LoadTGA("Image//shark.tga");
-	meshList[GEO_FISHFOOD] = MeshBuilder::GenerateQuad("fishfood", Color(1, 1, 1));
-	meshList[GEO_FISHFOOD]->textureID = LoadTGA("Image//fishfood.tga");
-	meshList[GEO_CRAZY] = MeshBuilder::GenerateQuad("crazy", Color(1, 1, 1));
-	meshList[GEO_CRAZY]->textureID = LoadTGA("Image//crazy.tga");
-	meshList[GEO_HAPPY] = MeshBuilder::GenerateQuad("happy", Color(1, 1, 1));
-	meshList[GEO_HAPPY]->textureID = LoadTGA("Image//happy.tga");
+	//meshList[GEO_TOOFULL] = MeshBuilder::GenerateQuad("toofull", Color(1, 1, 1));
+	//meshList[GEO_TOOFULL]->textureID = LoadTGA("Image//toofull.tga");
+	//meshList[GEO_FULL] = MeshBuilder::GenerateQuad("full", Color(1, 1, 1));
+	//meshList[GEO_FULL]->textureID = LoadTGA("Image//full.tga");
+	//meshList[GEO_HUNGRY] = MeshBuilder::GenerateQuad("hungry", Color(1, 1, 1));
+	//meshList[GEO_HUNGRY]->textureID = LoadTGA("Image//hungry.tga");
+	//meshList[GEO_DEAD] = MeshBuilder::GenerateQuad("dead", Color(1, 1, 1));
+	//meshList[GEO_DEAD]->textureID = LoadTGA("Image//dead.tga");
+	//meshList[GEO_SHARK] = MeshBuilder::GenerateQuad("shark", Color(1, 1, 1));
+	//meshList[GEO_SHARK]->textureID = LoadTGA("Image//shark.tga");
+	//meshList[GEO_FISHFOOD] = MeshBuilder::GenerateQuad("fishfood", Color(1, 1, 1));
+	//meshList[GEO_FISHFOOD]->textureID = LoadTGA("Image//fishfood.tga");
+	//meshList[GEO_CRAZY] = MeshBuilder::GenerateQuad("crazy", Color(1, 1, 1));
+	//meshList[GEO_CRAZY]->textureID = LoadTGA("Image//crazy.tga");
+	//meshList[GEO_HAPPY] = MeshBuilder::GenerateQuad("happy", Color(1, 1, 1));
+	//meshList[GEO_HAPPY]->textureID = LoadTGA("Image//happy.tga");
 	meshList[GEO_BASEBLUE] = MeshBuilder::GenerateQuad("baseblue", Color(1, 1, 1));
 	meshList[GEO_BASEBLUE]->textureID = LoadTGA("Image//BaseBlue.tga");
 	meshList[GEO_BASERED] = MeshBuilder::GenerateQuad("basered", Color(1, 1, 1));
@@ -146,22 +146,22 @@ void SceneBase::Init()
 	meshList[GEO_SPAWNERRED] = MeshBuilder::GenerateQuad("spawnerred", Color(1, 1, 1));
 	meshList[GEO_SPAWNERRED]->textureID = LoadTGA("Image//RedSpawnerReversed.tga");
 	{
-		meshList[GEO_ATTACKER] = MeshBuilder::GenerateQuad("attacker", Color(1, 1, 1));
-		meshList[GEO_ATTACKER]->textureID = LoadTGA("Image//Attacker1Healthy.tga");
-		meshList[GEO_RANGED] = MeshBuilder::GenerateQuad("ranged", Color(1, 1, 1));
-		meshList[GEO_RANGED]->textureID = LoadTGA("Image//RangedFaceRight.tga");
-		meshList[GEO_RANGEDRIGHT] = MeshBuilder::GenerateQuad("ranged", Color(1, 1, 1));
-		meshList[GEO_RANGEDRIGHT]->textureID = LoadTGA("Image//RangedFaceLeft.tga");
-		meshList[GEO_SUPPORT] = MeshBuilder::GenerateQuad("support", Color(1, 1, 1));
-		meshList[GEO_SUPPORT]->textureID = LoadTGA("Image//hungry.tga");
-		meshList[GEO_MECHANIC] = MeshBuilder::GenerateQuad("support", Color(0, 1, 1));
-		meshList[GEO_MECHANIC]->textureID = LoadTGA("Image//hungry.tga");
-		meshList[GEO_TANK] = MeshBuilder::GenerateQuad("support", Color(0, 1, 1));
-		meshList[GEO_TANK]->textureID = LoadTGA("Image//hungry.tga");
-		meshList[GEO_MORTAR] = MeshBuilder::GenerateQuad("support", Color(0, 1, 1));
-		meshList[GEO_MORTAR]->textureID = LoadTGA("Image//hungry.tga");
-		meshList[GEO_MORBOMB] = MeshBuilder::GenerateQuad("support", Color(0, 1, 1));
-		meshList[GEO_MORBOMB]->textureID = LoadTGA("Image//hungry.tga");
+		//meshList[GEO_ATTACKER] = MeshBuilder::GenerateQuad("attacker", Color(1, 1, 1));
+		//meshList[GEO_ATTACKER]->textureID = LoadTGA("Image//Attacker1Healthy.tga");
+		//meshList[GEO_RANGED] = MeshBuilder::GenerateQuad("ranged", Color(1, 1, 1));
+		//meshList[GEO_RANGED]->textureID = LoadTGA("Image//RangedFaceRight.tga");
+		//meshList[GEO_RANGEDRIGHT] = MeshBuilder::GenerateQuad("ranged", Color(1, 1, 1));
+		//meshList[GEO_RANGEDRIGHT]->textureID = LoadTGA("Image//RangedFaceLeft.tga");
+		//meshList[GEO_SUPPORT] = MeshBuilder::GenerateQuad("support", Color(1, 1, 1));
+		//meshList[GEO_SUPPORT]->textureID = LoadTGA("Image//hungry.tga");
+		//meshList[GEO_MECHANIC] = MeshBuilder::GenerateQuad("support", Color(0, 1, 1));
+		//meshList[GEO_MECHANIC]->textureID = LoadTGA("Image//hungry.tga");
+		//meshList[GEO_TANK] = MeshBuilder::GenerateQuad("support", Color(0, 1, 1));
+		//meshList[GEO_TANK]->textureID = LoadTGA("Image//hungry.tga");
+		//meshList[GEO_MORTAR] = MeshBuilder::GenerateQuad("support", Color(0, 1, 1));
+		//meshList[GEO_MORTAR]->textureID = LoadTGA("Image//hungry.tga");
+		//meshList[GEO_MORBOMB] = MeshBuilder::GenerateQuad("support", Color(0, 1, 1));
+		//meshList[GEO_MORBOMB]->textureID = LoadTGA("Image//hungry.tga");
 	}
 	{
 		// Attacker 1
@@ -338,45 +338,45 @@ void SceneBase::Init()
 	meshList[GEO_TEXT]->material.kAmbient.Set(1, 0, 0);
 
 	//week 6 - make chessboard mesh/texture pair
-	meshList[GEO_CHESSBOARD] = MeshBuilder::GenerateQuad("chessboard", Color(1, 1, 1));
-	meshList[GEO_CHESSBOARD]->textureID = LoadTGA("Image//chessboard.tga");
-	meshList[GEO_QUEEN] = MeshBuilder::GenerateQuad("queen", Color(1, 1, 1));
-	meshList[GEO_QUEEN]->textureID = LoadTGA("Image//queen.tga");
-	meshList[GEO_KNIGHT] = MeshBuilder::GenerateQuad("knight", Color(1, 1, 1));
-	meshList[GEO_KNIGHT]->textureID = LoadTGA("Image//knight.tga");
+	//meshList[GEO_CHESSBOARD] = MeshBuilder::GenerateQuad("chessboard", Color(1, 1, 1));
+	//meshList[GEO_CHESSBOARD]->textureID = LoadTGA("Image//chessboard.tga");
+	//meshList[GEO_QUEEN] = MeshBuilder::GenerateQuad("queen", Color(1, 1, 1));
+	//meshList[GEO_QUEEN]->textureID = LoadTGA("Image//queen.tga");
+	//meshList[GEO_KNIGHT] = MeshBuilder::GenerateQuad("knight", Color(1, 1, 1));
+	//meshList[GEO_KNIGHT]->textureID = LoadTGA("Image//knight.tga");
 
-	//week 7
-	meshList[GEO_WHITEQUAD] = MeshBuilder::GenerateQuad("whitequad", Color(1, 1, 1));
-	meshList[GEO_WALL] = MeshBuilder::GenerateQuad("wall", Color(1, 1, 1));
-	meshList[GEO_WALL]->textureID = LoadTGA("Image//wall.tga");
-	meshList[GEO_FLOOR] = MeshBuilder::GenerateQuad("floor", Color(1, 1, 1));
-	meshList[GEO_FLOOR]->textureID = LoadTGA("Image//floor.tga");
-	meshList[GEO_AGENT] = MeshBuilder::GenerateQuad("agent", Color(1, 1, 1));
-	meshList[GEO_AGENT]->textureID = LoadTGA("Image//agent.tga");
-	meshList[GEO_WAYPOINT] = MeshBuilder::GenerateQuad("waypoint", Color(1, 1, 1));
-	meshList[GEO_WAYPOINT]->textureID = LoadTGA("Image//waypoint.tga");
+	////week 7
+	//meshList[GEO_WHITEQUAD] = MeshBuilder::GenerateQuad("whitequad", Color(1, 1, 1));
+	//meshList[GEO_WALL] = MeshBuilder::GenerateQuad("wall", Color(1, 1, 1));
+	//meshList[GEO_WALL]->textureID = LoadTGA("Image//wall.tga");
+	//meshList[GEO_FLOOR] = MeshBuilder::GenerateQuad("floor", Color(1, 1, 1));
+	//meshList[GEO_FLOOR]->textureID = LoadTGA("Image//floor.tga");
+	//meshList[GEO_AGENT] = MeshBuilder::GenerateQuad("agent", Color(1, 1, 1));
+	//meshList[GEO_AGENT]->textureID = LoadTGA("Image//agent.tga");
+	//meshList[GEO_WAYPOINT] = MeshBuilder::GenerateQuad("waypoint", Color(1, 1, 1));
+	//meshList[GEO_WAYPOINT]->textureID = LoadTGA("Image//waypoint.tga");
 
-	//week 13
-	meshList[GEO_WHITEHEX] = MeshBuilder::GenerateRing("whitehex", Color(1, 1, 1), 6, 0.5f, 0.f);
+	////week 13
+	//meshList[GEO_WHITEHEX] = MeshBuilder::GenerateRing("whitehex", Color(1, 1, 1), 6, 0.5f, 0.f);
 
-	//week 14
-	meshList[GEO_REVERSIBOARD4x4] = MeshBuilder::GenerateQuad("reversiboard4x4", Color(1, 1, 1));
-	meshList[GEO_REVERSIBOARD4x4]->textureID = LoadTGA("Image//reversi4x4.tga");
-	meshList[GEO_REVERSIBOARD] = MeshBuilder::GenerateQuad("reversiboard", Color(1, 1, 1));
-	meshList[GEO_REVERSIBOARD]->textureID = LoadTGA("Image//reversi.tga");
-	meshList[GEO_REVERSIBLACK] = MeshBuilder::GenerateQuad("reversiblack", Color(1, 1, 1));
-	meshList[GEO_REVERSIBLACK]->textureID = LoadTGA("Image//black.tga");
-	meshList[GEO_REVERSIWHITE] = MeshBuilder::GenerateQuad("reversiwhite", Color(1, 1, 1));
-	meshList[GEO_REVERSIWHITE]->textureID = LoadTGA("Image//white.tga");
+	////week 14
+	//meshList[GEO_REVERSIBOARD4x4] = MeshBuilder::GenerateQuad("reversiboard4x4", Color(1, 1, 1));
+	//meshList[GEO_REVERSIBOARD4x4]->textureID = LoadTGA("Image//reversi4x4.tga");
+	//meshList[GEO_REVERSIBOARD] = MeshBuilder::GenerateQuad("reversiboard", Color(1, 1, 1));
+	//meshList[GEO_REVERSIBOARD]->textureID = LoadTGA("Image//reversi.tga");
+	//meshList[GEO_REVERSIBLACK] = MeshBuilder::GenerateQuad("reversiblack", Color(1, 1, 1));
+	//meshList[GEO_REVERSIBLACK]->textureID = LoadTGA("Image//black.tga");
+	//meshList[GEO_REVERSIWHITE] = MeshBuilder::GenerateQuad("reversiwhite", Color(1, 1, 1));
+	//meshList[GEO_REVERSIWHITE]->textureID = LoadTGA("Image//white.tga");
 
-	//week 16
-	meshList[GEO_FLAPPYBG] = MeshBuilder::GenerateQuad("bg", Color(1, 1, 1));
-	meshList[GEO_FLAPPYBG]->textureID = LoadTGA("Image//background-day.tga");
-	meshList[GEO_SIDEBAR] = MeshBuilder::GenerateQuad("blackquad", Color(0, 0, 0));
-	meshList[GEO_CHARACTER] = MeshBuilder::GenerateQuad("bird", Color(1, 1, 1));
-	meshList[GEO_CHARACTER]->textureID = LoadTGA("Image//yellowbird-downflap.tga");
-	meshList[GEO_PIPE] = MeshBuilder::GenerateQuad("pipe", Color(1, 1, 1));
-	meshList[GEO_PIPE]->textureID = LoadTGA("Image//pipe-green.tga");
+	////week 16
+	//meshList[GEO_FLAPPYBG] = MeshBuilder::GenerateQuad("bg", Color(1, 1, 1));
+	//meshList[GEO_FLAPPYBG]->textureID = LoadTGA("Image//background-day.tga");
+	//meshList[GEO_SIDEBAR] = MeshBuilder::GenerateQuad("blackquad", Color(0, 0, 0));
+	//meshList[GEO_CHARACTER] = MeshBuilder::GenerateQuad("bird", Color(1, 1, 1));
+	//meshList[GEO_CHARACTER]->textureID = LoadTGA("Image//yellowbird-downflap.tga");
+	//meshList[GEO_PIPE] = MeshBuilder::GenerateQuad("pipe", Color(1, 1, 1));
+	//meshList[GEO_PIPE]->textureID = LoadTGA("Image//pipe-green.tga");
 
 	bLightEnabled = false;
 }

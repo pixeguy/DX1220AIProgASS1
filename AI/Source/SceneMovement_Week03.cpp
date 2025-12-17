@@ -52,11 +52,13 @@ void SceneMovement_Week03::Init()
 
 	InitMainBase(GameObject::SIDE_BLUE, Vector3(m_worldWidth - m_gridSize, m_worldHeight / 2, 0.f));
 	InitMainBase(GameObject::SIDE_RED, Vector3(0 + m_gridSize, m_worldHeight / 2, 0.f));
-	InitSpawner(GameObject::SIDE_BLUE, Vector3((m_worldWidth / 4) * 3, m_worldHeight / 4, 0.f));
-	InitSpawner(GameObject::SIDE_BLUE, Vector3((m_worldWidth / 4) * 3, (m_worldHeight / 4) * 3, 0.f));
-	InitSpawner(GameObject::SIDE_RED, Vector3((m_worldWidth / 4), m_worldHeight / 4, 0.f));
-	//InitSpawner(GameObject::SIDE_RED, Vector3((m_worldWidth / 4)  + 10, m_worldHeight / 4, 0.f));
-	InitSpawner(GameObject::SIDE_RED, Vector3((m_worldWidth / 4), (m_worldHeight / 4) * 3, 0.f));
+	float yPull = 5;
+	InitSpawner(GameObject::SIDE_BLUE, Vector3((m_worldWidth / 4) * 3, (m_worldHeight / 4) + yPull, 0.f));
+	InitSpawner(GameObject::SIDE_BLUE, Vector3((m_worldWidth / 4) * 3, (m_worldHeight / 4) * 3 - yPull, 0.f));
+
+	InitSpawner(GameObject::SIDE_RED, Vector3((m_worldWidth / 4), (m_worldHeight / 4) + yPull, 0.f));
+	InitSpawner(GameObject::SIDE_RED, Vector3((m_worldWidth / 4), (m_worldHeight / 4) * 3 - yPull, 0.f));
+
 	InitMortarSpawner(GameObject::SIDE_BLUE, Vector3((m_worldWidth / 2) + m_gridSize * 3, (m_worldHeight / 2), 0.f));
 	InitMortarSpawner(GameObject::SIDE_RED, Vector3((m_worldWidth / 2) - m_gridSize * 3, (m_worldHeight / 2), 0.f));
 	//InitGoldenOrb(Vector3(m_worldWidth / 2, m_worldHeight / 2, 0.f));
@@ -220,8 +222,9 @@ GameObject* SceneMovement_Week03::InitMainBase(GameObject::SIDE side, Vector3 po
 	mainBase->target = mainBase->pos;
 	mainBase->sm->SetNextState("Healthy");
 	mainBase->maxEnergy = 100;
-	mainBase->maxHealth = 700;
-	mainBase->health = 700;
+	mainBase->energy = 0;
+	mainBase->maxHealth = 900;
+	mainBase->health = 900;
 	mainBase->moving = false;
 	return mainBase;
 }
@@ -234,8 +237,9 @@ GameObject* SceneMovement_Week03::InitGoldenOrb(Vector3 pos)
 	mainBase->target = mainBase->pos;
 	mainBase->sm->SetNextState("Healthy");
 	mainBase->maxEnergy = 100;
-	mainBase->maxHealth = 400;
-	mainBase->health = 400;
+	mainBase->energy = 0;
+	mainBase->maxHealth = 500;
+	mainBase->health = 500;
 	mainBase->moving = false;
 	return mainBase;
 }
@@ -250,8 +254,8 @@ GameObject* SceneMovement_Week03::InitSpawner(GameObject::SIDE side, Vector3 pos
 	float random = Math::RandFloatMinMax(0.f, 25.f);
 	spawner->energy = random;
 	spawner->maxEnergy = 100;
-	spawner->maxHealth = 550;
-	spawner->health = 550;
+	spawner->maxHealth = 700;
+	spawner->health = 700;
 	spawner->sm->SetNextState("Healthy");
 	spawner->woodenLogs = spawner->metalParts = 0;
 	spawner->moving = false;
@@ -339,8 +343,8 @@ GameObject* SceneMovement_Week03::SpawnUnit(GameObject::SIDE side, Vector3 pos, 
 
 	// i need to set a blank state first, in order to access the Enter() of the first actual state
 	unit->sm->SetNextState("None");
-	unit->maxHealth = 200;
-	unit->health = 200;
+	unit->maxHealth = 300;
+	unit->health = 300;
 	unit->maxEnergy = 10;
 	unit->energy = 0;
 
@@ -375,8 +379,8 @@ GameObject* SceneMovement_Week03::SpawnMetalUnit(GameObject::SIDE side, Vector3 
 	}
 
 	unit->sm->SetNextState("None");
-	unit->maxHealth = 270;
-	unit->health = 270;
+	unit->maxHealth = 400;
+	unit->health = 400;
 	unit->maxEnergy = 10;
 	unit->energy = 0;
 
@@ -504,11 +508,6 @@ SceneMovement_Week03::ArmyStats SceneMovement_Week03::ComputeArmyStats(GameObjec
 	return stats;
 }
 
-void SceneMovement_Week03::CalcNeededUnits()
-{
-
-}
-
 int SceneMovement_Week03::MechanicNeedGet(GameObject* spawner)
 {
 	ArmyStats stats = ComputeArmyStats(spawner->side);
@@ -536,7 +535,7 @@ int SceneMovement_Week03::MechanicNeedGet(GameObject* spawner)
 
 	//find avg need
 	float woodNeed = (needAttacker + needRanged + needSupport + needMech) / 4.0f;
-	float metalNeed = (needTank + needMortar) / 2.0f;
+	float metalNeed = ((needTank + needMortar) / 2.0f) * 0.5f;
 
 	// ---- Also look at current stock, so we don't overcap one resource ----
 	int woodStock = spawner->woodenLogs;
@@ -602,7 +601,7 @@ bool SceneMovement_Week03::DecideSpawn(GameObject* spawner)
 		needMech += 0.2f;
 	}
 
-	// Helper (can be put at top of file or as a static function)
+	// Helper 
 	auto TypeName = [](GameObject::GAMEOBJECT_TYPE t) -> const char*
 		{
 			switch (t)
@@ -867,37 +866,37 @@ void SceneMovement_Week03::Update(double dt)
 	//	Init();
 	//	return;
 	//}
-	static bool bFState = false;
-	if (!bFState && Application::IsKeyPressed('F'))
-	{
-		bFState = true;
+	//static bool bFState = false;
+	//if (!bFState && Application::IsKeyPressed('F'))
+	//{
+	//	bFState = true;
 
-		bool found = false;
-		for (std::vector<GameObject*>::iterator it = m_goList.begin(); it != m_goList.end(); ++it)
-		{
-			GameObject* go = (GameObject*)*it;
-			if (!go->active)
-				continue;
-			if (go->type == GameObject::GO_MECHANIC)
-			{
-				if (go->specID == 2) {
-					found = true;
-					go->health -= 10;
-				}
-			}
-		}
+	//	bool found = false;
+	//	for (std::vector<GameObject*>::iterator it = m_goList.begin(); it != m_goList.end(); ++it)
+	//	{
+	//		GameObject* go = (GameObject*)*it;
+	//		if (!go->active)
+	//			continue;
+	//		if (go->type == GameObject::GO_MECHANIC)
+	//		{
+	//			if (go->specID == 2) {
+	//				found = true;
+	//				go->health -= 10;
+	//			}
+	//		}
+	//	}
 
-		if (!found)
-		{
-			Vector3 randomPos = RandomPointInRing(m_spawners[2]->pos, 3.75, 10);
-			GameObject* uni1 = SpawnUnit(GameObject::SIDE_RED, randomPos, GameObject::GO_MECHANIC);
-			uni1->specID = 2;
-		}
-	}
-	else if (bFState && !Application::IsKeyPressed('F'))
-	{
-		bFState = false;
-	}
+	//	if (!found)
+	//	{
+	//		Vector3 randomPos = RandomPointInRing(m_spawners[2]->pos, 3.75, 10);
+	//		GameObject* uni1 = SpawnUnit(GameObject::SIDE_RED, randomPos, GameObject::GO_MECHANIC);
+	//		uni1->specID = 2;
+	//	}
+	//}
+	//else if (bFState && !Application::IsKeyPressed('F'))
+	//{
+	//	bFState = false;
+	//}
 	static bool bGState = false;
 	if (!bGState && Application::IsKeyPressed('G'))
 	{
@@ -912,7 +911,7 @@ void SceneMovement_Week03::Update(double dt)
 		bGState = false;
 	}
 
-	if (timeCounter >= 300) { gamePlaying = false; }
+	//if (timeCounter >= 300) { gamePlaying = false; }
 	if (!gamePlaying) return;
 
 	static float checkTimer = 0.0f;
@@ -1425,8 +1424,8 @@ void SceneMovement_Week03::Update(double dt)
 	for (std::vector<GameObject*>::iterator it = m_spawners.begin(); it != m_spawners.end(); ++it)
 	{
 		GameObject* spawner = *it;
-
-		spawner->energy += 0.2; // dont wanna use EnergyReduce function, i want energy to stop at max
+		if (spawner->active == false) { continue; }
+		spawner->energy += 0.13; // dont wanna use EnergyReduce function, i want energy to stop at max
 
 		if (spawner->energy >= spawner->maxEnergy)
 		{
@@ -1650,17 +1649,13 @@ void SceneMovement_Week03::Update(double dt)
 
 	//Counting objects
 	CountingGO();
-	if (timeCounter <= 300)
-	{
-		timeCounter += dt;
-	}
+	timeCounter += dt;
+	
 	gameStateString = GameState();
 	if (gameStateString == "Red Side Wins!" || gameStateString == "Blue Side Wins!")
 	{
 		gamePlaying = false;
 	}
-
-
 }
 std::string GetTimeString(float timeCounter)
 {
@@ -1669,8 +1664,6 @@ std::string GetTimeString(float timeCounter)
 	// clamp between 0 and 5 minutes
 	if (totalSeconds < 0)
 		totalSeconds = 0;
-	if (totalSeconds > 5 * 60)
-		totalSeconds = 5 * 60;
 
 	int minutes = totalSeconds / 60;
 	int seconds = totalSeconds % 60;
@@ -1684,7 +1677,7 @@ std::string GetTimeString(float timeCounter)
 
 	result += std::to_string(seconds);
 
-	return result; // e.g. "0:05", "1:23", "5:00"
+	return result; 
 }
 
 void SceneMovement_Week03::CountingGO()
@@ -1913,10 +1906,10 @@ void SceneMovement_Week03::RenderGO(GameObject* go)
 		{
 			if (go->pos.y < m_worldHeight / 2)
 			{
-				modelStack.Translate(go->pos.x + 125, go->pos.y + 65, zOffset);
+				modelStack.Translate(go->pos.x + 125, go->pos.y + 60, zOffset);
 			}
 			else {
-				modelStack.Translate(go->pos.x + 90, go->pos.y + 15, zOffset);
+				modelStack.Translate(go->pos.x + 90, go->pos.y + 20, zOffset);
 			}
 			RenderGOBar(go, 14, Vector3(0, -1.5, 0));
 
@@ -1925,10 +1918,10 @@ void SceneMovement_Week03::RenderGO(GameObject* go)
 		{
 			if (go->pos.y < m_worldHeight / 2)
 			{
-				modelStack.Translate(go->pos.x + 75, go->pos.y + 25, zOffset);
+				modelStack.Translate(go->pos.x + 75, go->pos.y + 20, zOffset);
 			}
 			else {
-				modelStack.Translate(go->pos.x + 40, go->pos.y - 25, zOffset);
+				modelStack.Translate(go->pos.x + 40, go->pos.y - 20, zOffset);
 			}
 			RenderGOBar(go, 14, Vector3(0, -1.5, 0));
 		}
@@ -2304,8 +2297,19 @@ bool SceneMovement_Week03::Handle(Message* message)
 		}
 		projectile->pos = msgSpawnProj2->go->pos;
 		projectile->scale = Vector3(m_gridSize / 4, m_gridSize / 4, m_gridSize / 4);
+		Vector3 delta = msgSpawnProj2->target->pos - msgSpawnProj2->go->pos;
 
-		Vector3 dir = (msgSpawnProj2->target->pos - msgSpawnProj2->go->pos).Normalized();
+		Vector3 dir;
+		float len = delta.Length();
+		if (len > Math::EPSILON)   // safe to normalize
+		{
+			dir = delta.Normalized();
+		}
+		else
+		{
+			// fallback direction if on top of target
+			dir = Vector3(1.f, 0.f, 0.f); // or keep previous dir, or skip spawning
+		}
 		float overshootDistance = 100.0f;
 		projectile->target = msgSpawnProj2->target->pos + dir * overshootDistance;
 		projectile->nearest = msgSpawnProj2->target; //use nearest as proj target object
@@ -2990,30 +2994,30 @@ std::string SceneMovement_Week03::GameState()
 	if (m_mainBaseBlue && m_mainBaseBlue->maxHealth > 0.0f)
 		blueBasePer = m_mainBaseBlue->health / m_mainBaseBlue->maxHealth;
 
-	if (timeCounter >= 300)
-	{
-		if (redBasePer == 1 && blueBasePer == 1)
-		{
-			if (redSpawnerHealth > blueSpawnerHealth)
-				return "Blue Side Wins!";
-			else if (blueSpawnerHealth > redSpawnerHealth)
-				return "Red Side Wins!";
-			else if (redSpawnerHealth == blueSpawnerHealth)
-				return "The Game is Tied Currently";
-		}
-		else if (redBasePer > blueBasePer)
-		{
-			return "Blue Side Wins!";
-		}
-		else if (blueBasePer > redBasePer)
-		{
-			return "Red Side Wins!";
-		}
-		else if (blueBasePer == redBasePer)
-		{
-			return "The Game is Tied Currently";
-		}
-	}
+	//if (timeCounter >= 300)
+	//{
+	//	if (redBasePer == 1 && blueBasePer == 1)
+	//	{
+	//		if (redSpawnerHealth > blueSpawnerHealth)
+	//			return "Blue Side Wins!";
+	//		else if (blueSpawnerHealth > redSpawnerHealth)
+	//			return "Red Side Wins!";
+	//		else if (redSpawnerHealth == blueSpawnerHealth)
+	//			return "The Game is Tied Currently";
+	//	}
+	//	else if (redBasePer > blueBasePer)
+	//	{
+	//		return "Blue Side Wins!";
+	//	}
+	//	else if (blueBasePer > redBasePer)
+	//	{
+	//		return "Red Side Wins!";
+	//	}
+	//	else if (blueBasePer == redBasePer)
+	//	{
+	//		return "The Game is Tied Currently";
+	//	}
+	//}
 
 	if (redBasePer <= 0)
 	{

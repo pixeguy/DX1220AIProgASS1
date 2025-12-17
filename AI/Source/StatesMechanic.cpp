@@ -20,7 +20,7 @@ void StateMechanicHealthy::Enter()
 	go->moveSpeed = 1;
 	go->target = go->pos;
 	go->nearest = NULL;
-	go->actionSpeed = 0.12;
+	go->actionSpeed = 0.06;
 }
 
 void StateMechanicHealthy::Update(double dt)
@@ -126,7 +126,7 @@ void StateMechanicHealing::Enter()
 {
 	go->moveSpeed = 1;
 	go->target = go->pos;
-	go->actionSpeed = 0.4;
+	go->actionSpeed = 0.12;
 	//go->nearest = NULL;
 }
 
@@ -307,7 +307,7 @@ void StateMechanicHurt::Enter()
 	go->nearest = NULL;
 	go->energy = 0;
 	go->normalTarget = Vector3(0, 0, 0);
-	go->actionSpeed = 0.12f;
+	go->actionSpeed = 0.06f;
 }
 
 void StateMechanicHurt::Update(double dt)
@@ -469,7 +469,7 @@ void StateMechanicGoldenChase::Enter()
 	go->target = go->pos;
 	go->energy = 0;
 	go->normalTarget = Vector3(0, 0, 0);
-	go->actionSpeed = 0.4;
+	go->actionSpeed = 0.15;
 }
 
 void StateMechanicGoldenChase::Update(double dt)

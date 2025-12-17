@@ -18,7 +18,7 @@ StateTankHealthy::~StateTankHealthy()
 void StateTankHealthy::Enter()
 {
 	go->moveSpeed = 1;
-	go->actionSpeed = 0.2;
+	go->actionSpeed = 0.1;
 	go->target = go->pos;
 	go->nearest = NULL;
 	go->moving = true;
@@ -28,10 +28,10 @@ void StateTankHealthy::Update(double dt)
 {
 	if (go->health < 40)
 	{
-		go->actionSpeed = 0.29f;
+		go->actionSpeed = 0.19f;
 		go->panicking = true;
 	}
-	else { go->actionSpeed = 0.2f; go->panicking = false;}
+	else { go->actionSpeed = 0.1f; go->panicking = false;}
 
 	if(go->health <= 0)
 	{
@@ -99,7 +99,7 @@ StateTankSoloHealthy::~StateTankSoloHealthy()
 void StateTankSoloHealthy::Enter()
 {
 	go->moveSpeed = 1;
-	go->actionSpeed = 0.2;
+	go->actionSpeed = 0.1;
 	go->target = go->pos;
 	go->nearest = NULL;
 	go->moving = true;
@@ -109,10 +109,10 @@ void StateTankSoloHealthy::Update(double dt)
 {
 	if (go->health < 40)
 	{
-		go->actionSpeed = 0.29f;
+		go->actionSpeed = 0.15f;
 		go->panicking = true;
 	}
-	else { go->actionSpeed = 0.2f; go->panicking = false; }
+	else { go->actionSpeed = 0.1f; go->panicking = false; }
 	if (go->health <= 0)
 	{
 		float random = Math::RandFloatMinMax(0.f, 1.f);

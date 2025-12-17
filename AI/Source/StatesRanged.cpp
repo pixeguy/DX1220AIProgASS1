@@ -18,7 +18,7 @@ StateRangedHealthy::~StateRangedHealthy()
 void StateRangedHealthy::Enter()
 {
 	go->moveSpeed = 0.75;
-	go->actionSpeed = 0.2;
+	go->actionSpeed = 0.1;
 	go->target = go->pos;
 	go->nearest = NULL;
 }
@@ -102,7 +102,7 @@ StateRangedHurt::~StateRangedHurt()
 void StateRangedHurt::Enter()
 {
 	go->moveSpeed = 0.75;
-	go->actionSpeed = 0.2;
+	go->actionSpeed = 0.115;
 	go->target = go->pos;
 	go->nearest = NULL;
 }
@@ -189,7 +189,7 @@ StateRangedPanic::~StateRangedPanic()
 void StateRangedPanic::Enter()
 {
 	go->moveSpeed = 0.75;
-	go->actionSpeed = 0.2;
+	go->actionSpeed = 0.135;
 	go->target = go->pos;
 	go->nearest = NULL;
 }
@@ -278,7 +278,7 @@ StateRangedNearDeath::~StateRangedNearDeath()
 void StateRangedNearDeath::Enter()
 {
 	go->moveSpeed = 0.75;
-	go->actionSpeed = 0.2;
+	go->actionSpeed = 0.15;
 	go->target = go->pos;
 	go->nearest = NULL;
 }

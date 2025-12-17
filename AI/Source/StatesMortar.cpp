@@ -18,7 +18,7 @@ void StateMortarHealthy::Enter()
 {
 	go->moveSpeed = 0;
 	go->moving = false;
-	go->actionSpeed = 0.05;
+	go->actionSpeed = 0.02;
 	go->target = go->pos;
 	go->nearest = NULL;
 	go->energy = 0;
@@ -52,7 +52,7 @@ void StateMortarPanic::Enter()
 {
 	go->moveSpeed = 0;
 	go->moving = false;
-	go->actionSpeed = 0.08;
+	go->actionSpeed = 0.055;
 	go->target = go->pos;
 	go->nearest = NULL;
 }

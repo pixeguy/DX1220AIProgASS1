@@ -16,7 +16,7 @@ StateAttackerHealthy::~StateAttackerHealthy()
 void StateAttackerHealthy::Enter()
 {
 	go->moveSpeed = 1;
-	go->actionSpeed = 0.2;
+	go->actionSpeed = 0.15;
 	go->target = go->pos;
 	go->nearest = NULL;
 	go->external = NULL;
