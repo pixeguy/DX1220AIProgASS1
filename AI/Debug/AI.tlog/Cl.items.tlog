@@ -11,12 +11,17 @@ E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\MeshBuilder.cpp;E:\pixegu
 E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\PostOffice.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\PostOffice.obj
 E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneBase.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\SceneBase.obj
 E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneData.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\SceneData.obj
+E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneGraph_Week09.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\SceneGraph_Week09.obj
+E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneGraph_Week12.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\SceneGraph_Week12.obj
+E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneHex.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\SceneHex.obj
+E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMaze.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\SceneMaze.obj
 E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week01.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\SceneMovement_Week01.obj
 E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week02.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\SceneMovement_Week02.obj
 E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week03.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\SceneMovement_Week03.obj
 E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week04.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\SceneMovement_Week04.obj
 E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneMovement_Week999.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\SceneMovement_Week999.obj
 E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneTicTacToe.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\SceneTicTacToe.obj
+E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\SceneTurn.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\SceneTurn.obj
 E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\shader.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\shader.obj
 E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\State.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\State.obj
 E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Source\StateMachine.cpp;E:\pixeguy\Documents\GitHub\DX1220AIProgASS1\AI\Debug\StateMachine.obj

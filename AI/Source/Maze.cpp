@@ -24,6 +24,10 @@ void Maze::Generate(unsigned key, unsigned size, MazePt start, float wallLoad)
 	start.x = Math::Clamp(start.x, 0, (int)size - 1);
 	start.y = Math::Clamp(start.y, 0, (int)size - 1);
 	wallLoad = Math::Clamp(wallLoad, 0.f, 0.8f);
+
+	float slowLoad = 0.15f;           
+	slowLoad = Math::Clamp(slowLoad, 0.f, 0.8f);
+
 	unsigned total = size * size;
 	m_grid.resize(total);
 	std::fill(m_grid.begin(), m_grid.end(), TILE_EMPTY);
@@ -40,15 +44,27 @@ void Maze::Generate(unsigned key, unsigned size, MazePt start, float wallLoad)
 			++i;
 		}
 	}
+	// 2) Place slow tiles (only on remaining EMPTY tiles)
+	for (int i = 0; i < (int)(total * slowLoad);)
+	{
+		unsigned chosen = rand() % total;
+		if (chosen == startId) continue;
+
+		if (m_grid[chosen] == TILE_EMPTY)
+		{
+			m_grid[chosen] = TILE_SLOW;
+			++i;
+		}
+	}
 	std::cout << "Maze " << key << std::endl;
 	for (int row = (int)size - 1; row >= 0; --row)
 	{
 		for (int col = 0; col < (int)size; ++col)
 		{
-			if (m_grid[row * size + col] == TILE_WALL)
-				std::cout << "1 ";
-			else
-				std::cout << "0 ";
+			int t = m_grid[row * size + col];
+			if (t == TILE_WALL) std::cout << "1 ";
+			else if (t == TILE_SLOW) std::cout << "S ";
+			else std::cout << "0 ";
 		}
 		std::cout << std::endl;
 	}

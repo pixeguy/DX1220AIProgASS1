@@ -18,6 +18,7 @@ public:
 		TILE_WALL = -1,
 		TILE_FOG = 0,
 		TILE_EMPTY = 1,
+		TILE_SLOW = 2,
 	};
 	enum DIRECTION
 	{
