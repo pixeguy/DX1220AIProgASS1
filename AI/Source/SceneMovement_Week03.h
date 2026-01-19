@@ -6,6 +6,7 @@
 #include "SceneBase.h"
 #include "PostOffice.h"
 #include "ConcreteMessages.h"
+#include <queue>
 
 class SceneMovement_Week03 : public SceneBase , ObjectBase
 {
@@ -106,6 +107,44 @@ protected:
 	int m_numBlueGO[GameObject::GO_TOTAL] = { 0 };
 	int m_numRedGO[GameObject::GO_TOTAL] = { 0 };
 	float zOffset;
+
+
+
+	void CarveUntilNoFog();
+	void DFS(MazePt curr);
+	int IsWithinBoundary(int x) const;
+	int Get1DIndex(int x, int y) const;
+	int HeuristicManhattan(const MazePt& a, const MazePt& b);
+	bool AStar(GameObject* go, MazePt start, MazePt end);
+	// Add this method declaration to SceneTurn.h inside the SceneTurn class
+	int GetTileCost(Maze::TILE_CONTENT tile);
+
+	bool TryFindFrontierTarget(GameObject* go, const MazePt& goal, MazePt& outTarget);
+
+	void RevealAround(GameObject* go);
+
+	void PathFind(GameObject* go, const MazePt& goal, int moveBudget);
+
+	void ClearSpawnArea();
+	void DFSOnce(GameObject* go);
+
+	GameObject::SIDE GetSide(GameObject* go);
+
+	int m_turn = 0;
+	Maze m_maze;
+	MazePt m_start;
+	MazePt m_end;
+	std::vector<Maze::TILE_CONTENT> m_myGrid; //read maze and store here
+	std::vector<bool> m_visited; //visited set for DFS/BFS
+	std::vector<bool> b_visited;
+	std::vector<bool> r_visited;
+	std::vector<Maze::TILE_CONTENT> b_grid;
+	std::vector<Maze::TILE_CONTENT> r_grid;
+	std::queue<MazePt> m_queue; //queue for BFS
+	std::vector<MazePt> m_previous; //to store previous tile
+	std::vector<MazePt> m_shortestPath;  //to store shortest path
+	unsigned m_mazeKey;
+	float m_wallLoad;
 };
 
 #endif

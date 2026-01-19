@@ -19,9 +19,10 @@ public:
 	virtual void Exit();
 
 	void RenderGO(GameObject *go);
+	void CarveUntilNoFog();
+	void DFS(MazePt curr);
 	GameObject* FetchGO(GameObject::GAMEOBJECT_TYPE);
 
-	void DFS(MazePt curr);
 	bool BFS(MazePt start, MazePt end);
 
 protected:
@@ -32,20 +33,24 @@ protected:
 	// 5.	Declare these methods and variable in SceneTurn.h
 	void DFSOnce(GameObject* go);
 	bool BFSLimit(GameObject* go, MazePt end, int limit);
+	bool AStar(GameObject* go, MazePt start, MazePt end);
+    // Add this method declaration to SceneTurn.h inside the SceneTurn class
+    int GetTileCost(Maze::TILE_CONTENT tile);
+
+	bool TryFindFrontierTarget(GameObject* go, const MazePt& goal, MazePt& outTarget);
+
+	void RevealAround(GameObject* go);
+
+	void PathFind(GameObject* go, const MazePt& goal, int moveBudget);
+
 	int m_turn = 0;
 
 	std::vector<GameObject *> m_goList;
 	float m_speed;
-	float m_worldWidth;
-	float m_worldHeight;
 	int m_objectCount;
 	int m_noGrid;
 	float m_gridSize;
 	float m_gridOffset;
-
-	// Exercise Week 8
-	// 5.	Declare these methods and variable in SceneTurn.h
-
 
 	Maze m_maze;
 	MazePt m_start;
@@ -57,6 +62,11 @@ protected:
 	std::vector<MazePt> m_shortestPath;  //to store shortest path
 	unsigned m_mazeKey;
 	float m_wallLoad;
+	// Exercise Week 8
+	// 5.	Declare these methods and variable in SceneTurn.h
+
+
+
 };
 
 #endif

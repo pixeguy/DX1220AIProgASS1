@@ -4,6 +4,7 @@
 #include "GameObject.h"
 #include <vector>
 #include "SceneBase.h"
+#include <queue>
 
 class SceneMovement_Week999 : public SceneBase
 {
@@ -42,6 +43,32 @@ protected:
 	float m_hourOfTheDay;
 	int m_numGO[GameObject::GO_TOTAL];
 	float zOffset;
+
+	void CarveUntilNoFog();
+	int IsWithinBoundary(int x) const;
+	int Get1DIndex(int x, int y) const;
+	bool AStar(GameObject* go, MazePt start, MazePt end);
+	// Add this method declaration to SceneTurn.h inside the SceneTurn class
+	int GetTileCost(Maze::TILE_CONTENT tile);
+
+	bool TryFindFrontierTarget(GameObject* go, const MazePt& goal, MazePt& outTarget);
+
+	void RevealAround(GameObject* go);
+
+	void PathFind(GameObject* go, const MazePt& goal, int moveBudget);
+
+	int m_turn = 0;
+
+	Maze m_maze;
+	MazePt m_start;
+	MazePt m_end;
+	std::vector<Maze::TILE_CONTENT> m_myGrid; //read maze and store here
+	std::vector<bool> m_visited; //visited set for DFS/BFS
+	std::queue<MazePt> m_queue; //queue for BFS
+	std::vector<MazePt> m_previous; //to store previous tile
+	std::vector<MazePt> m_shortestPath;  //to store shortest path
+	unsigned m_mazeKey;
+	float m_wallLoad;
 };
 
 #endif

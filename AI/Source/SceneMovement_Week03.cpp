@@ -19,6 +19,10 @@
 //0.5882352941 range - circle conversion
 
 SceneMovement_Week03::SceneMovement_Week03()
+	: m_turn{}, m_goList{}, m_speed{}, m_gridOffset{}, m_maze{},
+	m_start{}, m_end{}, m_myGrid{},
+	m_visited{}, m_queue{}, m_previous{},
+	m_shortestPath{}, m_mazeKey{}, m_wallLoad{}
 {
 }
 
@@ -45,10 +49,6 @@ void SceneMovement_Week03::Init()
 	m_gridOffset = m_gridSize / 2;
 	m_hourOfTheDay = 0;
 
-	//GameObject* go = FetchGO(GameObject::GO_SHARK);
-	//go->scale.Set(m_gridSize, m_gridSize, m_gridSize);
-	//go->pos.Set(m_gridOffset + Math::RandIntMinMax(0, m_noGrid - 1) * m_gridSize, m_gridOffset + Math::RandIntMinMax(0, m_noGrid - 1) * m_gridSize, 0);
-	//go->target = go->pos;
 
 	InitMainBase(GameObject::SIDE_BLUE, Vector3(m_worldWidth - m_gridSize, m_worldHeight / 2, 0.f));
 	InitMainBase(GameObject::SIDE_RED, Vector3(0 + m_gridSize, m_worldHeight / 2, 0.f));
@@ -67,7 +67,26 @@ void SceneMovement_Week03::Init()
 
 	PostOffice::GetInstance()->Register("Scene", this);
 
+
 	srand(time(NULL));
+
+	m_start.Set(0, 0);
+	m_mazeKey = 0;
+	m_wallLoad = 0.3f;
+	m_maze.Generate(m_mazeKey, m_noGrid, m_start, m_wallLoad); //Generate new maze
+	m_myGrid.resize(m_noGrid * m_noGrid);
+	m_visited.resize(m_noGrid * m_noGrid);
+	m_previous.resize(m_noGrid * m_noGrid);
+	std::fill(m_myGrid.begin(), m_myGrid.end(), Maze::TILE_FOG);
+	std::fill(m_visited.begin(), m_visited.end(), false);
+	std::fill(b_grid.begin(), b_grid.end(), Maze::TILE_FOG);
+	std::fill(r_grid.begin(), r_grid.end(), Maze::TILE_FOG);
+	std::fill(b_visited.begin(), b_visited.end(), false);
+	std::fill(r_visited.begin(), r_visited.end(), false);
+	m_myGrid[m_start.y * m_noGrid + m_start.x] = Maze::TILE_EMPTY;
+	ClearSpawnArea();
+	DFS(m_start);
+	//CarveUntilNoFog();
 }
 
 GameObject* SceneMovement_Week03::FetchGO(GameObject::GAMEOBJECT_TYPE type)
@@ -211,7 +230,6 @@ GameObject* SceneMovement_Week03::FetchProj(GameObject::GAMEOBJECT_TYPE type)
 	}
 	return FetchProj(type);
 }
-
 
 GameObject* SceneMovement_Week03::InitMainBase(GameObject::SIDE side, Vector3 pos)
 {
@@ -803,12 +821,26 @@ void SceneMovement_Week03::Update(double dt)
 	if (!bLButtonState && Application::IsMousePressed(0))
 	{
 		bLButtonState = true;
-		std::cout << "LBUTTON DOWN" << std::endl;
+		//std::cout << "LBUTTON DOWN" << std::endl;
+		double x, y;
+		Application::GetCursorPos(&x, &y);
+		int w = Application::GetWindowWidth();
+		int h = Application::GetWindowHeight();
+		float posX = static_cast<float>(x) / w * m_worldWidth;
+		float posY = (h - static_cast<float>(y)) / h * m_worldHeight;
+		if (posX < m_noGrid * m_gridSize && posY < m_noGrid * m_gridSize) //ensure we're clicking within the board
+		{
+			m_end.Set(static_cast<int>(posX / m_gridSize), static_cast<int>(posY / m_gridSize));
+			std::cout << static_cast<int>(posX / m_gridSize) << " , " << static_cast<int>(posY / m_gridSize) << std::endl;
+			for (GameObject* go : m_goList)
+				if (go->active && go->type == GameObject::GO_NPC)
+					PathFind(go, m_end, 1);
+		}
 	}
 	else if (bLButtonState && !Application::IsMousePressed(0))
 	{
 		bLButtonState = false;
-		std::cout << "LBUTTON UP" << std::endl;
+		//std::cout << "LBUTTON UP" << std::endl;
 	}
 	static bool bRButtonState = false;
 	if (!bRButtonState && Application::IsMousePressed(1))
@@ -825,17 +857,33 @@ void SceneMovement_Week03::Update(double dt)
 	if (!bSpaceState && Application::IsKeyPressed(VK_SPACE))
 	{
 		bSpaceState = true;
-		if (!gamePlaying) {
-			Vector3 randomPos = RandomPointInRing(m_spawners[0]->pos, 3.75, 10);
-			GameObject* uni1 = SpawnUnit(GameObject::SIDE_BLUE, randomPos, GameObject::GO_MECHANIC);
-			randomPos = RandomPointInRing(m_spawners[1]->pos, 3.75, 10);
-			uni1 = SpawnUnit(GameObject::SIDE_BLUE, randomPos, GameObject::GO_MECHANIC);
-			randomPos = RandomPointInRing(m_spawners[2]->pos, 3.75, 10);
-			uni1 = SpawnUnit(GameObject::SIDE_RED, randomPos, GameObject::GO_MECHANIC);
-			randomPos = RandomPointInRing(m_spawners[3]->pos, 3.75, 10);
-			uni1 = SpawnUnit(GameObject::SIDE_RED, randomPos, GameObject::GO_MECHANIC);
-			gamePlaying = true;
-		}
+		//if (!gamePlaying) {
+		//	Vector3 randomPos = RandomPointInRing(m_spawners[0]->pos, 3.75, 10);
+		//	GameObject* uni1 = SpawnUnit(GameObject::SIDE_BLUE, randomPos, GameObject::GO_MECHANIC);
+		//	randomPos = RandomPointInRing(m_spawners[1]->pos, 3.75, 10);
+		//	uni1 = SpawnUnit(GameObject::SIDE_BLUE, randomPos, GameObject::GO_MECHANIC);
+		//	randomPos = RandomPointInRing(m_spawners[2]->pos, 3.75, 10);
+		//	uni1 = SpawnUnit(GameObject::SIDE_RED, randomPos, GameObject::GO_MECHANIC);
+		//	randomPos = RandomPointInRing(m_spawners[3]->pos, 3.75, 10);
+		//	uni1 = SpawnUnit(GameObject::SIDE_RED, randomPos, GameObject::GO_MECHANIC);
+		//	gamePlaying = true;
+		//}
+
+		GameObject* go = FetchGO(GameObject::GAMEOBJECT_TYPE::GO_NPC);
+		go->grid.resize(m_noGrid * m_noGrid);
+		go->visited.resize(m_noGrid * m_noGrid);
+		std::fill(go->grid.begin(), go->grid.end(), Maze::TILE_FOG);
+		std::fill(go->visited.begin(), go->visited.end(), false);
+		//set position to a random EMPTY tile
+		do
+		{
+			go->curr.Set(Math::RandIntMinMax(0, m_noGrid - 1),
+				Math::RandIntMinMax(0, m_noGrid - 1));
+		} while (m_maze.See(go->curr) != Maze::TILE_EMPTY);
+		go->grid[Get1DIndex(go->curr.x, go->curr.y)] = Maze::TILE_EMPTY;
+		RevealAround(go);
+		go->stack.push_back(go->curr); //triggers dfs
+
 	}
 	else if (bSpaceState && !Application::IsKeyPressed(VK_SPACE))
 	{
@@ -912,39 +960,40 @@ void SceneMovement_Week03::Update(double dt)
 	}
 
 	//if (timeCounter >= 300) { gamePlaying = false; }
-	if (!gamePlaying) return;
+	//if (!gamePlaying) return;
 
 	static float checkTimer = 0.0f;
 
-	if (timeCounter >= 30 && !goldenEvent)
-	{
-		checkTimer += dt;                 // dt = seconds per frame
-		if (checkTimer >= 1.0f)           // check once per second
-		{
-			checkTimer -= 1.0f;
-
-			float r = Math::RandFloatMinMax(0.f, 1.f);
-			if (r < 0.05f)
-			{
-				InitGoldenOrb(Vector3(m_worldWidth * 0.5f, m_worldHeight * 0.5f, 0.f));
-				goldenEvent = true;
-			}
-		}
-		if (timeCounter >= 80 && !goldenEvent) //force spawn if too long
-		{
-			InitGoldenOrb(Vector3(m_worldWidth * 0.5f, m_worldHeight * 0.5f, 0.f));
-			goldenEvent = true;
-		}
-	}
+	//----------GoldenOrb Event Spawn--------------
+	
+	//if (timeCounter >= 30 && !goldenEvent)
+	//{
+	//	checkTimer += dt;                 // dt = seconds per frame
+	//	if (checkTimer >= 1.0f)           // check once per second
+	//	{
+	//		checkTimer -= 1.0f;
+	//		float r = Math::RandFloatMinMax(0.f, 1.f);
+	//		if (r < 0.05f)
+	//		{
+	//			InitGoldenOrb(Vector3(m_worldWidth * 0.5f, m_worldHeight * 0.5f, 0.f));
+	//			goldenEvent = true;
+	//		}
+	//	}
+	//	if (timeCounter >= 80 && !goldenEvent) //force spawn if too long
+	//	{
+	//		InitGoldenOrb(Vector3(m_worldWidth * 0.5f, m_worldHeight * 0.5f, 0.f));
+	//		goldenEvent = true;
+	//	}
+	//}
 
 	//StateMachine
-	for (int i = 0; i < m_goList.size(); i++) {
-		GameObject* go = m_goList[i];
-		if (!go->active)
-			continue;
-		if (go->sm)
-			go->sm->Update(dt);
-	}
+	//for (int i = 0; i < m_goList.size(); i++) {
+	//	GameObject* go = m_goList[i];
+	//	if (!go->active)
+	//		continue;
+	//	if (go->sm)
+	//		go->sm->Update(dt);
+	//}
 	//if (ref != NULL && ref->nearest != NULL)
 		//std::cout << ref->nearest << std::endl;
 	//External triggers
@@ -1547,6 +1596,30 @@ void SceneMovement_Week03::Update(double dt)
 		//std::cout << proj->target << std::endl;
 	}
 
+	static constexpr float TURN_TIME = 0.5f;
+	static float timer = 0.f;
+	// 6.	SceneTurn::Update - add code to support a turn-based system. Read this pseudo codes and try to implement on your own. The solution will be provided during lesson time.
+	//remember to declare and initialize m_turn
+	timer += m_speed * dt;
+	if (timer > 1.0f)
+	{
+		timer = 0.f;
+		++m_turn;
+		//for each GameObject in m_goList
+		for (GameObject* go : m_goList)
+		{
+			if (go->active)
+			{
+				switch (go->type)
+				{
+				case GameObject::GO_NPC:
+					DFSOnce(go);
+					break;
+				}
+			}
+		}
+	}
+
 	//check for death buildings and units
 	{
 		for (std::vector<GameObject*>::iterator it = m_goList.begin(); it != m_goList.end(); ++it)
@@ -1576,76 +1649,76 @@ void SceneMovement_Week03::Update(double dt)
 	}
 
 	//Movement Section
-	for (std::vector<GameObject*>::iterator it = m_goList.begin(); it != m_goList.end(); ++it)
-	{
-		GameObject* go = (GameObject*)*it;
-		if (!go->active)
-			continue;
-		Vector3 dir = go->target - go->pos;
+	//for (std::vector<GameObject*>::iterator it = m_goList.begin(); it != m_goList.end(); ++it)
+	//{
+	//	GameObject* go = (GameObject*)*it;
+	//	if (!go->active)
+	//		continue;
+	//	Vector3 dir = go->target - go->pos;
 
-		//use additive speed so i can add on whenever i want
-		go->finalMoveSpeed = (go->moveSpeed * 5) + go->supportSpeed;
-		//if (go->type == GameObject::GO_RANGED) { std::cout << dir.Length() << std::endl; }
-		if (go->moving == true) {
-			if (dir.Length() < go->finalMoveSpeed * dt * m_speed)
-			{
-				//GO->pos reach target
-				go->pos = go->target;
-				
-				if (go->moveRight)
-					go->target = go->pos + Vector3(m_gridSize, 0, 0);
+	//	//use additive speed so i can add on whenever i want
+	//	go->finalMoveSpeed = (go->moveSpeed * 5) + go->supportSpeed;
+	//	//if (go->type == GameObject::GO_RANGED) { std::cout << dir.Length() << std::endl; }
+	//	if (go->moving == true) {
+	//		if (dir.Length() < go->finalMoveSpeed * dt * m_speed)
+	//		{
+	//			//GO->pos reach target
+	//			go->pos = go->target;
+	//			
+	//			if (go->moveRight)
+	//				go->target = go->pos + Vector3(m_gridSize, 0, 0);
 
-				else if (go->moveLeft)
-					go->target = go->pos + Vector3(-m_gridSize, 0, 0);
+	//			else if (go->moveLeft)
+	//				go->target = go->pos + Vector3(-m_gridSize, 0, 0);
 
-				else if (go->moveUp)
-					go->target = go->pos + Vector3(0, m_gridSize, 0);
+	//			else if (go->moveUp)
+	//				go->target = go->pos + Vector3(0, m_gridSize, 0);
 
-				else if (go->moveDown)
-					go->target = go->pos + Vector3(0, -m_gridSize, 0);
+	//			else if (go->moveDown)
+	//				go->target = go->pos + Vector3(0, -m_gridSize, 0);
 
-				else
-					go->target = go->pos; // no movement allowed
+	//			else
+	//				go->target = go->pos; // no movement allowed
 
-				if (go->target.x < 0 || go->target.x > m_noGrid * m_gridSize || go->target.y < 0 || go->target.y > m_noGrid * m_gridSize)
-					go->target = go->pos;
-			}
-			else
-			{
-				try
-				{
-					dir.Normalize();
-					go->pos += dir * go->finalMoveSpeed * static_cast<float>(dt) * m_speed;
-				}
-				catch (DivideByZero)
-				{
-				}
-			}
-		}
-	}
-	for (std::vector<GameObject*>::iterator it = m_projList.begin(); it != m_projList.end(); ++it)
-	{
-		GameObject* go = (GameObject*)*it;
-		if (!go->active)
-			continue;
-		Vector3 dir = go->target - go->pos;
-		if (dir.Length() < go->moveSpeed * dt * m_speed)
-		{
-			//GO->pos reach target
-			go->pos = go->target;
-		}
-		else
-		{
-			try
-			{
-				dir.Normalize();
-				go->pos += dir * go->moveSpeed * static_cast<float>(dt) * m_speed;
-			}
-			catch (DivideByZero)
-			{
-			}
-		}
-	}
+	//			if (go->target.x < 0 || go->target.x > m_noGrid * m_gridSize || go->target.y < 0 || go->target.y > m_noGrid * m_gridSize)
+	//				go->target = go->pos;
+	//		}
+	//		else
+	//		{
+	//			try
+	//			{
+	//				dir.Normalize();
+	//				go->pos += dir * go->finalMoveSpeed * static_cast<float>(dt) * m_speed;
+	//			}
+	//			catch (DivideByZero)
+	//			{
+	//			}
+	//		}
+	//	}
+	//}
+	//for (std::vector<GameObject*>::iterator it = m_projList.begin(); it != m_projList.end(); ++it)
+	//{
+	//	GameObject* go = (GameObject*)*it;
+	//	if (!go->active)
+	//		continue;
+	//	Vector3 dir = go->target - go->pos;
+	//	if (dir.Length() < go->moveSpeed * dt * m_speed)
+	//	{
+	//		//GO->pos reach target
+	//		go->pos = go->target;
+	//	}
+	//	else
+	//	{
+	//		try
+	//		{
+	//			dir.Normalize();
+	//			go->pos += dir * go->moveSpeed * static_cast<float>(dt) * m_speed;
+	//		}
+	//		catch (DivideByZero)
+	//		{
+	//		}
+	//	}
+	//}
 
 	//Counting objects
 	CountingGO();
@@ -1657,6 +1730,7 @@ void SceneMovement_Week03::Update(double dt)
 		gamePlaying = false;
 	}
 }
+
 std::string GetTimeString(float timeCounter)
 {
 	int totalSeconds = static_cast<int>(timeCounter);
@@ -1844,6 +1918,18 @@ void SceneMovement_Week03::RenderGO(GameObject* go)
 	std::ostringstream ss;
 	switch (go->type)
 	{
+	case GameObject::GO_NPC: //Render GO_NPC
+	{
+		modelStack.PushMatrix();
+		modelStack.Translate(m_gridOffset + m_gridSize * go->curr.x,
+			m_gridOffset + m_gridSize *
+			go->curr.y,
+			6);
+		modelStack.Scale(m_gridSize, m_gridSize, m_gridSize);
+		RenderMesh(meshList[GEO_AGENT], false);
+		modelStack.PopMatrix();
+	}
+	break;
 	case GameObject::GO_MAINBASE:
 		modelStack.PushMatrix();
 		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
@@ -2895,6 +2981,62 @@ void SceneMovement_Week03::Render()
 	}
 	RenderDebugGO(GameObject::SIDE_BLUE, 35);
 	RenderDebugGO(GameObject::SIDE_RED,75);
+	
+	for (int row = 0; row < m_noGrid; ++row)
+	{
+		for (int col = 0; col < m_noGrid; ++col)
+		{
+			modelStack.PushMatrix();
+			modelStack.Translate(m_gridOffset + m_gridSize * col, m_gridOffset + m_gridSize * row, 5);
+			modelStack.Scale(m_gridSize, m_gridSize, m_gridSize);
+			// Exercise Week 08
+			// b.Render the tiles using m_maze.m_grid instead of m_myGrid
+			switch (m_myGrid[row * m_noGrid + col])
+			{
+			case Maze::TILE_WALL:
+				RenderMesh(meshList[GEO_WALL], false);
+				break;
+			case Maze::TILE_FOG:
+				meshList[GEO_WHITEQUAD]->material.kAmbient.Set(0.f, 0.f, 0.f);
+				RenderMesh(meshList[GEO_WHITEQUAD], true);
+				break;
+			case Maze::TILE_SLOW:
+				meshList[GEO_WHITEQUAD]->material.kAmbient.Set(1.f, 0.f, 0.f);
+				RenderMesh(meshList[GEO_WHITEQUAD], true);
+				break;
+			case Maze::TILE_EMPTY:
+				//RenderMesh(meshList[GEO_FLOOR], false);
+				break;
+			}
+			modelStack.PopMatrix();
+		}
+	}
+
+	int i = 0;
+	for (bool b : b_visited)
+	{
+		if (b)
+		{
+			int cellX = i % m_noGrid;
+			int cellY = i / m_noGrid;
+
+			modelStack.PushMatrix();
+			modelStack.Translate(
+				m_gridOffset + m_gridSize * cellX,
+				m_gridOffset + m_gridSize * cellY,
+				0.05f
+			);
+			modelStack.Scale(m_gridSize, m_gridSize, m_gridSize);
+
+			// tint for blue visited
+			meshList[GEO_FLOOR]->material.kAmbient.Set(0.25f, 0.25f, 1.0f);
+			RenderMesh(meshList[GEO_FLOOR], true);
+
+			modelStack.PopMatrix();
+		}
+		++i;
+	}
+	
 	//On screen text
 
 	std::ostringstream ss;
@@ -2918,6 +3060,24 @@ void SceneMovement_Week03::Render()
 	ss.str("");
 	ss << input;
 	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 3, 49, 2.5);
+
+	ss.precision(3);
+	ss << "Speed:" << m_speed;
+	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 3, 50, 6);
+
+	ss.str("");
+	ss.precision(5);
+	ss << "FPS:" << fps;
+	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 3, 50, 3);
+
+	ss.str("");
+	ss << "Turn:" << m_turn;
+	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 3, 50, 9);
+
+	ss.str("");
+	ss << "Turn Maze " << m_mazeKey;
+	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 3, 50, 0);
+
 }
 
 std::string SceneMovement_Week03::GameState()
@@ -3049,6 +3209,525 @@ std::string SceneMovement_Week03::GameState()
 	{
 		return "The Game is Tied Currently";
 	}
+}
+void SceneMovement_Week03::DFS(MazePt curr)
+{
+	m_visited[curr.y * m_noGrid + curr.x] = true;
+	//UP
+	if (curr.y < m_noGrid - 1)
+	{
+		MazePt next(curr.x, curr.y + 1);
+		if (!m_visited[next.y * m_noGrid + next.x])
+		{
+			if (m_maze.Move(Maze::DIR_UP) == true)
+			{
+				Maze::TILE_CONTENT var = m_maze.See(next);
+				m_myGrid[next.y * m_noGrid + next.x] = var;
+				DFS(next);
+				m_maze.Move(Maze::DIR_DOWN);
+			}
+			else
+			{
+				m_myGrid[next.y * m_noGrid + next.x] = Maze::TILE_WALL;
+			}
+		}
+	}
+	//DOWN
+	if (curr.y > 0)
+	{
+		MazePt next(curr.x, curr.y - 1);
+		if (!m_visited[next.y * m_noGrid + next.x])
+		{
+			if (m_maze.Move(Maze::DIR_DOWN) == true)
+			{
+				Maze::TILE_CONTENT var = m_maze.See(next);
+				m_myGrid[next.y * m_noGrid + next.x] = var;
+				DFS(next);
+				m_maze.Move(Maze::DIR_UP);
+			}
+			else
+			{
+				m_myGrid[next.y * m_noGrid + next.x] = Maze::TILE_WALL;
+			}
+		}
+	}
+	//LEFT
+	if (curr.x > 0)
+	{
+		MazePt next(curr.x - 1, curr.y);
+		if (!m_visited[next.y * m_noGrid + next.x])
+		{
+			if (m_maze.Move(Maze::DIR_LEFT) == true)
+			{
+				Maze::TILE_CONTENT var = m_maze.See(next);
+				m_myGrid[next.y * m_noGrid + next.x] = var;
+				DFS(next);
+				m_maze.Move(Maze::DIR_RIGHT);
+			}
+			else
+			{
+				m_myGrid[next.y * m_noGrid + next.x] = Maze::TILE_WALL;
+			}
+		}
+	}
+	//RIGHT
+	if (curr.x < m_noGrid - 1)
+	{
+		MazePt next(curr.x + 1, curr.y);
+		if (!m_visited[next.y * m_noGrid + next.x])
+		{
+			if (m_maze.Move(Maze::DIR_RIGHT) == true)
+			{
+				Maze::TILE_CONTENT var = m_maze.See(next);
+				m_myGrid[next.y * m_noGrid + next.x] = var;
+				DFS(next);
+				m_maze.Move(Maze::DIR_LEFT);
+			}
+			else
+			{
+				m_myGrid[next.y * m_noGrid + next.x] = Maze::TILE_WALL;
+			}
+		}
+	}
+}
+
+
+void SceneMovement_Week03::CarveUntilNoFog()
+{
+	while (true)
+	{
+		std::fill(m_visited.begin(), m_visited.end(), false);
+		DFS(m_start);
+		bool fog = false;
+
+		for (auto t : m_myGrid)
+		{
+			if (t == Maze::TILE_FOG) fog = true;
+		}
+		if (!fog) { break; }
+
+		bool carved = false;
+
+		const int dx[4] = { 1,-1,0,0 };
+		const int dy[4] = { 0,0,1,-1 };
+
+		for (int y = 0; y < (int)m_noGrid && !carved; y++)
+			for (int x = 0; x < (int)m_noGrid && !carved; x++)
+			{
+				int idx = y * m_noGrid + x;
+				if (m_myGrid[idx] != Maze::TILE_FOG) continue; // we're looking at fog walls
+
+				// if this fog tile touches ANY seen tile, break THIS tile
+				for (int k = 0; k < 4; k++)
+				{
+					int nx = x + dx[k], ny = y + dy[k];
+					if (nx < 0 || nx >= (int)m_noGrid || ny < 0 || ny >= (int)m_noGrid) continue;
+
+					int nidx = ny * m_noGrid + nx;
+
+					if (m_myGrid[nidx] != Maze::TILE_FOG)
+					{
+						//std::cout << ny << " , " << nx << std::endl;
+						// carve the fog tile (idx) in the TRUE grid
+						m_maze.m_grid[nidx] = Maze::TILE_EMPTY;
+						m_myGrid[nidx] = Maze::TILE_EMPTY; // optional immediate reveal
+						carved = true;
+						break;
+					}
+				}
+			}
+
+		if (!carved) break; // safety
+	}
+}
+
+//helper function to check if given index is within boundary
+int SceneMovement_Week03::IsWithinBoundary(int x) const
+{
+	return x >= 0 && x < m_noGrid;
+}
+
+//helper function to convert 2d indices to 1d index
+int SceneMovement_Week03::Get1DIndex(int x, int y) const
+{
+	return y * m_noGrid + x;
+}
+
+int SceneMovement_Week03::HeuristicManhattan(const MazePt& a, const MazePt& b)
+{
+	return abs(a.x - b.x) + abs(a.y - b.y) * 1;
+}
+
+bool SceneMovement_Week03::AStar(GameObject* go, MazePt start, MazePt end)
+{
+	const int N = m_noGrid * m_noGrid;
+
+	go->path.clear();
+
+
+	// A* arrays
+
+	const int INF = INT_MAX / 4;
+
+	std::vector<int> gCost(N, INF);
+	std::vector<int> fCost(N, INF);
+	std::vector<int> prev(N, -1);
+
+	//open to hold what to check, closed to hold what is already in
+	std::vector<int> open;
+	std::vector<bool> closed(N, false);
+
+	int startIdx = Get1DIndex(start.x, start.y);
+	int endIdx = Get1DIndex(end.x, end.y);
+
+	// if end is not walkable (fog/wall), immediately fail
+	if (GetTileCost(go->grid[endIdx]) == INT_MAX)
+		return false;
+
+	gCost[startIdx] = 0;
+	fCost[startIdx] = HeuristicManhattan(start, end);
+	open.push_back(startIdx);
+
+	static int offsets[][2] = { {0,1}, {0,-1}, {-1,0}, {1,0} };
+
+	while (!open.empty())
+	{
+		// find node in open with lowest fCost (tie-breaker: lower gCost)
+		int bestPos = 0;
+		for (int i = 1; i < (int)open.size(); ++i)
+		{
+			int a = open[i];
+			int b = open[bestPos];
+
+			if (fCost[a] < fCost[b] || (fCost[a] == fCost[b] && gCost[a] < gCost[b]))
+				bestPos = i;
+		}
+
+		int currIdx = open[bestPos];
+		open.erase(open.begin() + bestPos);
+
+		if (closed[currIdx]) // already closed
+			continue;
+
+		closed[currIdx] = true; // close it
+
+		if (currIdx == endIdx)
+		{
+			// reconstruct path end -> start using prev[]
+			int walk = endIdx;
+			while (walk != -1)
+			{
+				go->path.insert(go->path.begin(), MazePt(walk % m_noGrid, walk / m_noGrid));
+				if (walk == startIdx) break;
+				walk = prev[walk];
+			}
+
+			// if we didn't reach start, then reconstruction failed
+			if (go->path.empty() || !(go->path.front().x == start.x && go->path.front().y == start.y))
+				return false;
+
+			return true;
+		}
+
+		MazePt curr = MazePt(currIdx % m_noGrid, currIdx / m_noGrid);
+
+		// explore neighbours
+		for (int(&off)[2] : offsets)
+		{
+			MazePt next(curr.x + off[0], curr.y + off[1]);
+			if (!IsWithinBoundary(next.x) || !IsWithinBoundary(next.y))
+				continue;
+
+			int nextIdx = Get1DIndex(next.x, next.y);
+
+			if (closed[nextIdx]) // already closed
+				continue;
+
+			int tileCost = GetTileCost(go->grid[nextIdx]);
+			if (tileCost == INT_MAX) continue;
+
+			int tentativeG = gCost[currIdx] + tileCost;
+
+			if (tentativeG < gCost[nextIdx])
+			{
+				prev[nextIdx] = currIdx;
+				gCost[nextIdx] = tentativeG;
+				fCost[nextIdx] = tentativeG + HeuristicManhattan(next, end);
+
+				// add to open if not already there
+				if (std::find(open.begin(), open.end(), nextIdx) == open.end())
+					open.push_back(nextIdx);
+			}
+		}
+	}
+
+	// no path found
+	return false;
+}
+
+int SceneMovement_Week03::GetTileCost(Maze::TILE_CONTENT tile)
+{
+	switch (tile)
+	{
+	case Maze::TILE_EMPTY: return 1;
+	case Maze::TILE_SLOW: return INT_MAX;
+	case Maze::TILE_FOG:   return INT_MAX;
+	case Maze::TILE_WALL:  return INT_MAX; // not walkable
+	}
+	return 1;
+}
+
+bool SceneMovement_Week03::TryFindFrontierTarget(GameObject* go, const MazePt& goal, MazePt& outTarget)
+{
+	bool found = false;
+	int bestScore = INT_MAX;
+
+	static int offsets[][2] = { {0,1}, {0,-1}, {-1,0}, {1,0} };
+
+	for (int y = 0; y < m_noGrid; ++y)
+		for (int x = 0; x < m_noGrid; ++x)
+		{
+			if (x == go->curr.x && y == go->curr.y)
+				continue;
+			int idx = Get1DIndex(x, y);
+			if (go->grid[idx] != Maze::TILE_EMPTY) continue; // must be known walkable
+
+			// Frontier = known empty tile that touches fog
+			bool touchesFog = false;
+			for (int(&off)[2] : offsets)
+			{
+				int nx = x + off[0], ny = y + off[1];
+				if (!IsWithinBoundary(nx) || !IsWithinBoundary(ny)) continue;
+
+				int nIdx = Get1DIndex(nx, ny);
+				if (go->grid[nIdx] == Maze::TILE_FOG)
+				{
+					touchesFog = true;
+					break;
+				}
+			}
+			if (!touchesFog) continue;
+
+			// Pick frontier that is closest to the final goal
+			MazePt p(x, y);
+			int score = HeuristicManhattan(p, goal);
+			if (score < bestScore)
+			{
+				bestScore = score;
+				outTarget = p;
+				found = true;
+			}
+		}
+
+	return found;
+}
+
+void SceneMovement_Week03::RevealAround(GameObject* go)
+{
+	MazePt curr = go->curr;
+	static int offsets[][2] = { {0,1},{0,-1},{-1,0},{1,0} };
+
+	// choose team grid ONCE
+	std::vector<Maze::TILE_CONTENT>& teamGrid =
+		(go->side == GameObject::SIDE_BLUE) ? b_grid : r_grid;
+
+	// always mark current as empty
+	teamGrid[Get1DIndex(curr.x, curr.y)] = Maze::TILE_EMPTY;
+
+	for (int(&off)[2] : offsets)
+	{
+		MazePt next(curr.x + off[0], curr.y + off[1]);
+		if (!IsWithinBoundary(next.x) || !IsWithinBoundary(next.y)) continue;
+
+		int idx = Get1DIndex(next.x, next.y);
+		teamGrid[idx] = m_maze.See(next);
+	}
+}
+
+void SceneMovement_Week03::PathFind(GameObject* go, const MazePt& goal, int moveBudget)
+{
+	if (moveBudget <= 0) return;
+
+	// loop until you run out of movement
+	while (moveBudget > 0)
+	{
+		// Always reveal from current position (so grid knowledge grows)
+		RevealAround(go);
+
+		// Decide whether we should try goal, or explore frontier
+		bool goalIsKnown = (go->grid[Get1DIndex(goal.x, goal.y)] != Maze::TILE_FOG);
+
+		bool havePlan = false;
+
+		if (goalIsKnown)
+		{
+			// Try to plan directly to goal (known tiles only)
+			havePlan = AStar(go, go->curr, goal) && go->path.size() > 1;
+		}
+
+		if (!havePlan)
+		{
+			// Goal unknown OR unreachable -> go to frontier
+			MazePt frontier;
+			if (!TryFindFrontierTarget(go, goal, frontier))
+				return; // nowhere new to explore
+
+			havePlan = AStar(go, go->curr, frontier) && go->path.size() > 1;
+			if (!havePlan)
+				return;
+		}
+
+		// Next step is path[1]
+		MazePt next = go->path[1];
+
+		// Check movement cost for stepping into that tile
+		int stepCost = GetTileCost(go->grid[Get1DIndex(next.x, next.y)]);
+		if (stepCost > moveBudget)
+			return; // can't afford to move further this turn
+
+		// Spend movement + move
+		moveBudget -= stepCost;
+		go->curr = next;
+
+		// Learn from the new tile immediately (recommended)
+		RevealAround(go);
+
+		// loop continues: with new info, it may switch from frontier mode to goal mode automatically
+	}
+}
+
+void SceneMovement_Week03::ClearSpawnArea()
+{
+	int tile = Get1DIndex(0, 9);
+	m_maze.m_grid[tile] = Maze::TILE_EMPTY;
+	m_myGrid[tile] = Maze::TILE_EMPTY;
+	tile = Get1DIndex(0, 10);
+	m_maze.m_grid[tile] = Maze::TILE_EMPTY;
+	m_myGrid[tile] = Maze::TILE_EMPTY;
+	tile = Get1DIndex(1, 9);
+	m_maze.m_grid[tile] = Maze::TILE_EMPTY;
+	m_myGrid[tile] = Maze::TILE_EMPTY;
+	tile = Get1DIndex(1, 10);
+	m_maze.m_grid[tile] = Maze::TILE_EMPTY;
+	m_myGrid[tile] = Maze::TILE_EMPTY;
+
+	tile = Get1DIndex(4, 5);
+	m_maze.m_grid[tile] = Maze::TILE_EMPTY;
+	m_myGrid[tile] = Maze::TILE_EMPTY;
+	tile = Get1DIndex(4, 6);
+	m_maze.m_grid[tile] = Maze::TILE_EMPTY;
+	m_myGrid[tile] = Maze::TILE_EMPTY;
+	tile = Get1DIndex(5, 5);
+	m_maze.m_grid[tile] = Maze::TILE_EMPTY;
+	m_myGrid[tile] = Maze::TILE_EMPTY;
+	tile = Get1DIndex(5, 6);
+	m_maze.m_grid[tile] = Maze::TILE_EMPTY;
+	m_myGrid[tile] = Maze::TILE_EMPTY;
+
+	tile = Get1DIndex(4, 13);
+	m_maze.m_grid[tile] = Maze::TILE_EMPTY;
+	m_myGrid[tile] = Maze::TILE_EMPTY;
+	tile = Get1DIndex(4, 14);
+	m_maze.m_grid[tile] = Maze::TILE_EMPTY;
+	m_myGrid[tile] = Maze::TILE_EMPTY;
+	tile = Get1DIndex(5, 13);
+	m_maze.m_grid[tile] = Maze::TILE_EMPTY;
+	m_myGrid[tile] = Maze::TILE_EMPTY;
+	tile = Get1DIndex(5, 14);
+	m_maze.m_grid[tile] = Maze::TILE_EMPTY;
+	m_myGrid[tile] = Maze::TILE_EMPTY;
+
+
+
+	tile = Get1DIndex(19, 9);
+	m_maze.m_grid[tile] = Maze::TILE_EMPTY;
+	m_myGrid[tile] = Maze::TILE_EMPTY;
+	tile = Get1DIndex(19, 10);
+	m_maze.m_grid[tile] = Maze::TILE_EMPTY;
+	m_myGrid[tile] = Maze::TILE_EMPTY;
+	tile = Get1DIndex(18, 9);
+	m_maze.m_grid[tile] = Maze::TILE_EMPTY;
+	m_myGrid[tile] = Maze::TILE_EMPTY;
+	tile = Get1DIndex(18, 10);
+	m_maze.m_grid[tile] = Maze::TILE_EMPTY;
+	m_myGrid[tile] = Maze::TILE_EMPTY;
+
+	tile = Get1DIndex(15, 5);
+	m_maze.m_grid[tile] = Maze::TILE_EMPTY;
+	m_myGrid[tile] = Maze::TILE_EMPTY;
+	tile = Get1DIndex(15, 6);
+	m_maze.m_grid[tile] = Maze::TILE_EMPTY;
+	m_myGrid[tile] = Maze::TILE_EMPTY;
+	tile = Get1DIndex(14, 5);
+	m_maze.m_grid[tile] = Maze::TILE_EMPTY;
+	m_myGrid[tile] = Maze::TILE_EMPTY;
+	tile = Get1DIndex(14, 6);
+	m_maze.m_grid[tile] = Maze::TILE_EMPTY;
+	m_myGrid[tile] = Maze::TILE_EMPTY;
+
+	tile = Get1DIndex(15, 13);
+	m_maze.m_grid[tile] = Maze::TILE_EMPTY;
+	m_myGrid[tile] = Maze::TILE_EMPTY;
+	tile = Get1DIndex(15, 14);
+	m_maze.m_grid[tile] = Maze::TILE_EMPTY;
+	m_myGrid[tile] = Maze::TILE_EMPTY;
+	tile = Get1DIndex(14, 13);
+	m_maze.m_grid[tile] = Maze::TILE_EMPTY;
+	m_myGrid[tile] = Maze::TILE_EMPTY;
+	tile = Get1DIndex(14, 14);
+	m_maze.m_grid[tile] = Maze::TILE_EMPTY;
+	m_myGrid[tile] = Maze::TILE_EMPTY;
+}
+
+void SceneMovement_Week03::DFSOnce(GameObject* go)
+{
+	MazePt curr{ go->curr.x, go->curr.y };
+	std::vector<MazePt>& stack = go->stack; //get a short-hand to stack instead of constant use of indirection later
+	if (stack.empty() ||
+		stack.back().x != curr.x || stack.back().y != curr.y)
+		//make sure we don't push node into stack when backtracking
+		go->stack.push_back(curr);
+
+	std::vector<bool>& teamVisited =
+		(go->side == GameObject::SIDE_BLUE) ? b_visited : r_visited;
+	int currIdx = Get1DIndex(curr.x, curr.y);
+	teamVisited[currIdx] = true;
+	//mark current node as visited
+	
+	//offsets: UP, DOWN, LEFT, RIGHT
+	static int offsets[][2] = { { 0, 1 }, { 0, -1 }, { -1, 0 },
+	{ 1, 0 } };
+	//check each direction
+	//int (& offset)[2] ---> offset is a reference to int[2]
+	MazePt next{};
+	for (int(&offset)[2] : offsets)
+	{
+		next.Set(curr.x + offset[0], curr.y + offset[1]);
+		//only consider next node if it's unvisited
+		if (IsWithinBoundary(next.x) && IsWithinBoundary(next.y))
+		{
+			//update agent's mental record of the maze
+			int idx = Get1DIndex(next.x, next.y);
+
+			if (teamVisited[idx])
+				continue;
+
+
+			std::vector<Maze::TILE_CONTENT>& teamGrid =
+				(go->side == GameObject::SIDE_BLUE) ? b_grid : r_grid;
+
+			teamGrid[idx] = m_maze.See(next);
+			if (teamGrid[idx] == Maze::TILE_CONTENT::TILE_EMPTY)
+			{
+				go->curr = next; //let's move to the next cell
+				return;
+			}
+		}
+	}
+	//already fully explored all surrounding neighbours. time tobacktrack
+	stack.pop_back();
+	if (!stack.empty())
+		go->curr = stack.back();
 }
 
 void SceneMovement_Week03::Exit()

@@ -26,7 +26,7 @@ void SceneMovement_Week999::Init()
 
 	//Physics code here
 	m_speed = 1.f;
-	
+
 	Math::InitRNG();
 
 	m_objectCount = 0;
@@ -44,7 +44,7 @@ void SceneMovement_Week999::Init()
 	//newShark->moveSpeed = FULL_SPEED * 1.5f;
 
 	//init objs
-	InitMainBase(GameObject::SIDE_BLUE,Vector3(m_worldWidth - m_gridSize, m_worldHeight / 2, 0.f));
+	InitMainBase(GameObject::SIDE_BLUE, Vector3(m_worldWidth - m_gridSize, m_worldHeight / 2, 0.f));
 	InitMainBase(GameObject::SIDE_RED, Vector3(0 + m_gridSize, m_worldHeight / 2, 0.f));
 	InitSpawner(GameObject::SIDE_BLUE, Vector3((m_worldWidth / 4) * 3, m_worldHeight / 4, 0.f));
 	InitSpawner(GameObject::SIDE_BLUE, Vector3((m_worldWidth / 4) * 3, (m_worldHeight / 4) * 3, 0.f));
@@ -55,9 +55,9 @@ void SceneMovement_Week999::Init()
 
 GameObject* SceneMovement_Week999::FetchGO(GameObject::GAMEOBJECT_TYPE type)
 {
-	for (std::vector<GameObject *>::iterator it = m_goList.begin(); it != m_goList.end(); ++it)
+	for (std::vector<GameObject*>::iterator it = m_goList.begin(); it != m_goList.end(); ++it)
 	{
-		GameObject *go = (GameObject *)*it;
+		GameObject* go = (GameObject*)*it;
 		if (!go->active && go->type == type)
 		{
 			go->active = true;
@@ -67,7 +67,7 @@ GameObject* SceneMovement_Week999::FetchGO(GameObject::GAMEOBJECT_TYPE type)
 	}
 	for (unsigned i = 0; i < 10; ++i)
 	{
-		GameObject *go = new GameObject(type);
+		GameObject* go = new GameObject(type);
 		m_goList.push_back(go);
 	}
 	return FetchGO(type);
@@ -180,12 +180,12 @@ void SceneMovement_Week999::Update(double dt)
 	//Calculating aspect ratio
 	m_worldHeight = 100.f;
 	m_worldWidth = m_worldHeight;
-	
-	if(Application::IsKeyPressed(VK_OEM_MINUS))
+
+	if (Application::IsKeyPressed(VK_OEM_MINUS))
 	{
 		m_speed = Math::Max(0.f, m_speed - 0.1f);
 	}
-	if(Application::IsKeyPressed(VK_OEM_PLUS))
+	if (Application::IsKeyPressed(VK_OEM_PLUS))
 	{
 		m_speed += 0.1f;
 	}
@@ -196,23 +196,23 @@ void SceneMovement_Week999::Update(double dt)
 
 	//Input Section
 	static bool bLButtonState = false;
-	if(!bLButtonState && Application::IsMousePressed(0))
+	if (!bLButtonState && Application::IsMousePressed(0))
 	{
 		bLButtonState = true;
 		std::cout << "LBUTTON DOWN" << std::endl;
 	}
-	else if(bLButtonState && !Application::IsMousePressed(0))
+	else if (bLButtonState && !Application::IsMousePressed(0))
 	{
 		bLButtonState = false;
 		std::cout << "LBUTTON UP" << std::endl;
 	}
 	static bool bRButtonState = false;
-	if(!bRButtonState && Application::IsMousePressed(1))
+	if (!bRButtonState && Application::IsMousePressed(1))
 	{
 		bRButtonState = true;
 		std::cout << "RBUTTON DOWN" << std::endl;
 	}
-	else if(bRButtonState && !Application::IsMousePressed(1))
+	else if (bRButtonState && !Application::IsMousePressed(1))
 	{
 		bRButtonState = false;
 		std::cout << "RBUTTON UP" << std::endl;
@@ -231,7 +231,7 @@ void SceneMovement_Week999::Update(double dt)
 		//go->currState = GameObject::STATE_FULL;	
 		//go->energy = 8.f;
 		//go->nearest = NULL;
-		Vector3 randomPos = RandomPointInRing(m_spawners[0]->pos, 3.75,10);
+		Vector3 randomPos = RandomPointInRing(m_spawners[0]->pos, 3.75, 10);
 		SpawnUnit(GameObject::SIDE_BLUE, randomPos);
 	}
 	else if (bSpaceState && !Application::IsKeyPressed(VK_SPACE))
@@ -258,14 +258,14 @@ void SceneMovement_Week999::Update(double dt)
 	fFoodTimers += (float)dt;
 
 	//StateMachine
-	for (std::vector<GameObject *>::iterator it = m_goList.begin(); it != m_goList.end(); ++it)
+	for (std::vector<GameObject*>::iterator it = m_goList.begin(); it != m_goList.end(); ++it)
 	{
-		GameObject *go = (GameObject *)*it;
+		GameObject* go = (GameObject*)*it;
 		if (!go->active)
 			continue;
 		if (go->sm)
 			go->sm->Update(dt);
-		if(go->type == GameObject::GO_FISH)
+		if (go->type == GameObject::GO_FISH)
 		{
 			//if the fish has to move in random direction
 			float random = Math::RandFloatMinMax(0.0f, 1.0f);
@@ -273,7 +273,7 @@ void SceneMovement_Week999::Update(double dt)
 				if (random < 0.5f)
 				{
 					// Left
-					go->target.x = m_worldWidth- m_gridOffset;
+					go->target.x = m_worldWidth - m_gridOffset;
 					go->target.y = m_gridOffset;
 					go->steps = 0;
 					go->prevPos = go->pos;
@@ -327,8 +327,8 @@ void SceneMovement_Week999::Update(double dt)
 				go->moveSpeed = FULL_SPEED;
 				go->energy -= ENERGY_DROP_RATE * 0;
 				//implement avoid shark later
-				
-				if(go->energy < 5)
+
+				if (go->energy < 5)
 				{
 					go->currState = GameObject::STATE_HUNGRY;
 				}
@@ -377,7 +377,7 @@ void SceneMovement_Week999::Update(double dt)
 		{
 			if (go->energy > 10)
 			{
-				Vector3 randomPos = RandomPointInRing(go->pos, 3.75 ,10.f);
+				Vector3 randomPos = RandomPointInRing(go->pos, 3.75, 10.f);
 				SpawnUnit(GameObject::SIDE_BLUE, randomPos);
 				go->energy = 0;
 			}
@@ -387,18 +387,18 @@ void SceneMovement_Week999::Update(double dt)
 	//External triggers
 	static const float SHARK_DIST = 10.f * m_gridSize;
 	static const float FOOD_DIST = 20.f * m_gridSize;
-	for (std::vector<GameObject *>::iterator it = m_goList.begin(); it != m_goList.end(); ++it)
+	for (std::vector<GameObject*>::iterator it = m_goList.begin(); it != m_goList.end(); ++it)
 	{
-		GameObject *go = (GameObject *)*it;
+		GameObject* go = (GameObject*)*it;
 		if (!go->active)
 			continue;
 		if (go->type == GameObject::GO_FISH)
 		{
 			go->nearest = NULL;
 			float nearestDistance = FLT_MAX;
-			for (std::vector<GameObject *>::iterator it2 = m_goList.begin(); it2 != m_goList.end(); ++it2)
+			for (std::vector<GameObject*>::iterator it2 = m_goList.begin(); it2 != m_goList.end(); ++it2)
 			{
-				GameObject *go2 = (GameObject *)*it2;
+				GameObject* go2 = (GameObject*)*it2;
 				if (!go2->active)
 					continue;
 				if (go2->type == GameObject::GO_SHARK)
@@ -471,14 +471,14 @@ void SceneMovement_Week999::Update(double dt)
 				GameObject* go2 = (GameObject*)*it2;
 				if (!go2->active)
 					continue;
-				if(go2->side == go->side)
+				if (go2->side == go->side)
 					continue;
 				if (go2->type == GameObject::GO_SPAWNER)
 				{
 					float distance = (go2->pos - go->pos).Length();
 					if (distance < m_gridSize)
 					{
-						if(go->EnergyReduce(1.f))
+						if (go->EnergyReduce(1.f))
 						{
 							go2->health -= 10;
 						}
@@ -544,9 +544,9 @@ void SceneMovement_Week999::Update(double dt)
 		}
 	}
 	//Movement Section
-	for(std::vector<GameObject *>::iterator it = m_goList.begin(); it != m_goList.end(); ++it)
+	for (std::vector<GameObject*>::iterator it = m_goList.begin(); it != m_goList.end(); ++it)
 	{
-		GameObject *go = (GameObject *)*it;
+		GameObject* go = (GameObject*)*it;
 		if (!go->active)
 			continue;
 		Vector3 dir = go->target - go->pos;
@@ -593,9 +593,9 @@ void SceneMovement_Week999::Update(double dt)
 
 	//Counting objects
 	m_numGO[GameObject::GO_FISH] = m_numGO[GameObject::GO_SHARK] = m_numGO[GameObject::GO_FISHFOOD] = 0;
-	for (std::vector<GameObject *>::iterator it = m_goList.begin(); it != m_goList.end(); ++it)
+	for (std::vector<GameObject*>::iterator it = m_goList.begin(); it != m_goList.end(); ++it)
 	{
-		GameObject *go = (GameObject *)*it;
+		GameObject* go = (GameObject*)*it;
 		if (!go->active)
 			continue;
 		++m_numGO[go->type];
@@ -642,10 +642,10 @@ void SceneMovement_Week999::RenderGOBar(GameObject* go, float vertScale)
 }
 
 
-void SceneMovement_Week999::RenderGO(GameObject *go)
+void SceneMovement_Week999::RenderGO(GameObject* go)
 {
 	std::ostringstream ss;
-	switch(go->type)
+	switch (go->type)
 	{
 	case GameObject::GO_BALL:
 		modelStack.PushMatrix();
@@ -661,7 +661,7 @@ void SceneMovement_Week999::RenderGO(GameObject *go)
 		modelStack.PushMatrix();
 		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
-		if(go->currState == GameObject::STATE_TOOFULL)
+		if (go->currState == GameObject::STATE_TOOFULL)
 			RenderMesh(meshList[GEO_TOOFULL], false);
 		else if (go->currState == GameObject::STATE_FULL)
 			RenderMesh(meshList[GEO_FULL], false);
@@ -696,7 +696,7 @@ void SceneMovement_Week999::RenderGO(GameObject *go)
 		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
 		modelStack.Rotate(180, 0, 0, 1);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
-		if(go->side == GameObject::SIDE_RED)
+		if (go->side == GameObject::SIDE_RED)
 			RenderMesh(meshList[GEO_BASERED], false);
 		else
 			RenderMesh(meshList[GEO_BASEBLUE], false);
@@ -772,17 +772,17 @@ void SceneMovement_Week999::Render()
 	Mtx44 projection;
 	projection.SetToOrtho(0, m_worldWidth * (float)Application::GetWindowWidth() / Application::GetWindowHeight(), 0, m_worldHeight, -10, 10);
 	projectionStack.LoadMatrix(projection);
-	
+
 	// Camera matrix
 	viewStack.LoadIdentity();
 	viewStack.LookAt(
-						camera.position.x, camera.position.y, camera.position.z,
-						camera.target.x, camera.target.y, camera.target.z,
-						camera.up.x, camera.up.y, camera.up.z
-					);
+		camera.position.x, camera.position.y, camera.position.z,
+		camera.target.x, camera.target.y, camera.target.z,
+		camera.up.x, camera.up.y, camera.up.z
+	);
 	// Model matrix : an identity matrix (model will be at the origin)
 	modelStack.LoadIdentity();
-	
+
 	RenderMesh(meshList[GEO_AXES], false);
 
 	modelStack.PushMatrix();
@@ -792,10 +792,10 @@ void SceneMovement_Week999::Render()
 	modelStack.PopMatrix();
 
 	zOffset = 0;
-	for(std::vector<GameObject *>::iterator it = m_goList.begin(); it != m_goList.end(); ++it)
+	for (std::vector<GameObject*>::iterator it = m_goList.begin(); it != m_goList.end(); ++it)
 	{
-		GameObject *go = (GameObject *)*it;
-		if(go->active)
+		GameObject* go = (GameObject*)*it;
+		if (go->active)
 		{
 			zOffset += 0.001f;
 			RenderGO(go);
@@ -817,7 +817,7 @@ void SceneMovement_Week999::Render()
 	ss.precision(3);
 	ss << "Speed:" << m_speed;
 	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 3, 50, 6);
-	
+
 	ss.str("");
 	ss.precision(5);
 	ss << "FPS:" << fps;
@@ -853,13 +853,13 @@ void SceneMovement_Week999::Exit()
 {
 	SceneBase::Exit();
 	//Cleanup GameObjects
-	while(m_goList.size() > 0)
+	while (m_goList.size() > 0)
 	{
-		GameObject *go = m_goList.back();
+		GameObject* go = m_goList.back();
 		delete go;
 		m_goList.pop_back();
 	}
-	if(m_ghost)
+	if (m_ghost)
 	{
 		delete m_ghost;
 		m_ghost = NULL;
