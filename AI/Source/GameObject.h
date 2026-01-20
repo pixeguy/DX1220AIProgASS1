@@ -39,6 +39,7 @@ struct GameObject : public ObjectBase
 		GO_BIGMORBOMB,
 		GO_SPAWNMORTARAREA,
 		GO_GOLDENORB,
+		GO_SCOUT,
 		GO_TOTAL, //must be last
 	};
 	enum STATE

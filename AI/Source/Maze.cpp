@@ -106,8 +106,8 @@ void Maze::SetNumMove(int num)
 
 bool Maze::Move(DIRECTION direction)
 {
-	Application::GetInstance().Iterate();
-	Sleep(gSleepDuration);
+	//Application::GetInstance().Iterate();
+	//Sleep(gSleepDuration);
 
 	++m_numMove;
 	MazePt temp = m_curr;

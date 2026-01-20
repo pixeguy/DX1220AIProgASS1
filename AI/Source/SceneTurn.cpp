@@ -540,22 +540,22 @@ void SceneTurn::Render()
 		}
 	}
 
-	//int i = 0;
-	//for (bool b : m_visited)
-	//{
-	//	if (b)
-	//	{
-	//		int cellX = i % m_noGrid;
-	//		int cellY = i / m_noGrid;
-	//		modelStack.PushMatrix();
-	//		modelStack.Translate(m_gridOffset + m_gridSize * cellX, m_gridOffset + m_gridSize * cellY, 0.05f);
-	//		modelStack.Scale(m_gridSize, m_gridSize, m_gridSize);
-	//		meshList[GEO_FLOOR]->material.kAmbient.Set(1.0f, 0.25f, 1);
-	//		RenderMesh(meshList[GEO_FLOOR], true);
-	//		modelStack.PopMatrix();
-	//	}
-	//	i++;
-	//}
+	int i = 0;
+	for (bool b : m_visited)
+	{
+		if (b)
+		{
+			int cellX = i % m_noGrid;
+			int cellY = i / m_noGrid;
+			modelStack.PushMatrix();
+			modelStack.Translate(m_gridOffset + m_gridSize * cellX, m_gridOffset + m_gridSize * cellY, 0.05f);
+			modelStack.Scale(m_gridSize, m_gridSize, m_gridSize);
+			meshList[GEO_FLOOR]->material.kAmbient.Set(1.0f, 0.25f, 1);
+			RenderMesh(meshList[GEO_FLOOR], true);
+			modelStack.PopMatrix();
+		}
+		i++;
+	}
 
 	// Exercise Week 8
 	//c.	Render each go based on its curr position - edit RenderGO(GameObject::GO_NPC)

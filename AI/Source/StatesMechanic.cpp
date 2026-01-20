@@ -41,8 +41,8 @@ void StateMechanicHealthy::Update(double dt)
 	}
 	if (go->steps >= 3)
 	{
-		go->sm->SetNextState("Hiding");
-		return;
+		//go->sm->SetNextState("Hiding");
+		//return;
 	}
 	if (go->health <= 40)
 	{
@@ -55,26 +55,26 @@ void StateMechanicHealthy::Update(double dt)
 		go->sm->SetNextState("Healing");
 		return;
 	}
-	go->moveLeft = go->moveRight = go->moveUp = go->moveDown = false;
-	if (go->nearest)
-	{
-		float diffX = go->nearest->pos.x - go->pos.x;
-		float diffY = go->nearest->pos.y - go->pos.y;
-		if (fabs(diffX) > fabs(diffY))
-		{
-			if (diffX > 0)
-				go->moveRight = true;
-			else
-				go->moveLeft = true;
-		}
-		else
-		{
-			if (diffY > 0)
-				go->moveUp = true;
-			else
-				go->moveDown = true;
-		}
-	}
+	//go->moveLeft = go->moveRight = go->moveUp = go->moveDown = false;
+	//if (go->nearest)
+	//{
+	//	float diffX = go->nearest->pos.x - go->pos.x;
+	//	float diffY = go->nearest->pos.y - go->pos.y;
+	//	if (fabs(diffX) > fabs(diffY))
+	//	{
+	//		if (diffX > 0)
+	//			go->moveRight = true;
+	//		else
+	//			go->moveLeft = true;
+	//	}
+	//	else
+	//	{
+	//		if (diffY > 0)
+	//			go->moveUp = true;
+	//		else
+	//			go->moveDown = true;
+	//	}
+	//}
 
 	//if close enough to a spawner
 	float distance = 999;
