@@ -121,15 +121,23 @@ protected:
 
 	bool TryFindFrontierTarget(GameObject* go, const MazePt& goal, MazePt& outTarget);
 
-	void RevealAround(GameObject* go);
+	void RevealAround(GameObject* go, int range);
 
 	void PathFind(GameObject* go, const MazePt& goal, int moveBudget);
 
 	void ClearSpawnArea();
 	void DFSOnce(GameObject* go);
 
-	GameObject::SIDE GetSide(GameObject* go);
+	Maze::TILE_CONTENT RevealTileIfNew(GameObject* go, const MazePt& p);
 
+	GameObject* RevealUnit(const MazePt& p);
+
+	bool IsInAtkRange(GameObject* go, GameObject* target);
+
+	GameObject* PickClosestVisibleTarget(GameObject* go);
+
+	GameObject::SIDE GetSide(GameObject* go);
+	GameObject::SIDE m_activeSide = GameObject::SIDE_BLUE;
 	int m_turn = 0;
 	Maze m_maze;
 	MazePt m_start;

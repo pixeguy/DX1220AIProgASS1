@@ -78,6 +78,8 @@ struct GameObject : public ObjectBase
 	float supportSpeed = 0;
 	float finalMoveSpeed;
 	float countDown = 0;
+	int viewRange = 0;
+	int atkRange = 0;
 	STATE currState;
 	GameObject *nearest;
 	//GameObject* nearest2 = NULL; //for archer to find 2nd nearest
@@ -92,6 +94,10 @@ struct GameObject : public ObjectBase
 	GameObject* lastAttacker = NULL;
 	GameObject* external = NULL; //for calling others
 	GameObject* external2 = NULL; //for archer calling more others
+
+	std::vector<GameObject*> visibleTargets; 
+
+	GameObject* atkTarget = NULL;
  
 
 	int specID; //remove later

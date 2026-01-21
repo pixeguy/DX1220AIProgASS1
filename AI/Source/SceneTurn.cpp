@@ -456,7 +456,7 @@ void SceneTurn::Render()
 				meshList[GEO_WHITEQUAD]->material.kAmbient.Set(0.f, 0.f, 0.f);
 				RenderMesh(meshList[GEO_WHITEQUAD], true);
 				break;
-			case Maze::TILE_SLOW:
+			case Maze::TILE_ORE:
 				meshList[GEO_WHITEQUAD]->material.kAmbient.Set(1.f, 0.f, 0.f);
 				RenderMesh(meshList[GEO_WHITEQUAD], true);
 				break;
@@ -495,7 +495,7 @@ void SceneTurn::Render()
 				RenderMesh(meshList[GEO_WHITEQUAD], true);
 				break;
 
-			case Maze::TILE_SLOW:
+			case Maze::TILE_ORE:
 				meshList[GEO_WHITEQUAD]->material.kAmbient.Set(1.f, 0.f, 0.f);
 				RenderMesh(meshList[GEO_WHITEQUAD], true);
 				break;
@@ -878,7 +878,7 @@ int SceneTurn::GetTileCost(Maze::TILE_CONTENT tile)
 	switch (tile)
 	{
 	case Maze::TILE_EMPTY: return 1;
-	case Maze::TILE_SLOW: return INT_MAX;
+	case Maze::TILE_ORE: return INT_MAX;
 	case Maze::TILE_FOG:   return INT_MAX;
 	case Maze::TILE_WALL:  return INT_MAX; // not walkable
 	}

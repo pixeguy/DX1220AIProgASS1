@@ -72,7 +72,7 @@ void SceneMovement_Week03::Init()
 	srand(time(NULL));
 
 	m_start.Set(0, 0);
-	m_mazeKey = 0;
+	m_mazeKey = 2;
 	m_wallLoad = 0.3f;
 	m_maze.Generate(m_mazeKey, m_noGrid, m_start, m_wallLoad); //Generate new maze
 	m_myGrid.resize(m_noGrid * m_noGrid);
@@ -353,21 +353,36 @@ GameObject* SceneMovement_Week03::SpawnUnit(GameObject::SIDE side, Vector3 pos, 
 	{
 		unit = FetchGO(GameObject::GO_ATTACKER);
 		unit->type = GameObject::GO_ATTACKER;
+		unit->viewRange = 2;
+		unit->atkRange = 1;
 	}
 	else if ((useRandom && random < AttackerRate + RangedRate && random > AttackerRate) || type == GameObject::GO_RANGED)
 	{
 		unit = FetchGO(GameObject::GO_RANGED);
 		unit->type = GameObject::GO_RANGED;
+		unit->viewRange = 4;
+		unit->atkRange = 3;
 	}
 	else if ((useRandom && random < AttackerRate + RangedRate + SupportRate && random > AttackerRate + RangedRate) || type == GameObject::GO_SUPPORT)
 	{
 		unit = FetchGO(GameObject::GO_SUPPORT);
 		unit->type = GameObject::GO_SUPPORT;
+		unit->viewRange = 3;
+		unit->atkRange = 2;
 	}
 	else if ((useRandom && random < 100 && random > AttackerRate + RangedRate + SupportRate) || type == GameObject::GO_MECHANIC)
 	{
 		unit = FetchGO(GameObject::GO_MECHANIC);
 		unit->type = GameObject::GO_MECHANIC;
+		unit->viewRange = 2;
+		unit->atkRange = 1;
+	}
+	else if ((type == GameObject::GO_SCOUT))
+	{
+		unit = FetchGO(GameObject::GO_SCOUT);
+		unit->type = GameObject::GO_SCOUT;
+		unit->viewRange = 2;
+		unit->atkRange = 1;
 	}
 
 	// i need to set a blank state first, in order to access the Enter() of the first actual state
@@ -870,11 +885,17 @@ void SceneMovement_Week03::Update(double dt)
 		bSpaceState = true;
 		if (!gamePlaying) {
 			//Vector3 randomPos = RandomPointInRing(m_spawners[0]->pos, 3.75, 10);
-			GameObject* uni1 = SpawnUnit(GameObject::SIDE_BLUE, Vector3(0,0,0), GameObject::GO_MECHANIC);
+			GameObject* uni1 = SpawnUnit(GameObject::SIDE_BLUE, Vector3(0,0,0), GameObject::GO_ATTACKER);
 			uni1->curr.Set(15, 5);
-			RevealAround(uni1);
+			RevealAround(uni1,uni1->viewRange);
 			uni1->stack.push_back(uni1->curr); //triggers dfs
 			b_visited[Get1DIndex(15, 5)] = true;
+
+			uni1 = SpawnUnit(GameObject::SIDE_RED, Vector3(0, 0, 0), GameObject::GO_ATTACKER);
+			uni1->curr.Set(4, 5);
+			RevealAround(uni1, uni1->viewRange);
+			uni1->stack.push_back(uni1->curr); //triggers dfs
+			b_visited[Get1DIndex(4, 5)] = true;
 			//randomPos = RandomPointInRing(m_spawners[1]->pos, 3.75, 10);
 			//uni1 = SpawnUnit(GameObject::SIDE_BLUE, randomPos, GameObject::GO_MECHANIC);
 			//randomPos = RandomPointInRing(m_spawners[2]->pos, 3.75, 10);
@@ -883,22 +904,6 @@ void SceneMovement_Week03::Update(double dt)
 			//uni1 = SpawnUnit(GameObject::SIDE_RED, randomPos, GameObject::GO_MECHANIC);
 			//gamePlaying = true;
 		}
-
-		//GameObject* go = FetchGO(GameObject::GAMEOBJECT_TYPE::GO_NPC);
-		//go->side = GameObject::SIDE_BLUE;
-		//go->grid.resize(m_noGrid * m_noGrid);
-		//go->visited.resize(m_noGrid * m_noGrid);
-		//std::fill(go->grid.begin(), go->grid.end(), Maze::TILE_FOG);
-		//std::fill(go->visited.begin(), go->visited.end(), false);
-		////set position to a random EMPTY tile
-		//do
-		//{
-		//	go->curr.Set(Math::RandIntMinMax(0, m_noGrid - 1),
-		//		Math::RandIntMinMax(0, m_noGrid - 1));
-		//} while (m_maze.See(go->curr) != Maze::TILE_EMPTY);
-		//go->grid[Get1DIndex(go->curr.x, go->curr.y)] = Maze::TILE_EMPTY;
-		//RevealAround(go);
-		//go->stack.push_back(go->curr); //triggers dfs
 
 	}
 	else if (bSpaceState && !Application::IsKeyPressed(VK_SPACE))
@@ -1622,22 +1627,70 @@ void SceneMovement_Week03::Update(double dt)
 	if (timer > 1.0f)
 	{
 		timer = 0.f;
-		++m_turn;
-		//for each GameObject in m_goList
+
+		if (m_activeSide == GameObject::SIDE_RED) ++m_turn;
+
+		GameObject::SIDE sideThisTurn = m_activeSide;
+
+		// ---- PHASE 1: PRE-REVEAL (sense before moving) ----
 		for (GameObject* go : m_goList)
 		{
 			if (!go->active) continue;
+			if (go->side != sideThisTurn) continue;
+
+			RevealAround(go, go->viewRange);
+
+			// target pick (with stickiness recommended)
+			if (!go->atkTarget && !go->visibleTargets.empty())
+				go->atkTarget = PickClosestVisibleTarget(go);
+		}
+
+		// ---- MOVE PHASE (only this side) ----
+		for (GameObject* go : m_goList)
+		{
+			if (!go->active) continue;
+			if (go->side != sideThisTurn) continue;
+
 			switch (go->type)
 			{
-			case GameObject::GO_NPC:
+			case GameObject::GO_SCOUT:
 				DFSOnce(go);
 				break;
-			case GameObject::GO_MECHANIC:
-				if (go->sm->GetCurrentState() == "Healthy")
+			case GameObject::GO_ATTACKER:
+				if (go->atkTarget == NULL) {
 					DFSOnce(go);
+				}
+				else
+				{
+					//attacking
+					if (IsInAtkRange(go, go->atkTarget))
+					{
+						//attack
+						std::cout << "attacking" << std::endl;
+					}
+					else {
+						PathFind(go, go->atkTarget->curr, 5);
+					}
+				}
 				break;
 			}
 		}
+
+		// ---- REVEAL PHASE (only this side) ----
+		for (GameObject* go : m_goList)
+		{
+			if (!go->active) continue;
+			if (go->side != sideThisTurn) continue;
+
+			RevealAround(go, go->viewRange);
+			if (go->visibleTargets.size() > 0)
+				go->atkTarget = PickClosestVisibleTarget(go);
+		}
+
+		// ---- flip to the other side for next tick ----
+		m_activeSide = (m_activeSide == GameObject::SIDE_BLUE)
+			? GameObject::SIDE_RED
+			: GameObject::SIDE_BLUE;
 	}
 
 	//check for death buildings and units
@@ -2072,7 +2125,10 @@ void SceneMovement_Week03::RenderGO(GameObject* go)
 			geo = isBlue ? GEO_ATTACKER1_HEALTHY : GEO_ATTACKER2_HEALTHY;
 
 		modelStack.PushMatrix();
-		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
+		modelStack.Translate(m_gridOffset + m_gridSize * go->curr.x,
+			m_gridOffset + m_gridSize *
+			go->curr.y,
+			6);
 		modelStack.Rotate(180, 0, 0, 1);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
 		RenderMesh(meshList[geo], false);
@@ -2285,21 +2341,27 @@ void SceneMovement_Week03::RenderGO(GameObject* go)
 		modelStack.PopMatrix();
 		RenderGOBar(go, 7);
 		break;
-	//case GameObject::GO_SPAWNMORTARAREA:
-	//	float width = m_gridSize * 1.5;   
-	//	float height = m_gridSize * 2.5;
+	case GameObject::GO_SCOUT:
+		std::string state = go->sm->GetCurrentState();
+		if (state == "Death") break;
 
-	//	modelStack.PushMatrix();
-	//	modelStack.Translate(go->pos.x, go->pos.y, zOffset);
+		bool isBlue = (go->side == GameObject::SIDE_BLUE);
+		GEOMETRY_TYPE geo = isBlue ? GEO_MORTAR1_HEALTHY : GEO_MORTAR2_HEALTHY;
 
-	//	// Scale the rectangle according to your width/height settings
-	//	modelStack.Scale(width, height, 1.f);
+		if (state == "Panic")
+			geo = isBlue ? GEO_MORTAR1_PANIC : GEO_MORTAR2_PANIC;
 
-	//	// Render a flat quad with yellow color
-	//	RenderMesh(meshList[GEO_CUBE], false);
-
-	//	modelStack.PopMatrix();
-	//	break;
+		modelStack.PushMatrix();
+		modelStack.Translate(m_gridOffset + m_gridSize * go->curr.x,
+			m_gridOffset + m_gridSize *
+			go->curr.y,
+			6);
+		modelStack.Rotate(180, 0, 0, 1);
+		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
+		RenderMesh(meshList[geo], false);
+		modelStack.PopMatrix();
+		RenderGOBar(go, 7);
+		break;
 	}
 }
 
@@ -2325,6 +2387,31 @@ int SceneMovement_Week03::HandleCount(Message* message)
 
 bool SceneMovement_Week03::Handle(Message* message)
 {
+	MessageNewTile* msgNewTile = dynamic_cast<MessageNewTile*>(message);
+	if (msgNewTile)
+	{
+		Maze::TILE_CONTENT t = msgNewTile->tile;
+		switch (t)
+		{
+		case Maze::TILE_ORE:
+			std::cout << "Call for Mechanics" << std::endl;
+			//call for closest 2 mechanics
+			//mechanics check if they are already assigned to a ore
+			//if yes, check if this ore is closer
+			//else check all other mechanics
+			break;
+		}
+	}
+
+	MessageRevealUnit* msgRevealUnit = dynamic_cast<MessageRevealUnit*>(message);
+	if (msgRevealUnit) {
+		if (msgRevealUnit->target->type == GameObject::GO_ATTACKER) {
+			std::cout << "Attacker Revealed!" << std::endl;
+			if (msgRevealUnit->spotter->type == GameObject::GO_ATTACKER)
+				msgRevealUnit->spotter->atkTarget = msgRevealUnit->target;
+		}
+	}
+
 	MessageMechanicBuild* msgMechBuild = dynamic_cast<MessageMechanicBuild*>(message);
 	if (msgMechBuild) {
 		for (GameObject* go2 : m_goList)
@@ -3025,9 +3112,9 @@ void SceneMovement_Week03::Render()
 				meshList[GEO_WHITEQUAD]->material.kAmbient.Set(0.f, 0.f, 0.f);
 				RenderMesh(meshList[GEO_WHITEQUAD], true);
 				break;
-			case Maze::TILE_SLOW:
-				meshList[GEO_WHITEQUAD]->material.kAmbient.Set(1.f, 0.f, 0.f);
-				RenderMesh(meshList[GEO_WHITEQUAD], true);
+			case Maze::TILE_ORE:
+				meshList[GEO_ORE]->material.kAmbient.Set(1.f, 1.f, 1.f);
+				RenderMesh(meshList[GEO_ORE], true);
 				break;
 			case Maze::TILE_EMPTY:
 				//RenderMesh(meshList[GEO_FLOOR], false);
@@ -3045,7 +3132,7 @@ void SceneMovement_Week03::Render()
 	// float step = miniSize + 0.2f;
 
 	int i = 0;
-	for (bool b : b_visited)
+	for (auto b : b_grid)
 	{
 		int cellX = i % m_noGrid;
 		int cellY = i / m_noGrid;
@@ -3058,14 +3145,29 @@ void SceneMovement_Week03::Render()
 		);
 		modelStack.Scale(miniSize, miniSize, miniSize);
 		if (b)
-		{
-			meshList[GEO_FLOOR]->material.kAmbient.Set(0.25f, 0.25f, 1.0f);
-			RenderMesh(meshList[GEO_FLOOR], true);
+		{			
+			switch (b_grid[cellY * m_noGrid + cellX])
+			{
+			case Maze::TILE_WALL:
+				RenderMesh(meshList[GEO_WALL], false);
+				break;
+			case Maze::TILE_FOG:
+				meshList[GEO_WHITEQUAD]->material.kAmbient.Set(0.f, 0.f, 0.f);
+				RenderMesh(meshList[GEO_WHITEQUAD], true);
+				break;
+			case Maze::TILE_ORE:
+				meshList[GEO_ORE]->material.kAmbient.Set(1.f, 0.f, 0.f);
+				RenderMesh(meshList[GEO_ORE], true);
+				break;
+			case Maze::TILE_EMPTY:
+				RenderMesh(meshList[GEO_FLOOR], false);
+				break;
+			}
 		}
 		else
 		{
-			meshList[GEO_WALL]->material.kAmbient.Set(0.25f, 0.25f, 1.0f);
-			RenderMesh(meshList[GEO_WALL], true);
+			meshList[GEO_WHITEQUAD]->material.kAmbient.Set(0, 0, 0);
+			RenderMesh(meshList[GEO_WHITEQUAD], true);
 		}
 
 		modelStack.PopMatrix();
@@ -3245,6 +3347,7 @@ std::string SceneMovement_Week03::GameState()
 		return "The Game is Tied Currently";
 	}
 }
+
 void SceneMovement_Week03::DFS(MazePt curr)
 {
 	m_visited[curr.y * m_noGrid + curr.x] = true;
@@ -3263,7 +3366,7 @@ void SceneMovement_Week03::DFS(MazePt curr)
 			}
 			else
 			{
-				m_myGrid[next.y * m_noGrid + next.x] = Maze::TILE_WALL;
+				m_myGrid[next.y * m_noGrid + next.x] = m_maze.See(next);
 			}
 		}
 	}
@@ -3282,7 +3385,7 @@ void SceneMovement_Week03::DFS(MazePt curr)
 			}
 			else
 			{
-				m_myGrid[next.y * m_noGrid + next.x] = Maze::TILE_WALL;
+				m_myGrid[next.y * m_noGrid + next.x] = m_maze.See(next);
 			}
 		}
 	}
@@ -3301,7 +3404,7 @@ void SceneMovement_Week03::DFS(MazePt curr)
 			}
 			else
 			{
-				m_myGrid[next.y * m_noGrid + next.x] = Maze::TILE_WALL;
+				m_myGrid[next.y * m_noGrid + next.x] = m_maze.See(next);
 			}
 		}
 	}
@@ -3320,12 +3423,11 @@ void SceneMovement_Week03::DFS(MazePt curr)
 			}
 			else
 			{
-				m_myGrid[next.y * m_noGrid + next.x] = Maze::TILE_WALL;
+				m_myGrid[next.y * m_noGrid + next.x] = m_maze.See(next);
 			}
 		}
 	}
 }
-
 
 void SceneMovement_Week03::CarveUntilNoFog()
 {
@@ -3505,13 +3607,9 @@ bool SceneMovement_Week03::AStar(GameObject* go, MazePt start, MazePt end)
 
 int SceneMovement_Week03::GetTileCost(Maze::TILE_CONTENT tile)
 {
-	switch (tile)
-	{
-	case Maze::TILE_EMPTY: return 1;
-	case Maze::TILE_SLOW: return INT_MAX;
-	case Maze::TILE_FOG:   return INT_MAX;
-	case Maze::TILE_WALL:  return INT_MAX; // not walkable
-	}
+
+	if (!m_maze.IsPassable(tile)) return INT_MAX; 
+	if (tile == Maze::TILE_EMPTY) return 1; // example
 	return 1;
 }
 
@@ -3535,7 +3633,7 @@ bool SceneMovement_Week03::TryFindFrontierTarget(GameObject* go, const MazePt& g
 			int idx = Get1DIndex(x, y);
 
 			// must be known walkable in TEAM knowledge
-			if (teamGrid[idx] != Maze::TILE_EMPTY) continue;
+			if (!m_maze.IsPassable(teamGrid[idx])) continue;
 
 			// Frontier = known empty tile that touches fog in TEAM knowledge
 			bool touchesFog = false;
@@ -3567,25 +3665,50 @@ bool SceneMovement_Week03::TryFindFrontierTarget(GameObject* go, const MazePt& g
 	return found;
 }
 
-void SceneMovement_Week03::RevealAround(GameObject* go)
+void SceneMovement_Week03::RevealAround(GameObject* go, int range)
 {
-	MazePt curr = go->curr;
-	static int offsets[][2] = { {0,1},{0,-1},{-1,0},{1,0} };
+	if (range < 0) return;
 
+	MazePt curr = go->curr;
+	go->visibleTargets.clear();
 	// choose team grid ONCE
 	std::vector<Maze::TILE_CONTENT>& teamGrid =
 		(go->side == GameObject::SIDE_BLUE) ? b_grid : r_grid;
 
-	// always mark current as empty
+	// mark current as empty
 	teamGrid[Get1DIndex(curr.x, curr.y)] = Maze::TILE_EMPTY;
 
-	for (int(&off)[2] : offsets)
+	for (int dy = -range; dy <= range; ++dy)
 	{
-		MazePt next(curr.x + off[0], curr.y + off[1]);
-		if (!IsWithinBoundary(next.x) || !IsWithinBoundary(next.y)) continue;
+		for (int dx = -range; dx <= range; ++dx)
+		{
+			// Manhattan distance (grid steps)
+			if (abs(dx) + abs(dy) > range) continue;
 
-		int idx = Get1DIndex(next.x, next.y);
-		teamGrid[idx] = m_maze.See(next);
+			MazePt p(curr.x + dx, curr.y + dy);
+			if (!IsWithinBoundary(p.x) || !IsWithinBoundary(p.y)) continue;
+
+			// (optional) skip the center tile if you want
+			// if (dx == 0 && dy == 0) continue;
+
+			if (auto t = RevealTileIfNew(go, p))
+			{
+				MessageNewTile msg(go, p, t);
+				Handle(&msg);
+			}
+
+			GameObject* unit = RevealUnit(p);
+			if (!unit) continue;
+			if (unit == go) continue;
+			if (unit->side == go->side) continue; // only enemies
+
+			// Avoid duplicates (can happen if your reveal covers same tile twice in future changes)
+			if (std::find(go->visibleTargets.begin(), go->visibleTargets.end(), unit) == go->visibleTargets.end())
+				go->visibleTargets.push_back(unit);
+
+			MessageRevealUnit msg(go, unit, p);
+			Handle(&msg);
+		}
 	}
 }
 
@@ -3593,14 +3716,18 @@ void SceneMovement_Week03::PathFind(GameObject* go, const MazePt& goal, int move
 {
 	if (moveBudget <= 0) return;
 
+	auto& teamGrid = (go->side == GameObject::SIDE_BLUE) ? b_grid : r_grid;
 	// loop until you run out of movement
 	while (moveBudget > 0)
 	{
 		// Always reveal from current position (so grid knowledge grows)
-		RevealAround(go);
+		if (go->atkTarget != NULL)
+			if (IsInAtkRange(go, go->atkTarget))
+				return;
+
 
 		// Decide whether we should try goal, or explore frontier
-		bool goalIsKnown = (go->grid[Get1DIndex(goal.x, goal.y)] != Maze::TILE_FOG);
+		bool goalIsKnown = (teamGrid[Get1DIndex(goal.x, goal.y)] != Maze::TILE_FOG);
 
 		bool havePlan = false;
 
@@ -3626,18 +3753,13 @@ void SceneMovement_Week03::PathFind(GameObject* go, const MazePt& goal, int move
 		MazePt next = go->path[1];
 
 		// Check movement cost for stepping into that tile
-		int stepCost = GetTileCost(go->grid[Get1DIndex(next.x, next.y)]);
+		int stepCost = GetTileCost(teamGrid[Get1DIndex(next.x, next.y)]);
 		if (stepCost > moveBudget)
 			return; // can't afford to move further this turn
 
 		// Spend movement + move
 		moveBudget -= stepCost;
 		go->curr = next;
-
-		// Learn from the new tile immediately (recommended)
-		RevealAround(go);
-
-		// loop continues: with new info, it may switch from frontier mode to goal mode automatically
 	}
 }
 
@@ -3762,7 +3884,7 @@ void SceneMovement_Week03::DFSOnce(GameObject* go)
 				(go->side == GameObject::SIDE_BLUE) ? b_grid : r_grid;
 
 			teamGrid[idx] = m_maze.See(next);
-			if (teamGrid[idx] == Maze::TILE_CONTENT::TILE_EMPTY)
+			if (m_maze.IsPassable(teamGrid[idx]))
 			{
 				go->curr = next; //let's move to the next cell
 				return;
@@ -3773,6 +3895,62 @@ void SceneMovement_Week03::DFSOnce(GameObject* go)
 	stack.pop_back();
 	if (!stack.empty())
 		go->curr = stack.back();
+}
+
+Maze::TILE_CONTENT SceneMovement_Week03::RevealTileIfNew(GameObject* go, const MazePt& p)
+{
+	auto& teamGrid = (go->side == GameObject::SIDE_BLUE) ? b_grid : r_grid;
+	int idx = Get1DIndex(p.x, p.y);
+
+	if (teamGrid[idx] != Maze::TILE_FOG) return Maze::TILE_NULL;
+
+	Maze::TILE_CONTENT t = m_maze.See(p);
+	teamGrid[idx] = t;
+
+	if (t == Maze::TILE_FOG) return Maze::TILE_NULL; // just in case
+	return t;
+}
+
+GameObject* SceneMovement_Week03::RevealUnit(const MazePt& p)
+{
+	for (GameObject* other : m_goList)
+	{
+		if (!other || !other->active) continue;
+
+		if (other->curr.x == p.x && other->curr.y == p.y)
+			return other;
+	}
+	return nullptr;
+}
+
+bool SceneMovement_Week03::IsInAtkRange(GameObject* go, GameObject* target)
+{
+	if (!go || !target) return false;
+
+	MazePt a = go->curr;
+	MazePt b = target->curr;   // if atkTarget is a GameObject*
+
+	return HeuristicManhattan(a, b) <= go->atkRange;
+}
+
+GameObject* SceneMovement_Week03::PickClosestVisibleTarget(GameObject* go)
+{
+	if (!go) return nullptr;
+
+	GameObject* best = nullptr;
+	int bestD = INT_MAX;
+
+	for (GameObject* t : go->visibleTargets)
+	{
+		if (!t || !t->active) continue;
+		int d = HeuristicManhattan(go->curr, t->curr);
+		if (d < bestD)
+		{
+			bestD = d;
+			best = t;
+		}
+	}
+	return best;
 }
 
 void SceneMovement_Week03::Exit()

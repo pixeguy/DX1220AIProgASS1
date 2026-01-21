@@ -334,6 +334,9 @@ void SceneBase::Init()
 
 		meshList[GEO_BULLET2] = MeshBuilder::GenerateQuad("Bullet2", Color(1, 1, 1));
 		meshList[GEO_BULLET2]->textureID = LoadTGA("Image//Bullet2.tga");
+
+		meshList[GEO_ORE] = MeshBuilder::GenerateQuad("Ore", Color(1, 1, 1));
+		meshList[GEO_ORE]->textureID = LoadTGA("Image//DiamondOre.tga");
 	}
 	meshList[GEO_TEXT]->material.kAmbient.Set(1, 0, 0);
 

@@ -25,8 +25,8 @@ void Maze::Generate(unsigned key, unsigned size, MazePt start, float wallLoad)
 	start.y = Math::Clamp(start.y, 0, (int)size - 1);
 	wallLoad = Math::Clamp(wallLoad, 0.f, 0.8f);
 
-	float slowLoad = 0.15f;           
-	slowLoad = Math::Clamp(slowLoad, 0.f, 0.8f);
+	float oreLoad = 0.025f;
+	oreLoad = Math::Clamp(oreLoad, 0.f, 0.5f);
 
 	unsigned total = size * size;
 	m_grid.resize(total);
@@ -45,14 +45,14 @@ void Maze::Generate(unsigned key, unsigned size, MazePt start, float wallLoad)
 		}
 	}
 	// 2) Place slow tiles (only on remaining EMPTY tiles)
-	for (int i = 0; i < (int)(total * slowLoad);)
+	for (int i = 0; i < (int)(total * oreLoad);)
 	{
 		unsigned chosen = rand() % total;
 		if (chosen == startId) continue;
 
 		if (m_grid[chosen] == TILE_EMPTY)
 		{
-			m_grid[chosen] = TILE_SLOW;
+			m_grid[chosen] = TILE_ORE;
 			++i;
 		}
 	}
@@ -63,7 +63,7 @@ void Maze::Generate(unsigned key, unsigned size, MazePt start, float wallLoad)
 		{
 			int t = m_grid[row * size + col];
 			if (t == TILE_WALL) std::cout << "1 ";
-			else if (t == TILE_SLOW) std::cout << "S ";
+			else if (t == TILE_ORE) std::cout << "S ";
 			else std::cout << "0 ";
 		}
 		std::cout << std::endl;
@@ -159,7 +159,8 @@ bool Maze::Move(DIRECTION direction)
 		break;
 	}
 	int tempId = temp.y * m_size + temp.x;
-	if (m_grid[tempId] == TILE_WALL)
+
+	if (!IsPassable(m_grid[tempId]))
 		return false;
 	m_curr = temp;
 	return true;
@@ -176,4 +177,11 @@ Maze::TILE_CONTENT Maze::See(MazePt tile)
 		return TILE_CONTENT::TILE_WALL;
 
 	return m_grid[tile.y*m_size + tile.x];
+}
+
+
+bool Maze::IsPassable(Maze::TILE_CONTENT tile)
+{
+	if (tile == Maze::TILE_WALL || tile == Maze::TILE_ORE) return false;
+	return true;
 }

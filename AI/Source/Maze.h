@@ -18,7 +18,8 @@ public:
 		TILE_WALL = -1,
 		TILE_FOG = 0,
 		TILE_EMPTY = 1,
-		TILE_SLOW = 2,
+		TILE_ORE = 2,
+		TILE_NULL,
 	};
 	enum DIRECTION
 	{
@@ -45,6 +46,7 @@ public:
 	void SetNumMove(int num);
 
 	TILE_CONTENT See(MazePt tile);
+	bool IsPassable(Maze::TILE_CONTENT tile);
 	std::vector<TILE_CONTENT> m_grid;
 
 private:

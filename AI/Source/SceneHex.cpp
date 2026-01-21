@@ -358,7 +358,7 @@ float SceneHex::GetTileCost(const MazePt& p) const
 	switch (m_myGrid[IDX(p.x, p.y, m_noGrid)])
 	{
 	case Maze::TILE_EMPTY: return 1.f;
-	case Maze::TILE_SLOW: return 999.f;
+	case Maze::TILE_ORE: return 999.f;
 	case Maze::TILE_FOG:   return 4.f;
 	case Maze::TILE_WALL:  return FLT_MAX; // not walkable
 	}
@@ -642,7 +642,7 @@ void SceneHex::Render()
 				meshList[GEO_WHITEHEX]->material.kAmbient.Set(0.5f, 0.5f, 0.5f);
 				RenderMesh(meshList[GEO_WHITEHEX], true); //grey
 				break;
-			case Maze::TILE_SLOW:
+			case Maze::TILE_ORE:
 					meshList[GEO_WHITEHEX]->material.kAmbient.Set(1.f, 0.f, 0.f);
 					RenderMesh(meshList[GEO_WHITEHEX], true); //grey
 					break;

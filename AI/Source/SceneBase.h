@@ -146,6 +146,7 @@ public:
 		GEO_ATTACKER1_HELPING,
 		GEO_BULLET1,
 		GEO_BULLET2,
+		GEO_ORE,
 		NUM_GEOMETRY,
 	};
 public:

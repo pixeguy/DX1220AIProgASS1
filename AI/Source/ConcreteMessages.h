@@ -38,6 +38,30 @@ struct MessageWRU : public Message
 	float mortarTooCloseValue;
 };
 
+struct MessageNewTile : public Message
+{
+	MessageNewTile(GameObject* goValue, const MazePt& posValue, Maze::TILE_CONTENT tileValue)
+		: go(goValue), pos(posValue), tile(tileValue) {
+	}
+
+	virtual ~MessageNewTile() {}
+
+	GameObject* go;
+	MazePt pos;
+	Maze::TILE_CONTENT tile;
+};
+
+struct MessageRevealUnit : public Message
+{
+	MessageRevealUnit(GameObject* spotterValue, GameObject* targetValue, const MazePt& posValue)
+		: spotter(spotterValue), target(targetValue), pos(posValue) {
+	}
+
+	GameObject* spotter;
+	GameObject* target;
+	MazePt pos;
+};
+
 struct MessageCheckActive : public Message
 {
 	MessageCheckActive() {}
