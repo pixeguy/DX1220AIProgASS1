@@ -80,6 +80,8 @@ struct GameObject : public ObjectBase
 	float countDown = 0;
 	int viewRange = 0;
 	int atkRange = 0;
+	int currMoves = 0;
+	int useMoves = 0;
 	STATE currState;
 	GameObject *nearest;
 	//GameObject* nearest2 = NULL; //for archer to find 2nd nearest
@@ -141,6 +143,7 @@ struct GameObject : public ObjectBase
 	std::vector<MazePt> stack; //for dfs
 	std::vector<MazePt> path;  //for storing path
 	MazePt curr;
+	MazePt currNodes[4];
 
 	//week 12
 	int currNode; //stores an index

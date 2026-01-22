@@ -19,6 +19,12 @@ public:
 	virtual void Render();
 	virtual void Exit();
 
+	void SetTileBoth(int x, int y, Maze::TILE_CONTENT tileType);
+
+	void Carve2x2Both(int x, int y, Maze::TILE_CONTENT tileType);
+
+	void FillCurrNodes2x2FromWorld(GameObject* go);
+
 	//init objs
 	virtual GameObject* InitMainBase(GameObject::SIDE side, Vector3 pos);
 	GameObject* InitGoldenOrb(Vector3 pos);
@@ -123,10 +129,10 @@ protected:
 
 	void RevealAround(GameObject* go, int range);
 
-	void PathFind(GameObject* go, const MazePt& goal, int moveBudget);
+	void PathFind(GameObject* go, const MazePt& goal, int& moveBudget, int stopRange);
 
-	void ClearSpawnArea();
-	void DFSOnce(GameObject* go);
+	void ClearSpawnArea(const std::initializer_list<std::pair<int, int>>& patches);
+	void DFSOnce(GameObject* go, int& moveBudget);
 
 	Maze::TILE_CONTENT RevealTileIfNew(GameObject* go, const MazePt& p);
 

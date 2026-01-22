@@ -62,8 +62,8 @@ void StateAttackerHealthy::Update(double dt)
 				float finalActionSpeed = (go->actionSpeed * 1) + go->supportActionSpeed;
 				if (go->EnergyReduce(finalActionSpeed))
 				{
-					go->nearest->health -= 5;
-					go->nearest->lastAttacker = go;
+					//go->nearest->health -= 5;
+					//go->nearest->lastAttacker = go;
 				}
 			}
 			else if (go->urgent) { //if im not close enough, continue checking
@@ -164,8 +164,8 @@ void StateAttackerStayStrong::Update(double dt)
 				float finalActionSpeed = (go->actionSpeed * 1) + go->supportActionSpeed;
 				if (go->EnergyReduce(finalActionSpeed))
 				{
-					go->nearest->health -= 5;
-					go->nearest->lastAttacker = go;
+					//go->nearest->health -= 5;
+					//go->nearest->lastAttacker = go;
 				}
 			}
 			else if (go->urgent) { //if im not close enough, continue checking
