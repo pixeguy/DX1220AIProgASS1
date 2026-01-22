@@ -1690,7 +1690,21 @@ void SceneMovement_Week03::Update(double dt)
 				if (go->sm->GetCurrentState() == "Healthy")
 				{
 					if (go->atkTarget == NULL) {
-						DFSOnce(go, go->currMoves);
+						while (go->currMoves > 0)
+						{
+							int before = go->currMoves;
+							DFSOnce(go, go->currMoves);   // spends tile cost
+
+							// if DFS couldn't move (blocked / too expensive), stop
+							if (go->currMoves == before)
+								return;
+
+							// reveal after moving too (so the newly reached tile reveals)
+							RevealAround(go, go->viewRange);
+
+							if (go->atkTarget != nullptr)
+								return;
+						}
 					}
 					else
 					{
