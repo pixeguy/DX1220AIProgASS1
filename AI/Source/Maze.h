@@ -19,6 +19,7 @@ public:
 		TILE_FOG = 0,
 		TILE_EMPTY = 1,
 		TILE_ORE = 2,
+		TILE_WOODENLOG = 3,
 		TILE_NULL,
 	};
 	enum DIRECTION
@@ -47,6 +48,7 @@ public:
 
 	TILE_CONTENT See(MazePt tile);
 	bool IsPassable(Maze::TILE_CONTENT tile);
+	bool NonMats(Maze::TILE_CONTENT tile);
 	std::vector<TILE_CONTENT> m_grid;
 
 private:

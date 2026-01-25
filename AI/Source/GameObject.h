@@ -107,9 +107,11 @@ struct GameObject : public ObjectBase
 	GameObject* specialTarget = NULL;
 
 	int choice = 0;
+	MazePt ptTarget = MazePt(999,999);
 
 	//for tank only
 	bool panicking = false;
+	int turnCounter = 0;
 	//for spawner only
 	int metalParts;
 	int woodenLogs;
@@ -142,6 +144,8 @@ struct GameObject : public ObjectBase
 	std::vector<bool> visited;
 	std::vector<MazePt> stack; //for dfs
 	std::vector<MazePt> path;  //for storing path
+	size_t pathIndex = 0;
+	bool havePlan = false;
 	MazePt curr;
 	MazePt currNodes[4];
 
@@ -160,6 +164,7 @@ struct GameObject : public ObjectBase
 	~GameObject();
 
 	bool Handle(Message* message);
+	void HandleAction(std::string e);
 };
 
 #endif

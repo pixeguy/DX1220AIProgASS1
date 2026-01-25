@@ -19,7 +19,7 @@ void StateSupportHealthy::Enter()
 {
 	m_go->moveSpeed = 1;
 	m_go->actionSpeed = 0.2;
-	m_go->target = m_go->pos;
+	m_go->target = m_go->pos; m_go->useMoves = 2;
 	m_go->nearest = NULL;
 }
 
@@ -33,11 +33,11 @@ void StateSupportHealthy::Update(double dt)
 		m_go->sm->m_currState->Enter();
 		return;
 	}
-	if (m_go->alliesActiveCount == 0)
-	{
-		m_go->sm->SetNextState("Hiding");
-		return;
-	}
+	//if (m_go->alliesActiveCount == 0)
+	//{
+	//	m_go->sm->SetNextState("Hiding");
+	//	return;
+	//}
 	if (m_go->health < 40)
 	{
 		m_go->sm->SetNextState("Hurt");
@@ -148,7 +148,7 @@ StateSupportHealing::~StateSupportHealing()
 void StateSupportHealing::Enter()
 {
 	m_go->moveSpeed = 1;
-	m_go->actionSpeed = 0.2;
+	m_go->actionSpeed = 0.2; m_go->useMoves = 2;
 }
 
 void StateSupportHealing::Update(double dt)
@@ -161,11 +161,11 @@ void StateSupportHealing::Update(double dt)
 		m_go->sm->m_currState->Enter();
 		return;
 	}
-	if (m_go->alliesActiveCount == 0)
-	{
-		m_go->sm->SetNextState("Hiding");
-		return;
-	}
+	//if (m_go->alliesActiveCount == 0)
+	//{
+	//	m_go->sm->SetNextState("Hiding");
+	//	return;
+	//}
 	if (m_go->health < 40)
 	{
 		m_go->sm->SetNextState("Hurt");
@@ -187,40 +187,40 @@ void StateSupportHealing::Update(double dt)
 		m_go->healTarget = NULL;
 		return;
 	}
-	m_go->moveLeft = m_go->moveRight = m_go->moveUp = m_go->moveDown = false;
-	if (m_go->nearest)
-	{
-		float diffX = m_go->nearest->pos.x - m_go->pos.x;
-		float diffY = m_go->nearest->pos.y - m_go->pos.y;
-		if (fabs(diffX) > fabs(diffY))
-		{
-			if (diffX > 0)
-				m_go->moveRight = true;
-			else
-				m_go->moveLeft = true;
-		}
-		else
-		{
-			if (diffY > 0)
-				m_go->moveUp = true;
-			else
-				m_go->moveDown = true;
-		}
-	}
+	//m_go->moveLeft = m_go->moveRight = m_go->moveUp = m_go->moveDown = false;
+	//if (m_go->nearest)
+	//{
+	//	float diffX = m_go->nearest->pos.x - m_go->pos.x;
+	//	float diffY = m_go->nearest->pos.y - m_go->pos.y;
+	//	if (fabs(diffX) > fabs(diffY))
+	//	{
+	//		if (diffX > 0)
+	//			m_go->moveRight = true;
+	//		else
+	//			m_go->moveLeft = true;
+	//	}
+	//	else
+	//	{
+	//		if (diffY > 0)
+	//			m_go->moveUp = true;
+	//		else
+	//			m_go->moveDown = true;
+	//	}
+	//}
 
-	if (m_go->nearest) {
-		if ((m_go->nearest->pos - m_go->pos).Length() < m_gridSize * 3)
-		{
-			m_go->moving = false;
-			if (m_go->EnergyReduce(m_go->actionSpeed))
-			{
-				m_go->nearest->health += 6;
-			}
-		}
-		else {
-			m_go->moving = true;
-		}
-	}
+	//if (m_go->nearest) {
+	//	if ((m_go->nearest->pos - m_go->pos).Length() < m_gridSize * 3)
+	//	{
+	//		m_go->moving = false;
+	//		if (m_go->EnergyReduce(m_go->actionSpeed))
+	//		{
+	//			m_go->nearest->health += 6;
+	//		}
+	//	}
+	//	else {
+	//		m_go->moving = true;
+	//	}
+	//}
 }
 void StateSupportHealing::Exit()
 {
@@ -242,6 +242,7 @@ void StateSupportUrgentHealing::Enter()
 {
 	m_go->moveSpeed = 2;
 	m_go->actionSpeed = 0.3;
+	m_go->useMoves = 3;
 }
 
 void StateSupportUrgentHealing::Update(double dt)
@@ -254,11 +255,11 @@ void StateSupportUrgentHealing::Update(double dt)
 		m_go->sm->m_currState->Enter();
 		return;
 	}
-	if (m_go->alliesActiveCount == 0)
-	{
-		m_go->sm->SetNextState("Hiding");
-		return;
-	}
+	//if (m_go->alliesActiveCount == 0)
+	//{
+	//	m_go->sm->SetNextState("Hiding");
+	//	return;
+	//}
 	if (m_go->health < 40)
 	{
 		m_go->sm->SetNextState("Hurt");
@@ -278,40 +279,40 @@ void StateSupportUrgentHealing::Update(double dt)
 		m_go->healTarget = NULL;
 		return;
 	}
-	m_go->moveLeft = m_go->moveRight = m_go->moveUp = m_go->moveDown = false;
-	if (m_go->nearest)
-	{
-		float diffX = m_go->nearest->pos.x - m_go->pos.x;
-		float diffY = m_go->nearest->pos.y - m_go->pos.y;
-		if (fabs(diffX) > fabs(diffY))
-		{
-			if (diffX > 0)
-				m_go->moveRight = true;
-			else
-				m_go->moveLeft = true;
-		}
-		else
-		{
-			if (diffY > 0)
-				m_go->moveUp = true;
-			else
-				m_go->moveDown = true;
-		}
-	}
+	//m_go->moveLeft = m_go->moveRight = m_go->moveUp = m_go->moveDown = false;
+	//if (m_go->nearest)
+	//{
+	//	float diffX = m_go->nearest->pos.x - m_go->pos.x;
+	//	float diffY = m_go->nearest->pos.y - m_go->pos.y;
+	//	if (fabs(diffX) > fabs(diffY))
+	//	{
+	//		if (diffX > 0)
+	//			m_go->moveRight = true;
+	//		else
+	//			m_go->moveLeft = true;
+	//	}
+	//	else
+	//	{
+	//		if (diffY > 0)
+	//			m_go->moveUp = true;
+	//		else
+	//			m_go->moveDown = true;
+	//	}
+	//}
 
-	if (m_go->nearest) {
-		if ((m_go->nearest->pos - m_go->pos).Length() < m_gridSize * 3)
-		{
-			m_go->moving = false;
-			if (m_go->EnergyReduce(m_go->actionSpeed))
-			{
-				m_go->nearest->health += 10;
-			}
-		}
-		else {
-			m_go->moving = true;
-		}
-	}
+	//if (m_go->nearest) {
+	//	if ((m_go->nearest->pos - m_go->pos).Length() < m_gridSize * 3)
+	//	{
+	//		m_go->moving = false;
+	//		if (m_go->EnergyReduce(m_go->actionSpeed))
+	//		{
+	//			m_go->nearest->health += 10;
+	//		}
+	//	}
+	//	else {
+	//		m_go->moving = true;
+	//	}
+	//}
 }
 void StateSupportUrgentHealing::Exit()
 {
@@ -334,6 +335,7 @@ void StateSupportHurt::Enter()
 	m_go->moveSpeed = 0.8;
 	m_go->actionSpeed = 0.2;
 	m_go->target = m_go->pos;
+	m_go->useMoves = 1;
 	m_go->nearest = NULL;
 }
 
@@ -347,51 +349,51 @@ void StateSupportHurt::Update(double dt)
 		m_go->sm->m_currState->Enter();
 		return;
 	}
-	if (m_go->alliesActiveCount == 0)
-	{
-		m_go->sm->SetNextState("Hiding");
-		return;
-	}
+	//if (m_go->alliesActiveCount == 0)
+	//{
+	//	m_go->sm->SetNextState("Hiding");
+	//	return;
+	//}
 	if (m_go->health > 80) {
 		m_go->sm->SetNextState("Healthy");
 		m_go->hiding = false;
 		return;
 	}
 
-	m_go->moveLeft = m_go->moveRight = m_go->moveUp = m_go->moveDown = false;
-	if (m_go->nearest)
-	{
-		float diffX = m_go->nearest->pos.x - m_go->pos.x;
-		float diffY = m_go->nearest->pos.y - m_go->pos.y;
-		if (fabs(diffX) > fabs(diffY))
-		{
-			if (diffX > 0)
-				m_go->moveRight = true;
-			else
-				m_go->moveLeft = true;
-		}
-		else
-		{
-			if (diffY > 0)
-				m_go->moveUp = true;
-			else
-				m_go->moveDown = true;
-		}
-	}
-	if (m_go->nearest != NULL) {
-		if ((m_go->nearest->pos - m_go->pos).Length() < m_gridSize) {
-			m_go->moving = false;
-			if (m_go->EnergyReduce(m_go->actionSpeed))
-			{
-				m_go->health += 5;
-				m_go->hiding = true;
-			}
-		}
-		else { m_go->moving = true;
-		m_go->hiding = false;
-		/*std::cout << "following" << std::endl*/; }
-	}
-	else { m_go->moving = false; /*std::cout << "cant find anything" << std::endl;*/ }
+	//m_go->moveLeft = m_go->moveRight = m_go->moveUp = m_go->moveDown = false;
+	//if (m_go->nearest)
+	//{
+	//	float diffX = m_go->nearest->pos.x - m_go->pos.x;
+	//	float diffY = m_go->nearest->pos.y - m_go->pos.y;
+	//	if (fabs(diffX) > fabs(diffY))
+	//	{
+	//		if (diffX > 0)
+	//			m_go->moveRight = true;
+	//		else
+	//			m_go->moveLeft = true;
+	//	}
+	//	else
+	//	{
+	//		if (diffY > 0)
+	//			m_go->moveUp = true;
+	//		else
+	//			m_go->moveDown = true;
+	//	}
+	//}
+	//if (m_go->nearest != NULL) {
+	//	if ((m_go->nearest->pos - m_go->pos).Length() < m_gridSize) {
+	//		m_go->moving = false;
+	//		if (m_go->EnergyReduce(m_go->actionSpeed))
+	//		{
+	//			m_go->health += 5;
+	//			m_go->hiding = true;
+	//		}
+	//	}
+	//	else { m_go->moving = true;
+	//	m_go->hiding = false;
+	//	/*std::cout << "following" << std::endl*/; }
+	//}
+	//else { m_go->moving = false; /*std::cout << "cant find anything" << std::endl;*/ }
 }
 
 void StateSupportHurt::Exit()
@@ -428,49 +430,49 @@ void StateSupportHiding::Update(double dt)
 		m_go->sm->m_currState->Enter();
 		return;
 	}
-	if (m_go->alliesActiveCount > 0)
-	{
-		m_go->sm->SetNextState("Healthy");
-		m_go->hiding = false;
-		return;
-	}
+	//if (m_go->alliesActiveCount > 0)
+	//{
+	//	m_go->sm->SetNextState("Healthy");
+	//	m_go->hiding = false;
+	//	return;
+	//}
 
-	m_go->moveLeft = m_go->moveRight = m_go->moveUp = m_go->moveDown = false;
-	if (m_go->nearest)
-	{
-		float diffX = m_go->nearest->pos.x - m_go->pos.x;
-		float diffY = m_go->nearest->pos.y - m_go->pos.y;
-		if (fabs(diffX) > fabs(diffY))
-		{
-			if (diffX > 0)
-				m_go->moveRight = true;
-			else
-				m_go->moveLeft = true;
-		}
-		else
-		{
-			if (diffY > 0)
-				m_go->moveUp = true;
-			else
-				m_go->moveDown = true;
-		}
-	}
-	if (m_go->nearest != NULL) {
-		if ((m_go->nearest->pos - m_go->pos).Length() < m_gridSize) {
-			m_go->moving = false;
-			if (m_go->EnergyReduce(m_go->actionSpeed))
-			{
-				m_go->health += 5;
-				m_go->hiding = true;
-			}
-		}
-		else {
-			m_go->moving = true;
-			m_go->hiding = false;
-			/*std::cout << "following" << std::endl*/;
-		}
-	}
-	else { m_go->moving = false; /*std::cout << "cant find anything" << std::endl;*/ }
+	//m_go->moveLeft = m_go->moveRight = m_go->moveUp = m_go->moveDown = false;
+	//if (m_go->nearest)
+	//{
+	//	float diffX = m_go->nearest->pos.x - m_go->pos.x;
+	//	float diffY = m_go->nearest->pos.y - m_go->pos.y;
+	//	if (fabs(diffX) > fabs(diffY))
+	//	{
+	//		if (diffX > 0)
+	//			m_go->moveRight = true;
+	//		else
+	//			m_go->moveLeft = true;
+	//	}
+	//	else
+	//	{
+	//		if (diffY > 0)
+	//			m_go->moveUp = true;
+	//		else
+	//			m_go->moveDown = true;
+	//	}
+	//}
+	//if (m_go->nearest != NULL) {
+	//	if ((m_go->nearest->pos - m_go->pos).Length() < m_gridSize) {
+	//		m_go->moving = false;
+	//		if (m_go->EnergyReduce(m_go->actionSpeed))
+	//		{
+	//			m_go->health += 5;
+	//			m_go->hiding = true;
+	//		}
+	//	}
+	//	else {
+	//		m_go->moving = true;
+	//		m_go->hiding = false;
+	//		/*std::cout << "following" << std::endl*/;
+	//	}
+	//}
+	//else { m_go->moving = false; /*std::cout << "cant find anything" << std::endl;*/ }
 }
 
 void StateSupportHiding::Exit()

@@ -75,6 +75,7 @@ bool GameObject::Handle(Message* message)
 		if(msg->go->lastAttacker == NULL)
 			return false; //no attackers to help attack
 		nearest = msg->go->lastAttacker;
+		atkTarget = msg->go->lastAttacker;
 		urgent = true; //attackers always urgent when called for help
 		return true;
 	}
@@ -82,4 +83,79 @@ bool GameObject::Handle(Message* message)
 	//note: pardon the inconsistency(when compared to SceneMovement's Handle)
 	//we do NOT want to create a new message on the heap PER object for performance reasons
 	return false;
+}
+
+void GameObject::HandleAction(std::string e)
+{
+	switch (type)
+	{
+	case GO_ATTACKER:
+		while (currMoves > 0 && atkTarget && atkTarget->active)
+		{
+			atkTarget->lastAttacker = this;
+			atkTarget->health -= 20;
+			currMoves--;
+		}
+		break;
+	case GO_RANGED:
+		if (e == "attack") {
+			while (currMoves > 0 && atkTarget && atkTarget->active)
+			{
+				atkTarget->lastAttacker = this;
+				atkTarget->health -= 10;
+				currMoves--;
+			}
+		}
+		break;
+	case GO_SUPPORT:
+		while (currMoves > 0) {
+			if (sm->GetCurrentState() == "Healing")
+				if (healTarget->health <= 100) {
+					healTarget->health += 5;
+				}
+				else { healTarget->health = 100; }
+			else if (sm->GetCurrentState() == "UrgentHealing")
+				if (healTarget->health <= 100) {
+					healTarget->health += 10;
+				}
+				else { healTarget->health = 100; }			
+			currMoves -= 1;
+		}
+	case GO_TANK:
+		if (sm->GetCurrentState() == "Suicide") {
+			for (GameObject* go : hits) {
+				go->lastAttacker = this;
+				go->health -= 12;
+				std::cout << "got hit" << std::endl;
+			}
+			hits.clear();
+			nearest = NULL;
+			active = false;
+			type = GameObject::GO_NONE;
+		}
+		else
+		{
+			if (atkTarget->type == GO_SPAWNER || atkTarget->type == GO_MAINBASE) {
+				while (currMoves > 0 && atkTarget && atkTarget->active)
+				{
+					for (GameObject* go : hits) {
+						go->lastAttacker = this;
+						go->health -= 10;
+						std::cout << "got hit" << std::endl;
+					}
+					currMoves--;
+				}
+				hits.clear();
+			}
+			else {
+				while (currMoves > 0 && atkTarget && atkTarget->active)
+				{
+					atkTarget->lastAttacker = this;
+					atkTarget->health -= 10;
+					currMoves--;
+				}
+			}
+		}
+		break;
+	}
 }

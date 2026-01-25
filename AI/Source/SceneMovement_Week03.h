@@ -121,6 +121,7 @@ protected:
 	int IsWithinBoundary(int x) const;
 	int Get1DIndex(int x, int y) const;
 	int HeuristicManhattan(const MazePt& a, const MazePt& b);
+	bool BFSMaterial(GameObject* go, Maze::TILE_CONTENT tile, MazePt& outMat);
 	bool AStar(GameObject* go, MazePt start, MazePt end);
 	// Add this method declaration to SceneTurn.h inside the SceneTurn class
 	int GetTileCost(Maze::TILE_CONTENT tile);

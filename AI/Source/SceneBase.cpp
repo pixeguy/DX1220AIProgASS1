@@ -337,6 +337,9 @@ void SceneBase::Init()
 
 		meshList[GEO_ORE] = MeshBuilder::GenerateQuad("Ore", Color(1, 1, 1));
 		meshList[GEO_ORE]->textureID = LoadTGA("Image//DiamondOre.tga");
+
+		meshList[GEO_LOG] = MeshBuilder::GenerateQuad("Log", Color(1, 1, 1));
+		meshList[GEO_LOG]->textureID = LoadTGA("Image//WoodenLog.tga");
 	}
 	meshList[GEO_TEXT]->material.kAmbient.Set(1, 0, 0);
 

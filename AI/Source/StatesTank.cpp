@@ -35,6 +35,7 @@ void StateTankHealthy::Update(double dt)
 
 	if(go->health <= 0)
 	{
+		if (go->atkTarget == NULL || !go->atkTarget->active) { go->sm->SetNextState("Death"); return; }
 		float random = Math::RandFloatMinMax(0.f, 1.f);
 		if( random < 0.5f )
 			go->sm->SetNextState("Death");
@@ -115,6 +116,7 @@ void StateTankSoloHealthy::Update(double dt)
 	else { go->actionSpeed = 0.1f; go->panicking = false; }
 	if (go->health <= 0)
 	{
+		if (go->atkTarget == NULL || !go->atkTarget->active) { go->sm->SetNextState("Death"); return; }
 		float random = Math::RandFloatMinMax(0.f, 1.f);
 		if( random < 0.5f )
 			go->sm->SetNextState("Death");
@@ -187,44 +189,46 @@ void StateTankSuicide::Enter()
 	go->target = go->pos;
 	go->nearest = NULL;
 	go->countDown = 2;
+	go->useMoves = 3;
+	go->atkRange = 0;
 	go->moving = true;
 }
 
 void StateTankSuicide::Update(double dt)
 {
-	go->moveLeft = go->moveRight = go->moveUp = go->moveDown = false;
-	if (go->nearest)
-	{
-		float diffX = go->nearest->pos.x - go->pos.x;
-		float diffY = go->nearest->pos.y - go->pos.y;
-		if (fabs(diffX) > fabs(diffY))
-		{
-			if (diffX > 0)
-				go->moveRight = true;
-			else
-				go->moveLeft = true;
-		}
-		else
-		{
-			if (diffY > 0)
-				go->moveUp = true;
-			else
-				go->moveDown = true;
-		}
-	}
+	//go->moveLeft = go->moveRight = go->moveUp = go->moveDown = false;
+	//if (go->nearest)
+	//{
+	//	float diffX = go->nearest->pos.x - go->pos.x;
+	//	float diffY = go->nearest->pos.y - go->pos.y;
+	//	if (fabs(diffX) > fabs(diffY))
+	//	{
+	//		if (diffX > 0)
+	//			go->moveRight = true;
+	//		else
+	//			go->moveLeft = true;
+	//	}
+	//	else
+	//	{
+	//		if (diffY > 0)
+	//			go->moveUp = true;
+	//		else
+	//			go->moveDown = true;
+	//	}
+	//}
 
-	if (go->countDown > 0)
-	{
-		go->countDown -= dt;
-	}
-	else {
-		go->moveSpeed = 0;
-		go->actionSpeed = 0.3;
-		go->target = go->pos;
-		go->nearest = NULL;
-		go->active = false;
-		go->type = GameObject::GO_NONE;
-	}
+	//if (go->countDown > 0)
+	//{
+	//	go->countDown -= dt;
+	//}
+	//else {
+	//	go->moveSpeed = 0;
+	//	go->actionSpeed = 0.3;
+	//	go->target = go->pos;
+	//	go->nearest = NULL;
+	//	go->active = false;
+	//	go->type = GameObject::GO_NONE;
+	//}
 }
 
 void StateTankSuicide::Exit()

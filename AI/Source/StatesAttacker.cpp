@@ -26,10 +26,10 @@ void StateAttackerHealthy::Update(double dt)
 {
 	if(go->health <= 70)
 	{
-		float random = Math::RandFloatMinMax(0.f, 1.f);
-		if( random < 0.5f )
-			go->sm->SetNextState("StayStrong");
-		else
+		//float random = Math::RandFloatMinMax(0.f, 1.f);
+		//if( random < 0.5f )
+		//	go->sm->SetNextState("StayStrong");
+		//else
 			go->sm->SetNextState("Flee");
 		return;
 	}

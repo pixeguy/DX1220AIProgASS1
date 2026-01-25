@@ -28,6 +28,9 @@ void Maze::Generate(unsigned key, unsigned size, MazePt start, float wallLoad)
 	float oreLoad = 0.025f;
 	oreLoad = Math::Clamp(oreLoad, 0.f, 0.5f);
 
+	float woodLoad = 0.025f;
+	woodLoad = Math::Clamp(woodLoad, 0.f, 0.5f);
+
 	unsigned total = size * size;
 	m_grid.resize(total);
 	std::fill(m_grid.begin(), m_grid.end(), TILE_EMPTY);
@@ -53,6 +56,17 @@ void Maze::Generate(unsigned key, unsigned size, MazePt start, float wallLoad)
 		if (m_grid[chosen] == TILE_EMPTY)
 		{
 			m_grid[chosen] = TILE_ORE;
+			++i;
+		}
+	}
+	for (int i = 0; i < (int)(total * woodLoad);)
+	{
+		unsigned chosen = rand() % total;
+		if (chosen == startId) continue;
+
+		if (m_grid[chosen] == TILE_EMPTY)
+		{
+			m_grid[chosen] = TILE_WOODENLOG;
 			++i;
 		}
 	}
@@ -182,6 +196,12 @@ Maze::TILE_CONTENT Maze::See(MazePt tile)
 
 bool Maze::IsPassable(Maze::TILE_CONTENT tile)
 {
-	if (tile == Maze::TILE_WALL || tile == Maze::TILE_ORE) return false;
+	if (tile == Maze::TILE_WALL || tile == Maze::TILE_ORE || tile == Maze::TILE_FOG || tile == Maze::TILE_WOODENLOG) return false;
+	return true;
+}
+
+bool Maze::NonMats(Maze::TILE_CONTENT tile)
+{
+	if (tile == Maze::TILE_WALL || tile == Maze::TILE_FOG) return false;
 	return true;
 }

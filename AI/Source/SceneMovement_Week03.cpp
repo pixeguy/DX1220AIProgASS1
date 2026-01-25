@@ -273,6 +273,8 @@ GameObject* SceneMovement_Week03::InitMainBase(GameObject::SIDE side, Vector3 po
 	mainBase->maxHealth = 900;
 	mainBase->health = 900;
 	mainBase->moving = false;
+	mainBase->viewRange = 0;
+	mainBase->atkRange = 0;
 	return mainBase;
 }
 
@@ -288,6 +290,8 @@ GameObject* SceneMovement_Week03::InitGoldenOrb(Vector3 pos)
 	mainBase->maxHealth = 500;
 	mainBase->health = 500;
 	mainBase->moving = false;
+	mainBase->viewRange = 0;
+	mainBase->atkRange = 0;
 	return mainBase;
 }
 
@@ -306,6 +310,8 @@ GameObject* SceneMovement_Week03::InitSpawner(GameObject::SIDE side, Vector3 pos
 	spawner->sm->SetNextState("Healthy");
 	spawner->woodenLogs = spawner->metalParts = 0;
 	spawner->moving = false;
+	spawner->viewRange = 0;
+	spawner->atkRange = 0;
 	m_spawners.push_back(spawner);
 	return spawner;
 }
@@ -324,6 +330,7 @@ GameObject* SceneMovement_Week03::InitMortarSpawner(GameObject::SIDE side, Vecto
 	spawner->sm->SetNextState("Healthy");
 	spawner->woodenLogs = spawner->metalParts = 0;
 	spawner->moving = false;
+	spawner->curr = MazePt(100, 100);
 	m_spawners.push_back(spawner);
 	return spawner;
 }
@@ -381,6 +388,7 @@ GameObject* SceneMovement_Week03::SpawnUnit(GameObject::SIDE side, Vector3 pos, 
 		unit->type = GameObject::GO_RANGED;
 		unit->viewRange = 4;
 		unit->atkRange = 3;
+		unit->useMoves = 2;
 	}
 	else if ((useRandom && random < AttackerRate + RangedRate + SupportRate && random > AttackerRate + RangedRate) || type == GameObject::GO_SUPPORT)
 	{
@@ -388,6 +396,7 @@ GameObject* SceneMovement_Week03::SpawnUnit(GameObject::SIDE side, Vector3 pos, 
 		unit->type = GameObject::GO_SUPPORT;
 		unit->viewRange = 3;
 		unit->atkRange = 2;
+		unit->useMoves = 2;
 	}
 	else if ((useRandom && random < 100 && random > AttackerRate + RangedRate + SupportRate) || type == GameObject::GO_MECHANIC)
 	{
@@ -434,6 +443,9 @@ GameObject* SceneMovement_Week03::SpawnMetalUnit(GameObject::SIDE side, Vector3 
 	{
 		unit = FetchGO(GameObject::GO_TANK);
 		unit->type = GameObject::GO_TANK;
+		unit->viewRange = 3;
+		unit->atkRange = 2;
+		unit->useMoves = 2;
 	}
 	else if ((useRandom && random < TankRate + MortarRate && random > TankRate) || type == GameObject::GO_MORTAR)
 	{
@@ -879,7 +891,7 @@ void SceneMovement_Week03::Update(double dt)
 			std::cout << static_cast<int>(posX / m_gridSize) << " , " << static_cast<int>(posY / m_gridSize) << std::endl;
 			for (GameObject* go : m_goList)
 				if (go->active && go->type == GameObject::GO_NPC)
-					PathFind(go, m_end, 1,0);
+					PathFind(go, m_end, go->currMoves,0);
 		}
 	}
 	else if (bLButtonState && !Application::IsMousePressed(0))
@@ -904,17 +916,24 @@ void SceneMovement_Week03::Update(double dt)
 		bSpaceState = true;
 		if (!gamePlaying) {
 			//Vector3 randomPos = RandomPointInRing(m_spawners[0]->pos, 3.75, 10);
-			GameObject* uni1 = SpawnUnit(GameObject::SIDE_BLUE, Vector3(0,0,0), GameObject::GO_ATTACKER);
-			uni1->curr.Set(15, 5);
+			GameObject* uni1 = SpawnMetalUnit(GameObject::SIDE_BLUE, Vector3(999,999,999), GameObject::GO_TANK);
+			uni1->curr.Set(15, 6);
 			RevealAround(uni1,uni1->viewRange);
 			uni1->stack.push_back(uni1->curr); //triggers dfs
-			b_visited[Get1DIndex(15, 5)] = true;
+			b_visited[Get1DIndex(15, 6)] = true;
+			ref = uni1;
+			//uni1 = SpawnMetalUnit(GameObject::SIDE_BLUE, Vector3(999, 999, 999), GameObject::GO_TANK);
+			//uni1->curr.Set(15, 5);
+			//RevealAround(uni1, uni1->viewRange);
+			//uni1->stack.push_back(uni1->curr); //triggers dfs
+			//b_visited[Get1DIndex(4, 5)] = true;
+			//ref = uni1;
 
-			uni1 = SpawnUnit(GameObject::SIDE_RED, Vector3(0, 0, 0), GameObject::GO_ATTACKER);
-			uni1->curr.Set(4, 5);
+			uni1 = SpawnUnit(GameObject::SIDE_BLUE, Vector3(999, 999, 999), GameObject::GO_MECHANIC);
+			uni1->curr.Set(15, 6);
 			RevealAround(uni1, uni1->viewRange);
 			uni1->stack.push_back(uni1->curr); //triggers dfs
-			b_visited[Get1DIndex(4, 5)] = true;
+			b_visited[Get1DIndex(15, 6)] = true;
 			//randomPos = RandomPointInRing(m_spawners[1]->pos, 3.75, 10);
 			//uni1 = SpawnUnit(GameObject::SIDE_BLUE, randomPos, GameObject::GO_MECHANIC);
 			//randomPos = RandomPointInRing(m_spawners[2]->pos, 3.75, 10);
@@ -934,6 +953,9 @@ void SceneMovement_Week03::Update(double dt)
 	{
 		bVState = true;
 
+		for (GameObject* go : m_goList)
+			if (go->active && go->type == GameObject::GO_TANK)
+				go->health -= 20;
 		//Vector3 randomPos = RandomPointInRing(m_spawners[2]->pos, 3.75, 10);
 		//SpawnGrid3x3(GameObject::SIDE_RED, randomPos, GameObject::GO_ATTACKER);
 
@@ -1038,482 +1060,484 @@ void SceneMovement_Week03::Update(double dt)
 		//std::cout << ref->nearest << std::endl;
 		
 
-	for (int i = 0; i < m_goList.size();i++) {
-		if (!m_goList[i]->active) continue;
-		if (m_goList[i]->type == GameObject::GO_ATTACKER)
-			std::cout << "1 " << m_goList[i]->health << std::endl;
-	}
+	//for (int i = 0; i < m_goList.size();i++) {
+	//	if (!m_goList[i]->active) continue;
+	//	if (m_goList[i]->type == GameObject::GO_ATTACKER)
+	//		std::cout << "1 " << m_goList[i]->health << std::endl;
+	//}
 
-	//External triggers
-	for (std::vector<GameObject*>::iterator it = m_goList.begin(); it != m_goList.end(); ++it)
 	{
-		GameObject* go = (GameObject*)*it;
-		if (!go->active)
-			continue;
- 		
-		if (go->type == GameObject::GO_SPAWNER)
-		{
-			for (std::vector<GameObject*>::iterator it2 = m_goList.begin(); it2 != m_goList.end(); ++it2)
-			{
-				GameObject* go2 = (GameObject*)*it2;
-				if (!go2->active)
-					continue;
-				if (go->sm->GetCurrentState() == "Death")
-				{
-					MessageWRU msgAreaDamage = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY_INAREA, 1.5f);
-					Handle(&msgAreaDamage);
-					for (auto& target : go->hits)
-					{
-						target->health -= 20;
-						target->lastAttacker = go;
-					}
-				}
-			}
-		}
-		else if (go->type == GameObject::GO_MECHANIC)
-		{
-			//std::cout << "MECHANIC STATE: " << go->sm->GetCurrentState() << std::endl;
-			if (go->sm->GetCurrentState() == "Healthy")
-			{
-				MessageWRU msgCheckSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200.0f);
-				Handle(&msgCheckSpawner);
-				if (go->nearest != nullptr) {
-					if (go->nearest->active)
-					{
-						if (go->nearest->type == GameObject::GO_SPAWNER) {
-							go->choice = MechanicNeedGet(go->nearest);
-						}
-						else { go->choice = 0; }
-					}
-				}
-			}
+		//External triggers
+		//for (std::vector<GameObject*>::iterator it = m_goList.begin(); it != m_goList.end(); ++it)
+		//{
+		//	GameObject* go = (GameObject*)*it;
+		//	if (!go->active)
+		//		continue;
+	 //		
+		//	if (go->type == GameObject::GO_SPAWNER)
+		//	{
+		//		for (std::vector<GameObject*>::iterator it2 = m_goList.begin(); it2 != m_goList.end(); ++it2)
+		//		{
+		//			GameObject* go2 = (GameObject*)*it2;
+		//			if (!go2->active)
+		//				continue;
+		//			if (go->sm->GetCurrentState() == "Death")
+		//			{
+		//				MessageWRU msgAreaDamage = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY_INAREA, 1.5f);
+		//				Handle(&msgAreaDamage);
+		//				for (auto& target : go->hits)
+		//				{
+		//					target->health -= 20;
+		//					target->lastAttacker = go;
+		//				}
+		//			}
+		//		}
+		//	}
+		//	else if (go->type == GameObject::GO_MECHANIC)
+		//	{
+		//		//std::cout << "MECHANIC STATE: " << go->sm->GetCurrentState() << std::endl;
+		//		if (go->sm->GetCurrentState() == "Healthy")
+		//		{
+		//			MessageWRU msgCheckSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200.0f);
+		//			Handle(&msgCheckSpawner);
+		//			if (go->nearest != nullptr) {
+		//				if (go->nearest->active)
+		//				{
+		//					if (go->nearest->type == GameObject::GO_SPAWNER) {
+		//						go->choice = MechanicNeedGet(go->nearest);
+		//					}
+		//					else { go->choice = 0; }
+		//				}
+		//			}
+		//		}
 
-			if(go->sm->GetCurrentState() == "Hurt")
-			{
-				MessageWRU nearestSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200);
-				Handle(&nearestSpawner);
-				MessageWRU msgNeedSup = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_FREE_SUP, 200.0f);
-				Handle(&msgNeedSup);
-				if (go->external != NULL) {
-					if (go->external->active) {
-						MessageAskHelp msgAskHelp = MessageAskHelp(go);
-						go->external->Handle(&msgAskHelp);
-					}
-				}
-			}
-			go->steps = 0;
-			GameObject* temp = go->nearest;
-			MessageWRU nearestSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200);
-			Handle(&nearestSpawner);
-			MessageWRU amtOfAtk = MessageWRU(go, MessageWRU::SEARCH_TYPE::ATTACKERCOUNT, 200);
-			Handle(&amtOfAtk);
-			go->nearest = temp;
-			if (go->sm->GetCurrentState() == "Hiding")
-			{
-				MessageWRU nearestSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200);
-				Handle(&nearestSpawner);
-			}
+		//		if(go->sm->GetCurrentState() == "Hurt")
+		//		{
+		//			MessageWRU nearestSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200);
+		//			Handle(&nearestSpawner);
+		//			MessageWRU msgNeedSup = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_FREE_SUP, 200.0f);
+		//			Handle(&msgNeedSup);
+		//			if (go->external != NULL) {
+		//				if (go->external->active) {
+		//					MessageAskHelp msgAskHelp = MessageAskHelp(go);
+		//					go->external->Handle(&msgAskHelp);
+		//				}
+		//			}
+		//		}
+		//		go->steps = 0;
+		//		GameObject* temp = go->nearest;
+		//		MessageWRU nearestSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200);
+		//		Handle(&nearestSpawner);
+		//		MessageWRU amtOfAtk = MessageWRU(go, MessageWRU::SEARCH_TYPE::ATTACKERCOUNT, 200);
+		//		Handle(&amtOfAtk);
+		//		go->nearest = temp;
+		//		if (go->sm->GetCurrentState() == "Hiding")
+		//		{
+		//			MessageWRU nearestSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200);
+		//			Handle(&nearestSpawner);
+		//		}
 
-			if (go->sm->GetCurrentState() == "Building")
-			{
-				if (go->normalTarget == Vector3(0, 0, 0))
-					go->normalTarget = SpawnMortarArea(go->side);
-			}
+		//		if (go->sm->GetCurrentState() == "Building")
+		//		{
+		//			if (go->normalTarget == Vector3(0, 0, 0))
+		//				go->normalTarget = SpawnMortarArea(go->side);
+		//		}
 
-			MessageWRU goldenOrb = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_GOLDENORB, 500.0f);
-			Handle(&goldenOrb);
-			if (go->sm->GetCurrentState() == "GoldenChase")
-			{
-				GameObject* temp = go->nearest;
-				MessageWRU msgCheckSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 50.0f);
-				Handle(&msgCheckSpawner);
+		//		MessageWRU goldenOrb = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_GOLDENORB, 500.0f);
+		//		Handle(&goldenOrb);
+		//		if (go->sm->GetCurrentState() == "GoldenChase")
+		//		{
+		//			GameObject* temp = go->nearest;
+		//			MessageWRU msgCheckSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 50.0f);
+		//			Handle(&msgCheckSpawner);
 
-				if (go->nearest != nullptr) {
-					if (go->nearest->active) {
-						if (go->nearest->type == GameObject::GO_SPAWNER) {
-							go->choice = MechanicNeedGet(go->nearest);
-						}
-						else { go->choice = 0; }
-					}
-				}
-				else { go->choice = 0; }
-				go->external2 = go->nearest;
-				go->nearest = temp;
-			}
-		}
-		else if (go->type == GameObject::GO_RANGED)
-		{
-			//std::cout << "RANGED STATE: " << go->sm->GetCurrentState() << std::endl;
-			if (go->sm->GetCurrentState() == "Healthy")
-			{
-				//if no target, or if current target died
-				if (go->nearest == NULL || go->nearest->active == false || go->nearest->hiding) {
-					MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 500.0f);
-					Handle(&msgCheckEnemy);
-				}
-				else //use for radius to check whether enemy is too close
-				{
-					GameObject* temp = go->nearest;
-					MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
-					Handle(&msgCheckEnemy);
-					go->countDown = (go->nearest->pos - go->pos).Length();
-					go->nearest = temp;
-					if (go->countDown < m_gridSize * 2) //if target too close
-					{
-						continue;
-					}
-					else if ((go->nearest->pos - go->pos).Length() < m_gridSize * 5)
-					{
-						continue;
-					}
-					else
-					{
-						go->moving = true;
-						MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
-						Handle(&msgCheckEnemy);
-						go->normalTarget = go->nearest->pos;
-					}
-				}
-			}
-			else if (go->sm->GetCurrentState() == "Hurt" || go->sm->GetCurrentState() == "Panic" || go->sm->GetCurrentState() == "NearDeath") {
-				if(go->sm->GetCurrentState() != "NearDeath")
-				{
-					MessageWRU msgNeedSup = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_FREE_SUP, 200.0f);
-					Handle(&msgNeedSup);
-					if (go->external != NULL) {
-						if (go->external->active) {
-							MessageAskHelp msgAskHelp = MessageAskHelp(go);
-							go->external->Handle(&msgAskHelp);
-						}
-					}
-				}
-				else
-				{
-					//find nearest free support
-					MessageWRU msgNeedSup = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_URG_SUP, 200.0f);
-					Handle(&msgNeedSup);
-					if (go->external != NULL) {
-						if (go->external->active) {
-							MessageAskHelp msgAskHelp = MessageAskHelp(go);
-							go->external->Handle(&msgAskHelp);
-						}
-					}
-				}
-				if(go->sm->GetCurrentState() != "Hurt")//give ranged a last attacker for testing
-				{
-					//go->lastAttacker = ref;
-					//find nearest spawner
-					MessageWRU msgNeedAtk = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ALLY_ATTACKER, 200.0f);
-					Handle(&msgNeedAtk);
-					if (go->external2 != NULL) {
-						if (go->external2->active) {
-							MessageAskForAtk msgAskHelp = MessageAskForAtk(go);
-							go->external2->Handle(&msgAskHelp);
-						}
-					}
-				}
+		//			if (go->nearest != nullptr) {
+		//				if (go->nearest->active) {
+		//					if (go->nearest->type == GameObject::GO_SPAWNER) {
+		//						go->choice = MechanicNeedGet(go->nearest);
+		//					}
+		//					else { go->choice = 0; }
+		//				}
+		//			}
+		//			else { go->choice = 0; }
+		//			go->external2 = go->nearest;
+		//			go->nearest = temp;
+		//		}
+		//	}
+		//	else if (go->type == GameObject::GO_RANGED)
+		//	{
+		//		//std::cout << "RANGED STATE: " << go->sm->GetCurrentState() << std::endl;
+		//		if (go->sm->GetCurrentState() == "Healthy")
+		//		{
+		//			//if no target, or if current target died
+		//			if (go->nearest == NULL || go->nearest->active == false || go->nearest->hiding) {
+		//				MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 500.0f);
+		//				Handle(&msgCheckEnemy);
+		//			}
+		//			else //use for radius to check whether enemy is too close
+		//			{
+		//				GameObject* temp = go->nearest;
+		//				MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
+		//				Handle(&msgCheckEnemy);
+		//				go->countDown = (go->nearest->pos - go->pos).Length();
+		//				go->nearest = temp;
+		//				if (go->countDown < m_gridSize * 2) //if target too close
+		//				{
+		//					continue;
+		//				}
+		//				else if ((go->nearest->pos - go->pos).Length() < m_gridSize * 5)
+		//				{
+		//					continue;
+		//				}
+		//				else
+		//				{
+		//					go->moving = true;
+		//					MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
+		//					Handle(&msgCheckEnemy);
+		//					go->normalTarget = go->nearest->pos;
+		//				}
+		//			}
+		//		}
+		//		else if (go->sm->GetCurrentState() == "Hurt" || go->sm->GetCurrentState() == "Panic" || go->sm->GetCurrentState() == "NearDeath") {
+		//			if(go->sm->GetCurrentState() != "NearDeath")
+		//			{
+		//				MessageWRU msgNeedSup = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_FREE_SUP, 200.0f);
+		//				Handle(&msgNeedSup);
+		//				if (go->external != NULL) {
+		//					if (go->external->active) {
+		//						MessageAskHelp msgAskHelp = MessageAskHelp(go);
+		//						go->external->Handle(&msgAskHelp);
+		//					}
+		//				}
+		//			}
+		//			else
+		//			{
+		//				//find nearest free support
+		//				MessageWRU msgNeedSup = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_URG_SUP, 200.0f);
+		//				Handle(&msgNeedSup);
+		//				if (go->external != NULL) {
+		//					if (go->external->active) {
+		//						MessageAskHelp msgAskHelp = MessageAskHelp(go);
+		//						go->external->Handle(&msgAskHelp);
+		//					}
+		//				}
+		//			}
+		//			if(go->sm->GetCurrentState() != "Hurt")//give ranged a last attacker for testing
+		//			{
+		//				//go->lastAttacker = ref;
+		//				//find nearest spawner
+		//				MessageWRU msgNeedAtk = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ALLY_ATTACKER, 200.0f);
+		//				Handle(&msgNeedAtk);
+		//				if (go->external2 != NULL) {
+		//					if (go->external2->active) {
+		//						MessageAskForAtk msgAskHelp = MessageAskForAtk(go);
+		//						go->external2->Handle(&msgAskHelp);
+		//					}
+		//				}
+		//			}
 
-				//if no target, or if current target died
-				if (go->nearest == NULL || go->nearest->active == false || go->nearest->hiding) {
-					MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
-					Handle(&msgCheckEnemy);
-				}
-				else //use for radius to check whether enemy is too close
-				{
-					GameObject* temp = go->nearest;
-					MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
-					Handle(&msgCheckEnemy);
-					go->countDown = (go->nearest->pos - go->pos).Length();
-					go->nearest = temp;
+		//			//if no target, or if current target died
+		//			if (go->nearest == NULL || go->nearest->active == false || go->nearest->hiding) {
+		//				MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
+		//				Handle(&msgCheckEnemy);
+		//			}
+		//			else //use for radius to check whether enemy is too close
+		//			{
+		//				GameObject* temp = go->nearest;
+		//				MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
+		//				Handle(&msgCheckEnemy);
+		//				go->countDown = (go->nearest->pos - go->pos).Length();
+		//				go->nearest = temp;
 
-					int distanceaway;
-					if (go->sm->GetCurrentState() == "Panic") { distanceaway = 4; }
-					else if (go->sm->GetCurrentState() == "Hurt") { distanceaway = 3; }	
-					else { distanceaway = 4; }
-					if (go->countDown < m_gridSize * distanceaway) //if target too close
-					{
-						continue;
-					}
-					else if ((go->nearest->pos - go->pos).Length() < m_gridSize * 6)
-					{
-						continue;
-					}
-					else
-					{
-						//std::cout << "moving closer!" << std::endl;
-						go->moving = true;
-						MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
-						Handle(&msgCheckEnemy);
-						go->normalTarget = go->nearest->pos;
-					}
-				}
-			}
-		}
-		else if (go->type == GameObject::GO_ATTACKER) //REMEMBERRRRRRRR TELL SUPPORTER TO GO AWAY ONCE HEALED //also a chance, unit back off to spawner but still getting hit
-		{
-			if (go->side == GameObject::SIDE_RED) {
-				//std::cout << "Attacker State: " << go->sm->GetCurrentState() << std::endl;
-			}
-			if (go->sm->GetCurrentState() == "Healthy") {
-				//if no target, or if current target died
-				if (go->nearest == NULL || go->nearest->active == false || go->nearest->hiding) {
-					MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
-					Handle(&msgCheckEnemy);
-				}
-				else
-				{
-					if ((go->nearest->pos - go->pos).Length() < m_gridSize)
-					{
-						continue;
-					}
-					else if (go->urgent) { //if im not close enough, continue checking
-						continue;
-					}
-					else {
-						go->moving = true;
-						MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
-						Handle(&msgCheckEnemy);
-					}
-				}
-			}
-			else if (go->sm->GetCurrentState() == "Flee") {
+		//				int distanceaway;
+		//				if (go->sm->GetCurrentState() == "Panic") { distanceaway = 4; }
+		//				else if (go->sm->GetCurrentState() == "Hurt") { distanceaway = 3; }	
+		//				else { distanceaway = 4; }
+		//				if (go->countDown < m_gridSize * distanceaway) //if target too close
+		//				{
+		//					continue;
+		//				}
+		//				else if ((go->nearest->pos - go->pos).Length() < m_gridSize * 6)
+		//				{
+		//					continue;
+		//				}
+		//				else
+		//				{
+		//					//std::cout << "moving closer!" << std::endl;
+		//					go->moving = true;
+		//					MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
+		//					Handle(&msgCheckEnemy);
+		//					go->normalTarget = go->nearest->pos;
+		//				}
+		//			}
+		//		}
+		//	}
+		//	else if (go->type == GameObject::GO_ATTACKER) //REMEMBERRRRRRRR TELL SUPPORTER TO GO AWAY ONCE HEALED //also a chance, unit back off to spawner but still getting hit
+		//	{
+		//		if (go->side == GameObject::SIDE_RED) {
+		//			//std::cout << "Attacker State: " << go->sm->GetCurrentState() << std::endl;
+		//		}
+		//		if (go->sm->GetCurrentState() == "Healthy") {
+		//			//if no target, or if current target died
+		//			if (go->nearest == NULL || go->nearest->active == false || go->nearest->hiding) {
+		//				MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
+		//				Handle(&msgCheckEnemy);
+		//			}
+		//			else
+		//			{
+		//				if ((go->nearest->pos - go->pos).Length() < m_gridSize)
+		//				{
+		//					continue;
+		//				}
+		//				else if (go->urgent) { //if im not close enough, continue checking
+		//					continue;
+		//				}
+		//				else {
+		//					go->moving = true;
+		//					MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
+		//					Handle(&msgCheckEnemy);
+		//				}
+		//			}
+		//		}
+		//		else if (go->sm->GetCurrentState() == "Flee") {
 
-				int step = go->steps;
-				go->steps = 0;
-				GameObject* temp = go->nearest;
-				MessageWRU nearestSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200);
-				Handle(&nearestSpawner);
-				MessageWRU amtOfAtk = MessageWRU(go, MessageWRU::SEARCH_TYPE::ATTACKERCOUNT, 200);
-				Handle(&amtOfAtk);
-				if (go->steps > 1) //if atleast 2 attacking my base while im behind
-				{
-					go->sm->SetNextState("StayStrong");
-				}
-				go->steps = step;
-				go->nearest = temp;
+		//			int step = go->steps;
+		//			go->steps = 0;
+		//			GameObject* temp = go->nearest;
+		//			MessageWRU nearestSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200);
+		//			Handle(&nearestSpawner);
+		//			MessageWRU amtOfAtk = MessageWRU(go, MessageWRU::SEARCH_TYPE::ATTACKERCOUNT, 200);
+		//			Handle(&amtOfAtk);
+		//			if (go->steps > 1) //if atleast 2 attacking my base while im behind
+		//			{
+		//				go->sm->SetNextState("StayStrong");
+		//			}
+		//			go->steps = step;
+		//			go->nearest = temp;
 
-				//find nearest free support
-				MessageWRU msgNeedSup = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_FREE_SUP, 200.0f);
-				Handle(&msgNeedSup);
-				if (go->external != NULL ) {
-					if (go->external->active) {
-						MessageAskHelp msgAskHelp = MessageAskHelp(go);
-						go->external->Handle(&msgAskHelp);
-					}
-				}
+		//			//find nearest free support
+		//			MessageWRU msgNeedSup = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_FREE_SUP, 200.0f);
+		//			Handle(&msgNeedSup);
+		//			if (go->external != NULL ) {
+		//				if (go->external->active) {
+		//					MessageAskHelp msgAskHelp = MessageAskHelp(go);
+		//					go->external->Handle(&msgAskHelp);
+		//				}
+		//			}
 
-				if (go->nearest == NULL || go->nearest->active == false) { //find nearest spawner
-					MessageWRU msgCheckSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200.0f);
-					Handle(&msgCheckSpawner);
-					go->steps = Math::RandIntMinMax(-1,1);
-					if (go->steps == 0) { go->steps = 1; } go->steps = 1;
-				}
-			}
-			else if (go->sm->GetCurrentState() == "StayStrong") {
+		//			if (go->nearest == NULL || go->nearest->active == false) { //find nearest spawner
+		//				MessageWRU msgCheckSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200.0f);
+		//				Handle(&msgCheckSpawner);
+		//				go->steps = Math::RandIntMinMax(-1,1);
+		//				if (go->steps == 0) { go->steps = 1; } go->steps = 1;
+		//			}
+		//		}
+		//		else if (go->sm->GetCurrentState() == "StayStrong") {
 
-				//find nearest free support
-				MessageWRU msgNeedSup = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_FREE_SUP, 200.0f);
-				Handle(&msgNeedSup);
-				if (go->external != NULL) {
-					if (go->external->active) {
-						MessageAskHelp msgAskHelp = MessageAskHelp(go);
-						go->external->Handle(&msgAskHelp);
-					}
-				}
+		//			//find nearest free support
+		//			MessageWRU msgNeedSup = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_FREE_SUP, 200.0f);
+		//			Handle(&msgNeedSup);
+		//			if (go->external != NULL) {
+		//				if (go->external->active) {
+		//					MessageAskHelp msgAskHelp = MessageAskHelp(go);
+		//					go->external->Handle(&msgAskHelp);
+		//				}
+		//			}
 
-				//NORMAL ATTACKING BEHAVIOUR
-				//if no target, or if current target died
-				if (go->nearest == NULL || go->nearest->active == false || go->nearest->hiding) {
-					MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
-					Handle(&msgCheckEnemy);
-				}
-				else
-				{
-					if ((go->nearest->pos - go->pos).Length() < m_gridSize)
-					{
-						continue;
-					}
-					else { //if im not close enough, continue checking
-						go->moving = true;
-						MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
-						Handle(&msgCheckEnemy);
-					}
-				}
-			}
-			else if (go->sm->GetCurrentState() == "NearDeath") {
+		//			//NORMAL ATTACKING BEHAVIOUR
+		//			//if no target, or if current target died
+		//			if (go->nearest == NULL || go->nearest->active == false || go->nearest->hiding) {
+		//				MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
+		//				Handle(&msgCheckEnemy);
+		//			}
+		//			else
+		//			{
+		//				if ((go->nearest->pos - go->pos).Length() < m_gridSize)
+		//				{
+		//					continue;
+		//				}
+		//				else { //if im not close enough, continue checking
+		//					go->moving = true;
+		//					MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
+		//					Handle(&msgCheckEnemy);
+		//				}
+		//			}
+		//		}
+		//		else if (go->sm->GetCurrentState() == "NearDeath") {
 
-				int step = go->steps;
-				go->steps = 0;
-				GameObject* temp = go->nearest;
-				MessageWRU nearestSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200);
-				Handle(&nearestSpawner);
-				MessageWRU amtOfAtk = MessageWRU(go, MessageWRU::SEARCH_TYPE::ATTACKERCOUNT, 200);
-				Handle(&amtOfAtk);
-				if (go->steps > 1) //if atleast 2 attacking my base while im behind
-				{
-					go->sm->SetNextState("StayStrong");
-				}
-				go->steps = step;
-				go->nearest = temp;
+		//			int step = go->steps;
+		//			go->steps = 0;
+		//			GameObject* temp = go->nearest;
+		//			MessageWRU nearestSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200);
+		//			Handle(&nearestSpawner);
+		//			MessageWRU amtOfAtk = MessageWRU(go, MessageWRU::SEARCH_TYPE::ATTACKERCOUNT, 200);
+		//			Handle(&amtOfAtk);
+		//			if (go->steps > 1) //if atleast 2 attacking my base while im behind
+		//			{
+		//				go->sm->SetNextState("StayStrong");
+		//			}
+		//			go->steps = step;
+		//			go->nearest = temp;
 
-				//find nearest free support
-				MessageWRU msgNeedSup = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_URG_SUP, 200.0f);
-				Handle(&msgNeedSup);
-				if (go->external != NULL) {
-					if (go->external->active) {
-						MessageAskHelp msgAskHelp = MessageAskHelp(go);
-						go->external->Handle(&msgAskHelp);
-					}
-				}
+		//			//find nearest free support
+		//			MessageWRU msgNeedSup = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_URG_SUP, 200.0f);
+		//			Handle(&msgNeedSup);
+		//			if (go->external != NULL) {
+		//				if (go->external->active) {
+		//					MessageAskHelp msgAskHelp = MessageAskHelp(go);
+		//					go->external->Handle(&msgAskHelp);
+		//				}
+		//			}
 
-				if (go->nearest == NULL || go->nearest->active == false) { //find nearest spawner
-					MessageWRU msgCheckSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200.0f);
-					Handle(&msgCheckSpawner);
-					go->steps = Math::RandIntMinMax(-1, 1);
-					if (go->steps == 0) { go->steps = 1; } go->steps = 1;
-				}
-			}
-		}
-		else if (go->type == GameObject::GO_SUPPORT) 
-		{
-			//std::cout << "Supporter State: " << go->sm->GetCurrentState() << std::endl;
+		//			if (go->nearest == NULL || go->nearest->active == false) { //find nearest spawner
+		//				MessageWRU msgCheckSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200.0f);
+		//				Handle(&msgCheckSpawner);
+		//				go->steps = Math::RandIntMinMax(-1, 1);
+		//				if (go->steps == 0) { go->steps = 1; } go->steps = 1;
+		//			}
+		//		}
+		//	}
+		//	else if (go->type == GameObject::GO_SUPPORT) 
+		//	{
+		//		//std::cout << "Supporter State: " << go->sm->GetCurrentState() << std::endl;
 
-			go->alliesActiveCount = 0;
-			MessageWRU allyCount = MessageWRU(go, MessageWRU::SEARCH_TYPE::ALLYACTIVECOUNT, 500);
-			Handle(&allyCount);
+		//		go->alliesActiveCount = 0;
+		//		MessageWRU allyCount = MessageWRU(go, MessageWRU::SEARCH_TYPE::ALLYACTIVECOUNT, 500);
+		//		Handle(&allyCount);
 
-			go->external = go->nearest; // external is to store my past frame target for support
-			if (go->sm->GetCurrentState() == "Healthy") {
-				if (go->nearest == NULL || go->nearest->active == false) {
-					MessageWRU nearestAllyNoSup = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ALLY_NOSUP, 200);
-					Handle(&nearestAllyNoSup);
-				}
-			}
-			if (go->external != NULL) {
-				if (go->external != go->nearest)
-				{
-					go->external->supportActionSpeed = 0;
-					go->external->supportSpeed = 0;
-				}
-			}
-			if (go->sm->GetCurrentState() == "Hurt" || go->sm->GetCurrentState() == "Hiding") {
-				MessageWRU nearestSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200);
-				Handle(&nearestSpawner);
-			}
-		}
-		else if (go->type == GameObject::GO_TANK)
-		{
-			//std::cout << "TANK STATE: " << go->nearest << std::endl;
-			if (go->sm->GetCurrentState() == "Healthy") {
-				if (go->external2 == NULL || go->external2->active == false) {
-					GameObject* temp = go->nearest;
-					MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
-					Handle(&msgCheckEnemy);
-					go->external2 = go->nearest;
-					go->nearest = temp;
-				}
-				//tank uses target more instead of nearest. because to prevent tanks stacking on top of each other at the front
-				if (go->nearest == NULL || go->nearest->active == false) {
-					MessageWRU msgCheckFrontline = MessageWRU(go, MessageWRU::SEARCH_TYPE::FURTHEST_FRONTLINE, 200);
-					Handle(&msgCheckFrontline);
-					go->steps = Math::RandIntMinMax(-2, 2);
-					if(go->nearest == NULL)
-					{
-						go->sm->SetNextState("SoloHealthy");
-						return; // or handle “no frontline found” however you want
-					}
-				}
-				else
-				{
-					MessageWRU msgCheckFrontline = MessageWRU(go, MessageWRU::SEARCH_TYPE::FURTHEST_FRONTLINE, 200);
-					Handle(&msgCheckFrontline);
-					int redOrBlue = (go->side == GameObject::SIDE_BLUE) ? -1 : 1;
-					go->normalTarget = go->nearest->pos + Vector3(redOrBlue * m_gridSize * 1.85f, (float)go->steps * m_gridSize, 0);
-					if ((go->normalTarget - go->pos).Length() < m_gridSize)
-					{
-						go->moving = false;
-					}
-					else { //if im not there yet, continue checking
-						go->moving = true;
-					}
-				}
-			}
-			else if (go->sm->GetCurrentState() == "SoloHealthy") {
-				if (go->nearest == NULL || go->nearest->active == false) {
-					MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
-					Handle(&msgCheckEnemy);
-				}
-				GameObject* temp = go->nearest;
-				go->nearest = NULL;
-				MessageWRU msgCheckFrontline = MessageWRU(go, MessageWRU::SEARCH_TYPE::FURTHEST_FRONTLINE, 200);
-				Handle(&msgCheckFrontline);
-				if (go->nearest != NULL)
-				{
-					go->sm->SetNextState("Healthy");
-					return;
-				}
-				go->nearest = temp;
-				if ((go->nearest->pos - go->pos).Length() < m_gridSize * 5)
-				{
-					continue;
-				}
-				else {
-					MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
-					Handle(&msgCheckEnemy);
-				}
-			}
-			else if (go->sm->GetCurrentState() == "Suicide")
-			{
-				MessageWRU msgCheckObj = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_OBJ, 200.0f);
-				Handle(&msgCheckObj);
-				if (go->countDown <= 0)
-				{
-					MessageWRU msgAreaDamage = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY_INAREA, 1.5f);
-					Handle(&msgAreaDamage);
-					for (auto& target : go->hits)
-					{
-						target->health -= 20;
-						target->lastAttacker = go;
-					}
-				}
-			}
+		//		go->external = go->nearest; // external is to store my past frame target for support
+		//		if (go->sm->GetCurrentState() == "Healthy") {
+		//			if (go->nearest == NULL || go->nearest->active == false) {
+		//				MessageWRU nearestAllyNoSup = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ALLY_NOSUP, 200);
+		//				Handle(&nearestAllyNoSup);
+		//			}
+		//		}
+		//		if (go->external != NULL) {
+		//			if (go->external != go->nearest)
+		//			{
+		//				go->external->supportActionSpeed = 0;
+		//				go->external->supportSpeed = 0;
+		//			}
+		//		}
+		//		if (go->sm->GetCurrentState() == "Hurt" || go->sm->GetCurrentState() == "Hiding") {
+		//			MessageWRU nearestSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200);
+		//			Handle(&nearestSpawner);
+		//		}
+		//	}
+		//	else if (go->type == GameObject::GO_TANK)
+		//	{
+		//		//std::cout << "TANK STATE: " << go->nearest << std::endl;
+		//		if (go->sm->GetCurrentState() == "Healthy") {
+		//			if (go->external2 == NULL || go->external2->active == false) {
+		//				GameObject* temp = go->nearest;
+		//				MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
+		//				Handle(&msgCheckEnemy);
+		//				go->external2 = go->nearest;
+		//				go->nearest = temp;
+		//			}
+		//			//tank uses target more instead of nearest. because to prevent tanks stacking on top of each other at the front
+		//			if (go->nearest == NULL || go->nearest->active == false) {
+		//				MessageWRU msgCheckFrontline = MessageWRU(go, MessageWRU::SEARCH_TYPE::FURTHEST_FRONTLINE, 200);
+		//				Handle(&msgCheckFrontline);
+		//				go->steps = Math::RandIntMinMax(-2, 2);
+		//				if(go->nearest == NULL)
+		//				{
+		//					go->sm->SetNextState("SoloHealthy");
+		//					return; // or handle “no frontline found” however you want
+		//				}
+		//			}
+		//			else
+		//			{
+		//				MessageWRU msgCheckFrontline = MessageWRU(go, MessageWRU::SEARCH_TYPE::FURTHEST_FRONTLINE, 200);
+		//				Handle(&msgCheckFrontline);
+		//				int redOrBlue = (go->side == GameObject::SIDE_BLUE) ? -1 : 1;
+		//				go->normalTarget = go->nearest->pos + Vector3(redOrBlue * m_gridSize * 1.85f, (float)go->steps * m_gridSize, 0);
+		//				if ((go->normalTarget - go->pos).Length() < m_gridSize)
+		//				{
+		//					go->moving = false;
+		//				}
+		//				else { //if im not there yet, continue checking
+		//					go->moving = true;
+		//				}
+		//			}
+		//		}
+		//		else if (go->sm->GetCurrentState() == "SoloHealthy") {
+		//			if (go->nearest == NULL || go->nearest->active == false) {
+		//				MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
+		//				Handle(&msgCheckEnemy);
+		//			}
+		//			GameObject* temp = go->nearest;
+		//			go->nearest = NULL;
+		//			MessageWRU msgCheckFrontline = MessageWRU(go, MessageWRU::SEARCH_TYPE::FURTHEST_FRONTLINE, 200);
+		//			Handle(&msgCheckFrontline);
+		//			if (go->nearest != NULL)
+		//			{
+		//				go->sm->SetNextState("Healthy");
+		//				return;
+		//			}
+		//			go->nearest = temp;
+		//			if ((go->nearest->pos - go->pos).Length() < m_gridSize * 5)
+		//			{
+		//				continue;
+		//			}
+		//			else {
+		//				MessageWRU msgCheckEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY, 200.0f);
+		//				Handle(&msgCheckEnemy);
+		//			}
+		//		}
+		//		else if (go->sm->GetCurrentState() == "Suicide")
+		//		{
+		//			MessageWRU msgCheckObj = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_OBJ, 200.0f);
+		//			Handle(&msgCheckObj);
+		//			if (go->countDown <= 0)
+		//			{
+		//				MessageWRU msgAreaDamage = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY_INAREA, 1.5f);
+		//				Handle(&msgAreaDamage);
+		//				for (auto& target : go->hits)
+		//				{
+		//					target->health -= 20;
+		//					target->lastAttacker = go;
+		//				}
+		//			}
+		//		}
 
-			if (go->panicking)
-			{
-				MessageWRU msgCheckMech = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_MECHANIC_HEAL, 200.0f);
-				Handle(&msgCheckMech);
-				if (go->external != NULL) {
-					if (go->external->active) {
-						MessageAskHelp msgAskHelp = MessageAskHelp(go);
-						go->external->Handle(&msgAskHelp);
-					}
-				}
-			}
-		}
-		else if (go->type == GameObject::GO_MORTAR)
-		{
-			MessageWRU nearestMortarEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_MORTAR_ENEMY, 35,10);
-			Handle(&nearestMortarEnemy);
-			if(go->nearest != NULL)
-			{
-				float finalActionSpeed = (go->actionSpeed * 1) + go->supportActionSpeed;
-				if (go->EnergyReduce(finalActionSpeed))
-				{
-					PostOffice::GetInstance()->Send("Scene", new MessageSpawnMorBomb(go));
-				}
-			}
-			if (go->sm->GetCurrentState() == "Panic")
-			{
-				MessageWRU msgCheckMech = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_MECHANIC_HEAL, 200.0f);
-				Handle(&msgCheckMech);
-				if (go->external != NULL) {
-					if (go->external->active) {
-						MessageAskHelp msgAskHelp = MessageAskHelp(go);
-						go->external->Handle(&msgAskHelp);
-					}
-				}
-			}
-		}
+		//		if (go->panicking)
+		//		{
+		//			MessageWRU msgCheckMech = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_MECHANIC_HEAL, 200.0f);
+		//			Handle(&msgCheckMech);
+		//			if (go->external != NULL) {
+		//				if (go->external->active) {
+		//					MessageAskHelp msgAskHelp = MessageAskHelp(go);
+		//					go->external->Handle(&msgAskHelp);
+		//				}
+		//			}
+		//		}
+		//	}
+		//	else if (go->type == GameObject::GO_MORTAR)
+		//	{
+		//		MessageWRU nearestMortarEnemy = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_MORTAR_ENEMY, 35,10);
+		//		Handle(&nearestMortarEnemy);
+		//		if(go->nearest != NULL)
+		//		{
+		//			float finalActionSpeed = (go->actionSpeed * 1) + go->supportActionSpeed;
+		//			if (go->EnergyReduce(finalActionSpeed))
+		//			{
+		//				PostOffice::GetInstance()->Send("Scene", new MessageSpawnMorBomb(go));
+		//			}
+		//		}
+		//		if (go->sm->GetCurrentState() == "Panic")
+		//		{
+		//			MessageWRU msgCheckMech = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_MECHANIC_HEAL, 200.0f);
+		//			Handle(&msgCheckMech);
+		//			if (go->external != NULL) {
+		//				if (go->external->active) {
+		//					MessageAskHelp msgAskHelp = MessageAskHelp(go);
+		//					go->external->Handle(&msgAskHelp);
+		//				}
+		//			}
+		//		}
+		//	}
+		//}
 	}
 
 
@@ -1645,7 +1669,7 @@ void SceneMovement_Week03::Update(double dt)
 	}
 	for (int i = 0; i < m_goList.size(); i++) {
 		if (!m_goList[i]->active) continue;
-		if (m_goList[i]->type == GameObject::GO_ATTACKER)
+		if (m_goList[i]->type == GameObject::GO_SUPPORT)
 			std::cout << "2 " << m_goList[i]->health << std::endl;
 	}
 	static constexpr float TURN_TIME = 0.5f;
@@ -1658,38 +1682,42 @@ void SceneMovement_Week03::Update(double dt)
 		timer = 0.f;
 
 		if (m_activeSide == GameObject::SIDE_RED) ++m_turn;
-
+		 
 		GameObject::SIDE sideThisTurn = m_activeSide;
 
 		// ---- PHASE 1: PRE-REVEAL (sense before moving) ----
 		for (GameObject* go : m_goList)
 		{
+			if (go->type == GameObject::GO_SPAWNMORTARAREA) continue;
+			if (go->type == GameObject::GO_MAINBASE) continue;
+			if (go->type == GameObject::GO_SPAWNER) continue;
 			if (!go->active) continue;
 			if (go->side != sideThisTurn) continue;
 
 			RevealAround(go, go->viewRange);
 
 			// target pick (with stickiness recommended)
-			if (!go->atkTarget && !go->visibleTargets.empty())
+			if (!go->visibleTargets.empty())
 				go->atkTarget = PickClosestVisibleTarget(go);
 		}
 
 		// ---- MOVE PHASE (only this side) ----
 		for (GameObject* go : m_goList)
 		{
+			if (go->type == GameObject::GO_SPAWNMORTARAREA) continue;
 			if (!go->active) continue;
 			if (go->side != sideThisTurn) continue;
 			go->currMoves = go->useMoves;
 			switch (go->type)
 			{
 			case GameObject::GO_SCOUT:
-				DFSOnce(go);
+				DFSOnce(go, go->currMoves);
 				break;
 			case GameObject::GO_ATTACKER:
 				std::cout << go->health << std::endl;
 				if (go->sm->GetCurrentState() == "Healthy")
 				{
-					if (go->atkTarget == NULL) {
+					if (go->atkTarget == NULL || !go->atkTarget->active) {
 						while (go->currMoves > 0)
 						{
 							int before = go->currMoves;
@@ -1697,13 +1725,13 @@ void SceneMovement_Week03::Update(double dt)
 
 							// if DFS couldn't move (blocked / too expensive), stop
 							if (go->currMoves == before)
-								return;
+								break;
 
 							// reveal after moving too (so the newly reached tile reveals)
 							RevealAround(go, go->viewRange);
 
 							if (go->atkTarget != nullptr)
-								return;
+								break;
 						}
 					}
 					else
@@ -1711,39 +1739,451 @@ void SceneMovement_Week03::Update(double dt)
 						//attacking
 						if (IsInAtkRange(go, go->atkTarget))
 						{
-							while (go->currMoves > 0) {
-								go->atkTarget->health -= 20;
-								go->currMoves -= 1;
-							}
+							go->HandleAction("");
 							std::cout << "attacking" << std::endl;
 						}
 						else {
 							PathFind(go, go->atkTarget->curr, go->currMoves, go->atkRange);
-							std::cout << "too far" << std::endl;
+							if (go->currMoves > 0 && go->atkTarget && go->atkTarget->active && IsInAtkRange(go, go->atkTarget))
+							{
+								while (go->currMoves > 0) {
+									go->atkTarget->health -= 20;
+									go->currMoves -= 1;
+								}
+								std::cout << "attacking\n";
+							}
 						}
-					}
-					if (go->health <= 70)
-					{
-						go->sm->SetNextState("Flee");
 					}
 				}
 				if (go->sm->GetCurrentState() == "Flee")
 				{
+					MessageWRU msgNeedSup = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_FREE_SUP, 200.0f);
+					Handle(&msgNeedSup);
+					if (go->external != NULL) {
+						if (go->external->active) {
+							MessageAskHelp msgAskHelp = MessageAskHelp(go);
+							go->external->Handle(&msgAskHelp);
+						}
+					}
+
+					MessageWRU nearestSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200);
+					Handle(&nearestSpawner);
+					PathFind(go, go->nearest->currNodes[0], go->currMoves, 1);
+				}
+				if (go->sm->GetCurrentState() == "StayStrong")
+				{
+					MessageWRU msgNeedSup = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_FREE_SUP, 200.0f);
+					Handle(&msgNeedSup);
+					if (go->external != NULL && go->atkTarget->active) {
+						if (go->external->active) {
+							MessageAskHelp msgAskHelp = MessageAskHelp(go);
+							go->external->Handle(&msgAskHelp);
+						}
+					}
+
+					if (go->atkTarget == NULL || !go->atkTarget->active) {
+						while (go->currMoves > 0)
+						{
+							int before = go->currMoves;
+							DFSOnce(go, go->currMoves);   // spends tile cost
+
+							// if DFS couldn't move (blocked / too expensive), stop
+							if (go->currMoves == before)
+								break;
+
+							// reveal after moving too (so the newly reached tile reveals)
+							RevealAround(go, go->viewRange);
+
+							if (go->atkTarget != nullptr)
+								break;
+						}
+					}
+					else
+					{
+						//attacking
+						if (IsInAtkRange(go, go->atkTarget))
+						{
+							go->HandleAction("");
+							std::cout << "attacking" << std::endl;
+						}
+						else {
+							PathFind(go, go->atkTarget->curr, go->currMoves, go->atkRange);
+							if (go->currMoves > 0 && go->atkTarget && go->atkTarget->active && IsInAtkRange(go, go->atkTarget))
+							{
+								while (go->currMoves > 0) {
+									go->atkTarget->health -= 20;
+									go->currMoves -= 1;
+								}
+								std::cout << "attacking\n";
+							}
+						}
+					}
+				}
+				else if (go->sm->GetCurrentState() == "NearDeath")
+				{
+					MessageWRU msgNeedSup = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_URG_SUP, 200.0f);
+					Handle(&msgNeedSup);
+					if (go->external != NULL) {
+						if (go->external->active) {
+							MessageAskHelp msgAskHelp = MessageAskHelp(go);
+							go->external->Handle(&msgAskHelp);
+						}
+					}
 					MessageWRU nearestSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200);
 					Handle(&nearestSpawner);
 					PathFind(go, go->nearest->currNodes[0], go->currMoves, 1);
 				}
 				break;
+			case GameObject::GO_SUPPORT:
+				{
+					go->alliesActiveCount = 0;
+					MessageWRU allyCount = MessageWRU(go, MessageWRU::SEARCH_TYPE::ALLYACTIVECOUNT, 500);
+					Handle(&allyCount);
+				}
+				if (go->sm->GetCurrentState() == "Healing")
+				{
+					if (go->healTarget != NULL && go->healTarget->active)
+					{
+						if (!IsInAtkRange(go, go->healTarget))
+						{
+							PathFind(go, go->healTarget->curr, go->currMoves, go->atkRange);
+							if (go->currMoves > 0 && go->healTarget && go->healTarget->active && IsInAtkRange(go, go->healTarget))
+							{
+								go->HandleAction("");
+							}
+						}
+						else {
+							go->HandleAction("");
+						}
+					}
+				}
+				if (go->sm->GetCurrentState() == "UrgentHealing")
+				{
+					if (go->healTarget != NULL && go->healTarget->active)
+					{
+						if (!IsInAtkRange(go, go->healTarget))
+						{
+							PathFind(go, go->healTarget->curr, go->currMoves, go->atkRange);
+							if (go->currMoves > 0 && go->healTarget && go->healTarget->active && IsInAtkRange(go, go->healTarget))
+							{
+								go->HandleAction("");
+							}
+						}
+						else {
+							go->HandleAction("");
+						}
+					}
+				}
+				if (go->sm->GetCurrentState() == "Hurt")
+				{
+					MessageWRU nearestSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200);
+					Handle(&nearestSpawner);
+					if (go->nearest == NULL) continue;
+					PathFind(go, go->nearest->currNodes[0], go->currMoves, 1);
+					for(MazePt node : go->nearest->currNodes)
+					{
+						if (node.x == go->curr.x && node.y == go->curr.y) {
+							while (go->currMoves > 0)
+							{
+								if (go->health <= 100) {
+									go->health += 7;
+								}
+								else { go->health = 100; }
+								go->currMoves -= 1;
+							}
+						}
+					}
+				}
+				if (go->sm->GetCurrentState() == "Hiding")
+				{
+					MessageWRU nearestSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200);
+					Handle(&nearestSpawner);
+					if (go->nearest == NULL) { continue; }
+					PathFind(go, go->nearest->currNodes[0], go->currMoves, 1);
+					for (MazePt node : go->nearest->currNodes)
+					{
+						if (node.x == go->curr.x && node.y == go->curr.y) {
+							while (go->currMoves > 0)
+							{
+								if (go->health <= 100) {
+									go->health += 5;
+								}
+								else { go->health = 100; }
+								go->currMoves -= 1;
+							}
+						}
+					}
+				}
+				break;
+			case GameObject::GO_RANGED:
+				if (go->sm->GetCurrentState() == "Healthy")
+				{
+					if (go->atkTarget != NULL && go->atkTarget->active)
+					{
+						if (HeuristicManhattan(go->curr, go->atkTarget->curr) <= 1)
+						{
+							MessageWRU nearestSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200);
+							Handle(&nearestSpawner);
+							PathFind(go, go->nearest->currNodes[0], go->currMoves, 0);
+							if (go->currMoves > 0 && go->atkTarget && go->atkTarget->active && IsInAtkRange(go, go->atkTarget))
+							{
+								go->HandleAction("attack");
+								std::cout << "attacking\n";
+							}
+						}
+						else
+						{
+							if (IsInAtkRange(go, go->atkTarget))
+							{
+								go->HandleAction("");
+								std::cout << "attacking" << std::endl;
+							}
+							else {
+								PathFind(go, go->atkTarget->curr, go->currMoves, go->atkRange);
+								if (go->currMoves > 0 && go->atkTarget && go->atkTarget->active && IsInAtkRange(go, go->atkTarget))
+								{
+									go->HandleAction("attack");
+									std::cout << "attacking\n";
+								}
+							}
+						}
+					}
+				}
+				else if (go->sm->GetCurrentState() == "Hurt")
+				{
+					MessageWRU msgNeedSup = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_FREE_SUP, 200.0f);
+					Handle(&msgNeedSup);
+					if (go->external != NULL && go->atkTarget->active) {
+						if (go->external->active) {
+							MessageAskHelp msgAskHelp = MessageAskHelp(go);
+							go->external->Handle(&msgAskHelp);
+						}
+					}
+					if (go->atkTarget != NULL && go->atkTarget->active)
+					{
+						if (HeuristicManhattan(go->curr, go->atkTarget->curr) <= 2)
+						{
+							MessageWRU nearestSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200);
+							Handle(&nearestSpawner);
+							PathFind(go, go->nearest->currNodes[0], go->currMoves, 0);
+							if (go->currMoves > 0 && go->atkTarget && go->atkTarget->active && IsInAtkRange(go, go->atkTarget))
+							{
+								go->HandleAction("attack");
+								std::cout << "attacking\n";
+							}
+						}
+						else
+						{
+							if (IsInAtkRange(go, go->atkTarget))
+							{
+								go->HandleAction("");
+								std::cout << "attacking" << std::endl;
+							}
+							else {
+								PathFind(go, go->atkTarget->curr, go->currMoves, go->atkRange);
+								if (go->currMoves > 0 && go->atkTarget && go->atkTarget->active && IsInAtkRange(go, go->atkTarget))
+								{
+									go->HandleAction("attack");
+									std::cout << "attacking\n";
+								}
+							}
+						}
+					}
+				}
+				else if (go->sm->GetCurrentState() == "NearDeath")
+				{
+					MessageWRU msgNeedSup = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_FREE_SUP, 200.0f);
+					Handle(&msgNeedSup);
+					if (go->external != NULL && go->atkTarget->active) {
+						if (go->external->active) {
+							MessageAskHelp msgAskHelp = MessageAskHelp(go);
+							go->external->Handle(&msgAskHelp);
+						}
+					}
+					go->lastAttacker = ref;
+					MessageWRU msgNeedAtk = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ALLY_ATTACKER, 200.0f);
+					Handle(&msgNeedAtk);
+					if (go->external2 != NULL && go->atkTarget->active) {
+						if (go->external2->active) {
+							MessageAskForAtk msgAskHelp = MessageAskForAtk(go);
+							go->external2->Handle(&msgAskHelp);
+						}
+					}
+					if (go->atkTarget != NULL && go->atkTarget->active)
+					{
+						if (HeuristicManhattan(go->curr, go->atkTarget->curr) <= 2)
+						{
+							MessageWRU nearestSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200);
+							Handle(&nearestSpawner);
+							PathFind(go, go->nearest->currNodes[0], go->currMoves, 0);
+							if (go->currMoves > 0 && go->atkTarget && go->atkTarget->active && IsInAtkRange(go, go->atkTarget))
+							{
+								go->HandleAction("attack");
+								std::cout << "attacking\n";
+							}
+						}
+						else
+						{
+							if (IsInAtkRange(go, go->atkTarget))
+							{
+								go->HandleAction("");
+								std::cout << "attacking" << std::endl;
+							}
+							else {
+								PathFind(go, go->atkTarget->curr, go->currMoves, go->atkRange);
+								if (go->currMoves > 0 && go->atkTarget && go->atkTarget->active && IsInAtkRange(go, go->atkTarget))
+								{
+									go->HandleAction("attack");
+									std::cout << "attacking\n";
+								}
+							}
+						}
+					}
+				}
+				break;
+			case GameObject::GO_TANK:
+				{
+					MessageWRU msgCheckFrontline = MessageWRU(go, MessageWRU::SEARCH_TYPE::FURTHEST_FRONTLINE, 200);
+					Handle(&msgCheckFrontline);
+				}
+				if (go->sm->GetCurrentState() == "Healthy")
+				{
+					if (go->nearest == NULL || go->nearest->active == false) {
+							go->sm->SetNextState("SoloHealthy");
+							continue;
+					}
+					int redOrBlue = (go->side == GameObject::SIDE_BLUE) ? -2 : 2;
+					MazePt target = MazePt(go->nearest->curr.x + redOrBlue, go->nearest->curr.y);
+					PathFind(go, target, go->currMoves, 0);
+				}
+				else if (go->sm->GetCurrentState() == "SoloHealthy")
+				{
+					if (go->nearest != NULL && go->nearest->active == true) {
+						go->sm->SetNextState("Healthy");
+						continue;
+					}
+					else {
+						if (go->atkTarget == NULL || !go->atkTarget->active) {
+							while (go->currMoves > 0)
+							{
+								int before = go->currMoves;
+								DFSOnce(go, go->currMoves);   // spends tile cost
+
+								// if DFS couldn't move (blocked / too expensive), stop
+								if (go->currMoves == before)
+									break;
+
+								// reveal after moving too (so the newly reached tile reveals)
+								RevealAround(go, go->viewRange);
+
+								if (go->atkTarget != nullptr)
+									break;
+							}
+						}
+					}
+				}
+				else if (go->sm->GetCurrentState() == "Suicide")
+				{
+					if (go->atkTarget != NULL && go->atkTarget->active)
+					{
+						if (go->curr.x == go->atkTarget->curr.x && go->curr.y == go->atkTarget->curr.y)
+						{
+							MessageWRU msgAreaDamage = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY_INAREA, 1);
+							Handle(&msgAreaDamage);
+							go->HandleAction("");
+						}
+						else
+						{
+							PathFind(go, go->atkTarget->curr, go->currMoves, 0);
+							if (go->currMoves > 0 && go->atkTarget && go->atkTarget->active && IsInAtkRange(go, go->atkTarget))
+							{
+								MessageWRU msgAreaDamage = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY_INAREA, 1);
+								Handle(&msgAreaDamage);
+								go->HandleAction("");
+							}
+						}
+
+						if (go->turnCounter == 3)
+						{
+							MessageWRU msgAreaDamage = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY_INAREA, 1);
+							Handle(&msgAreaDamage);
+							go->HandleAction("");
+						}
+						go->turnCounter++;
+					}
+				}
+				else if (go->sm->GetCurrentState() == "Death")
+				{
+
+				}
+
+				if (go->panicking)
+				{
+					//MessageWRU msgCheckMech = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_MECHANIC_HEAL, 200.0f);
+					//Handle(&msgCheckMech);
+					//if (go->external != NULL) {
+					//	if (go->external->active) {
+					//		MessageAskHelp msgAskHelp = MessageAskHelp(go);
+					//		go->external->Handle(&msgAskHelp);
+					//	}
+					//}
+				}
+				if (go->atkTarget != NULL && go->atkTarget->active)
+				{
+					if (IsInAtkRange(go, go->atkTarget))
+					{
+						MessageWRU msgAreaDamage = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY_INAREA, 1);
+						Handle(&msgAreaDamage);
+						go->HandleAction("");
+					}
+					else {
+						PathFind(go, go->atkTarget->curr, go->currMoves, go->atkRange);
+						if (go->currMoves > 0 && go->atkTarget && go->atkTarget->active && IsInAtkRange(go, go->atkTarget))
+						{
+							MessageWRU msgAreaDamage = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY_INAREA, 1);
+							Handle(&msgAreaDamage);
+							go->HandleAction("");
+						}
+					}
+				}
+				break;
+			case GameObject::GO_MECHANIC:
+				if (go->sm->GetCurrentState() == "Healthy") {
+					//if (go->nearest == NULL || !go->nearest->active) {
+					//	MessageWRU msgCheckSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200.0f);
+					//	Handle(&msgCheckSpawner);
+					//}
+					//else
+					//{
+					//	if (go->nearest->type == GameObject::GO_SPAWNER)
+					//	{
+					//		go->choice = MechanicNeedGet(go->nearest);
+					//	}
+					//	else { go->choice = 0; }
+					go->choice = 1;
+						MessageWRU msgCheckMaterial = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_MAT, 200);
+						Handle(&msgCheckMaterial);
+						if (go->ptTarget.x != 999)
+						{
+							std::cout << "FoundSomething";
+						}
+					//}
+				}
+				break;
 			}
 		}
+		
 
 		// ---- REVEAL PHASE (only this side) ----
 		for (GameObject* go : m_goList)
 		{
+			if (go->type == GameObject::GO_SPAWNMORTARAREA) continue;
+			if (go->type == GameObject::GO_MAINBASE) continue;
+			if (go->type == GameObject::GO_SPAWNER) continue;
 			if (!go->active) continue;
 			if (go->side != sideThisTurn) continue;
 
-			RevealAround(go, go->viewRange);
+ 			RevealAround(go, go->viewRange);
 			if (go->visibleTargets.size() > 0)
 				go->atkTarget = PickClosestVisibleTarget(go);
 		}
@@ -1752,6 +2192,7 @@ void SceneMovement_Week03::Update(double dt)
 		m_activeSide = (m_activeSide == GameObject::SIDE_BLUE)
 			? GameObject::SIDE_RED
 			: GameObject::SIDE_BLUE;
+
 	}
 
 	//check for death buildings and units
@@ -1973,6 +2414,7 @@ void SceneMovement_Week03::CountingGO()
 
 void SceneMovement_Week03::RenderGOBar(GameObject* go, float vertScale)
 {
+	if (go->type == GameObject::GO_SPAWNER) return;
 	float healthRatio = go->health / go->maxHealth;
 	float energyRatio = go->energy / go->maxEnergy;
 	float barWidth = go->scale.x / 1.8f;
@@ -2004,7 +2446,7 @@ void SceneMovement_Week03::RenderGOBar(GameObject* go, float vertScale)
 	// shift left edge fixed: move half the reduced width to the left
 	float energyoffsetX = -(barWidth * (1.f - energyRatio));
 	offsetY = 4.9f;
-	modelStack.Translate(m_gridOffset + m_gridSize * go->curr.x + offsetX,
+	modelStack.Translate(m_gridOffset + m_gridSize * go->curr.x + energyoffsetX,
 		m_gridOffset + m_gridSize * go->curr.y - offsetY,
 		6);
 	modelStack.Scale(barWidth * energyRatio, barHeight, go->scale.z);
@@ -2225,7 +2667,10 @@ void SceneMovement_Week03::RenderGO(GameObject* go)
 			geo = isBlue ? GEO_RANGE1_HEALTHY : GEO_RANGE2_HEALTHY;
 
 		modelStack.PushMatrix();
-		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
+		modelStack.Translate(m_gridOffset + m_gridSize * go->curr.x,
+			m_gridOffset + m_gridSize *
+			go->curr.y,
+			6);
 		modelStack.Rotate(180, 0, 0, 1);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
 		RenderMesh(meshList[geo], false);
@@ -2253,7 +2698,10 @@ void SceneMovement_Week03::RenderGO(GameObject* go)
 			geo = isBlue ? GEO_SUPPORT1_HEALTHY : GEO_SUPPORT2_HEALTHY;
 
 		modelStack.PushMatrix();
-		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
+		modelStack.Translate(m_gridOffset + m_gridSize * go->curr.x,
+			m_gridOffset + m_gridSize *
+			go->curr.y,
+			6);
 		modelStack.Rotate(180, 0, 0, 1);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
 		RenderMesh(meshList[geo], false);
@@ -2361,7 +2809,10 @@ void SceneMovement_Week03::RenderGO(GameObject* go)
 			geo = isBlue ? GEO_TANK1_HEALTHY : GEO_TANK2_HEALTHY;
 
 		modelStack.PushMatrix();
-		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
+		modelStack.Translate(m_gridOffset + m_gridSize * go->curr.x,
+			m_gridOffset + m_gridSize *
+			go->curr.y,
+			6);
 		modelStack.Rotate(180, 0, 0, 1);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
 		RenderMesh(meshList[geo], false);
@@ -2471,16 +2922,14 @@ bool SceneMovement_Week03::Handle(Message* message)
 			//if yes, check if this ore is closer
 			//else check all other mechanics
 			break;
+		case Maze::TILE_WOODENLOG:
+			break;
 		}
 	}
 
 	MessageRevealUnit* msgRevealUnit = dynamic_cast<MessageRevealUnit*>(message);
 	if (msgRevealUnit) {
-		if (msgRevealUnit->target->type == GameObject::GO_ATTACKER) {
-			std::cout << "Attacker Revealed!" << std::endl;
-			if (msgRevealUnit->spotter->type == GameObject::GO_ATTACKER)
-				msgRevealUnit->spotter->atkTarget = msgRevealUnit->target;
-		}
+			msgRevealUnit->spotter->atkTarget = msgRevealUnit->target;
 	}
 
 	MessageMechanicBuild* msgMechBuild = dynamic_cast<MessageMechanicBuild*>(message);
@@ -2589,7 +3038,11 @@ bool SceneMovement_Week03::Handle(Message* message)
 
 	MessageSpawnAttacker* msgSpawnAtk = dynamic_cast<MessageSpawnAttacker*>(message);
 	if (msgSpawnAtk) {
-		SpawnUnit(msgSpawnAtk->go->side, msgSpawnAtk->go->pos, GameObject::GO_ATTACKER);
+		GameObject* atk = SpawnUnit(msgSpawnAtk->go->side, msgSpawnAtk->go->pos, GameObject::GO_ATTACKER);
+		atk->curr.Set(msgSpawnAtk->go->curr.x, msgSpawnAtk->go->curr.y);
+		RevealAround(atk, atk->viewRange);
+		atk->stack.push_back(atk->curr); //triggers dfs
+		b_visited[Get1DIndex(msgSpawnAtk->go->curr.x, msgSpawnAtk->go->curr.y)] = true;
 	}
 
 	MessageSpawnMortar* msgSpawnMor = dynamic_cast<MessageSpawnMortar*>(message);
@@ -2639,11 +3092,23 @@ bool SceneMovement_Week03::Handle(Message* message)
 
 			if (messageWRU->type == MessageWRU::NEAREST_SPAWNER && go2->type == GameObject::GO_SPAWNER && go->side == go2->side)
 			{
-				float distance = (go->pos - go2->pos).Length();
+				float distance = abs(go->curr.x - go2->curr.x) + abs(go->curr.y - go2->curr.y);
 				if (distance < messageWRU->threshold && distance < nearestDistance)
 				{
 					nearestDistance = distance;
 					go->nearest = go2;
+				}
+			}
+			else if (messageWRU->type == MessageWRU::NEAREST_MAT)
+			{
+				Maze::TILE_CONTENT t = Maze::TILE_WOODENLOG;
+				if (go->choice == 2) { t == Maze::TILE_ORE; }
+
+				MazePt mat;
+
+				if (BFSMaterial(go, t, mat))
+				{
+					go->ptTarget = mat;
 				}
 			}
 			else if (messageWRU->type == MessageWRU::NEAREST_GOLDENORB && go2->type == GameObject::GO_GOLDENORB)
@@ -2671,7 +3136,7 @@ bool SceneMovement_Week03::Handle(Message* message)
 			}
 			else if (messageWRU->type == MessageWRU::ALLYACTIVECOUNT && go2->side == go->side)
 			{
-				if (go2->type == GameObject::GO_SPAWNER || go2->type == GameObject::GO_MAINBASE || go2->type == GameObject::GO_GOLDENORB)
+				if (go2->type == GameObject::GO_SPAWNER || go2->type == GameObject::GO_MAINBASE || go2->type == GameObject::GO_GOLDENORB || go2->type == GameObject::GO_SPAWNMORTARAREA)
 					continue;
 
 				if (go2->hiding)
@@ -2684,8 +3149,8 @@ bool SceneMovement_Week03::Handle(Message* message)
 			}
 			else if (messageWRU->type == MessageWRU::NEAREST_ENEMY_INAREA && go2->side != go->side)
 			{
-				float distance = (go->pos - go2->pos).Length();
-				if (distance < m_gridSize * messageWRU->threshold)
+				float distance = abs(go->atkTarget->curr.x - go2->curr.x) + abs(go->atkTarget->curr.y - go2->curr.y);
+				if (distance <= messageWRU->threshold)
 				{
 					go->hits.push_back(go2);
 				}
@@ -2693,14 +3158,14 @@ bool SceneMovement_Week03::Handle(Message* message)
 			}
 			else if (messageWRU->type == MessageWRU::NEAREST_ALLY_ATTACKER && go2->type == GameObject::GO_ATTACKER && go2->side == go->side)
 			{
-				float distance = (go->pos - go2->pos).Length();
+				float distance = abs(go->curr.x - go2->curr.x) + abs(go->curr.y - go2->curr.y);
 				if (distance < messageWRU->threshold && distance < nearestDistance)
 				{
 					bool alreadyHelping = false;
 					if (go2->sm->GetCurrentState() != "Healthy")
 						alreadyHelping = true;
 
-					if (go2->nearest == go->lastAttacker) //someone is already attacking my attacker
+					if (go2->atkTarget == go->lastAttacker) //someone is already attacking my attacker
 						alreadyHelping = true;
 
 					nearestDistance = distance;
@@ -2709,7 +3174,7 @@ bool SceneMovement_Week03::Handle(Message* message)
 			}
 			else if (messageWRU->type == MessageWRU::NEAREST_URG_SUP && go2->type == GameObject::GO_SUPPORT && go2->side == go->side)
 			{
-				float distance = (go->pos - go2->pos).Length();
+				float distance = abs(go->curr.x - go2->curr.x) + abs(go->curr.y - go2->curr.y);
 				if (distance < messageWRU->threshold && distance < nearestDistance)
 				{
 					bool alreadyHelping = false;
@@ -2740,7 +3205,8 @@ bool SceneMovement_Week03::Handle(Message* message)
 			{
 				int bestPriority = -999;
 
-				float distance = (go->pos - go2->pos).Length();
+				float distance = abs(go->curr.x - go2->curr.x) + abs(go->curr.y - go2->curr.y);
+
 				if (distance < messageWRU->threshold && distance < nearestDistance)
 				{
 					if (go2->hiding == true) continue;
@@ -2826,19 +3292,19 @@ bool SceneMovement_Week03::Handle(Message* message)
 
 					// side start positions (replace 0.f / 600.f with your actual values/constants)
 					float RED_START_X = 0.0f;
-					float BLUE_START_X = 600.0f;
+					float BLUE_START_X = 20.0f;
 
 					float frontValue = 0.0f;
 
 					if (go->side == GameObject::SIDE_BLUE)
 					{
 						// how far BLUE has moved from 600 towards 0 (positive when they push left)
-						frontValue = BLUE_START_X - go2->pos.x;
+						frontValue = BLUE_START_X - go2->curr.x;
 					}
 					else // assume RED
 					{
 						// how far RED has moved from 0 towards +X
-						frontValue = go2->pos.x - RED_START_X;
+						frontValue = go2->curr.x - RED_START_X;
 					}
 
 					// Optional: if somehow behind their own start line, ignore
@@ -3187,6 +3653,10 @@ void SceneMovement_Week03::Render()
 				meshList[GEO_ORE]->material.kAmbient.Set(1.f, 1.f, 1.f);
 				RenderMesh(meshList[GEO_ORE], true);
 				break;
+			case Maze::TILE_WOODENLOG:
+				meshList[GEO_LOG]->material.kAmbient.Set(1.f, 1.f, 1.f);
+				RenderMesh(meshList[GEO_LOG], true);
+				break;
 			case Maze::TILE_EMPTY:
 				//RenderMesh(meshList[GEO_FLOOR], false);
 				break;
@@ -3229,6 +3699,10 @@ void SceneMovement_Week03::Render()
 			case Maze::TILE_ORE:
 				meshList[GEO_ORE]->material.kAmbient.Set(1.f, 0.f, 0.f);
 				RenderMesh(meshList[GEO_ORE], true);
+				break;
+			case Maze::TILE_WOODENLOG:
+				meshList[GEO_LOG]->material.kAmbient.Set(1.f, 1.f, 1.f);
+				RenderMesh(meshList[GEO_LOG], true);
 				break;
 			case Maze::TILE_EMPTY:
 				RenderMesh(meshList[GEO_FLOOR], false);
@@ -3566,6 +4040,56 @@ int SceneMovement_Week03::HeuristicManhattan(const MazePt& a, const MazePt& b)
 	return abs(a.x - b.x) + abs(a.y - b.y) * 1;
 }
 
+bool SceneMovement_Week03::BFSMaterial(GameObject* go, Maze::TILE_CONTENT tile, MazePt& outMat)
+{
+	int N = m_noGrid * m_noGrid;
+
+	std::vector<Maze::TILE_CONTENT>& teamGrid =
+		(go->side == GameObject::SIDE_BLUE) ? b_grid : r_grid;
+
+	std::queue<MazePt> q;
+	std::vector<int> dist(N, -1);
+
+	auto push = [&](int x, int y, int d)
+		{
+			if (x < 0 || y < 0 || x >= m_noGrid || y >= m_noGrid) return;
+			int idx = Get1DIndex(x, y);
+			if (dist[idx] != -1) return;
+
+			Maze::TILE_CONTENT t = teamGrid[idx];
+
+			// Only traverse tiles that are known-walkable
+			if (!m_maze.NonMats(t)) return;
+
+			dist[idx] = d;
+			q.push({ x, y });
+		};
+
+	// start from current
+	push(go->curr.x, go->curr.y, 0);
+
+	while (!q.empty())
+	{
+		MazePt p = q.front(); q.pop();
+		int idx = Get1DIndex(p.x, p.y);
+
+		// If THIS tile is material, it’s the closest (BFS guarantee)
+		if (tile == teamGrid[idx])
+		{
+			outMat = p;
+			return true;
+		}
+
+		int d = dist[idx] + 1;
+		push(p.x + 1, p.y, d);
+		push(p.x - 1, p.y, d);
+		push(p.x, p.y + 1, d);
+		push(p.x, p.y - 1, d);
+	}
+
+	return false; // none found in known vision
+}
+
 bool SceneMovement_Week03::AStar(GameObject* go, MazePt start, MazePt end)
 {
 	const int N = m_noGrid * m_noGrid;
@@ -3604,6 +4128,7 @@ bool SceneMovement_Week03::AStar(GameObject* go, MazePt start, MazePt end)
 	int bestIdx = startIdx;
 	int bestH = HeuristicManhattan(start, end);
 	int bestG = 0;
+	//int bestF = bestG + bestH;
 
 	static int offsets[][2] = { {0,1}, {0,-1}, {-1,0}, {1,0} };
 
@@ -3722,52 +4247,98 @@ int SceneMovement_Week03::GetTileCost(Maze::TILE_CONTENT tile)
 
 bool SceneMovement_Week03::TryFindFrontierTarget(GameObject* go, const MazePt& goal, MazePt& outTarget)
 {
-	bool found = false;
-	int bestScore = INT_MAX;
-
 	static int offsets[][2] = { {0,1}, {0,-1}, {-1,0}, {1,0} };
 
-	// Pick team memory ONCE
+	// Team memory ONCE
 	std::vector<Maze::TILE_CONTENT>& teamGrid =
 		(go->side == GameObject::SIDE_BLUE) ? b_grid : r_grid;
 
-	for (int y = 0; y < m_noGrid; ++y)
-		for (int x = 0; x < m_noGrid; ++x)
+	const int N = m_noGrid * m_noGrid;
+	if ((int)teamGrid.size() != N) return false;
+
+	auto passableKnown = [&](int idx) -> bool
 		{
-			if (x == go->curr.x && y == go->curr.y)
-				continue;
+			// Only tiles that are known passable in team vision.
+			return m_maze.IsPassable(teamGrid[idx]);
+			// If your IsPassable treats fog as passable, then instead do:
+			// return teamGrid[idx] == Maze::TILE_EMPTY;  (or whatever your "0" is)
+		};
 
-			int idx = Get1DIndex(x, y);
+	int startIdx = Get1DIndex(go->curr.x, go->curr.y);
+	if (startIdx < 0 || startIdx >= N) return false;
+	if (!passableKnown(startIdx)) return false;
 
-			// must be known walkable in TEAM knowledge
-			if (!m_maze.IsPassable(teamGrid[idx])) continue;
+	std::vector<char> visited(N, 0);
+	std::vector<int> q;
+	q.reserve(N);
 
-			// Frontier = known empty tile that touches fog in TEAM knowledge
-			bool touchesFog = false;
-			for (int(&off)[2] : offsets)
+	visited[startIdx] = 1;
+	q.push_back(startIdx);
+
+	bool found = false;
+	int bestScore = INT_MAX;
+
+	// Optional: tie-break so it still explores if same score
+	int bestDistFromStart = -1;
+
+	for (size_t qi = 0; qi < q.size(); ++qi)
+	{
+		int currIdx = q[qi];
+		int cx = currIdx % m_noGrid;
+		int cy = currIdx / m_noGrid;
+
+		// Check if THIS reachable known tile touches fog
+		bool touchesFog = false;
+		for (int(&off)[2] : offsets)
+		{
+			int nx = cx + off[0], ny = cy + off[1];
+			if (!IsWithinBoundary(nx) || !IsWithinBoundary(ny)) continue;
+
+			int nIdx = Get1DIndex(nx, ny);
+			if (teamGrid[nIdx] == Maze::TILE_FOG)
 			{
-				int nx = x + off[0], ny = y + off[1];
-				if (!IsWithinBoundary(nx) || !IsWithinBoundary(ny)) continue;
-
-				int nIdx = Get1DIndex(nx, ny);
-				if (teamGrid[nIdx] == Maze::TILE_FOG)
-				{
-					touchesFog = true;
-					break;
-				}
+				touchesFog = true;
+				break;
 			}
-			if (!touchesFog) continue;
+		}
 
-			// Pick frontier closest to final goal
-			MazePt p(x, y);
+		if (touchesFog)
+		{
+			MazePt p(cx, cy);
+
+			// Score: closer to goal is better
 			int score = HeuristicManhattan(p, goal);
-			if (score < bestScore)
+
+			// Distance-from-start (for tie-break). Since this is BFS order,
+			// you can approximate by qi (NOT exact distance). If you want exact,
+			// store dist[] too (shown below in a comment).
+			int distApprox = (int)qi;
+
+			if (!found ||
+				score < bestScore ||
+				(score == bestScore && distApprox > bestDistFromStart)) // explore farther on tie
 			{
 				bestScore = score;
+				bestDistFromStart = distApprox;
 				outTarget = p;
 				found = true;
 			}
 		}
+
+		// BFS expand through reachable known tiles
+		for (int(&off)[2] : offsets)
+		{
+			int nx = cx + off[0], ny = cy + off[1];
+			if (!IsWithinBoundary(nx) || !IsWithinBoundary(ny)) continue;
+
+			int nIdx = Get1DIndex(nx, ny);
+			if (visited[nIdx]) continue;
+			if (!passableKnown(nIdx)) continue;
+
+			visited[nIdx] = 1;
+			q.push_back(nIdx);
+		}
+	}
 
 	return found;
 }
@@ -3825,28 +4396,27 @@ void SceneMovement_Week03::PathFind(GameObject* go, const MazePt& goal, int& mov
 
 	auto& teamGrid = (go->side == GameObject::SIDE_BLUE) ? b_grid : r_grid;
 
-	// Track where we are along the current plan
-	size_t pathIndex = 1;   // next node to step to
-	bool havePlan = false;
 	bool planningToFrontier = false;
 
 	while (moveBudget > 0)
 	{
 		// Stop if close enough
 		if (HeuristicManhattan(go->curr, goal) <= stopRange)
+		{
+			go->havePlan = false;
 			return;
-
+		}
 		// ---- Decide whether we need to replan ----
 		bool needReplan = false;
 
-		if (!havePlan) needReplan = true;
+		if (!go->havePlan) needReplan = true;
 		else if (go->path.size() <= 1) needReplan = true;
-		else if (pathIndex >= go->path.size()) needReplan = true;                 // ran out of path
-		else if (go->path[0].x != go->curr.x || go->path[0].y != go->curr.y) needReplan = true;   // plan no longer starts at our current tile
+		else if (go->pathIndex >= go->path.size()) needReplan = true; // ran out of path
+		else if (go->path[go->pathIndex -1].x != go->curr.x || go->path[go->pathIndex -1].y != go->curr.y) needReplan = true;   // plan no longer starts at our current tile
 		else
 		{
 			// next step must be known & traversable (under your "known tiles only" rule)
-			MazePt next = go->path[pathIndex];
+			MazePt next = go->path[go->pathIndex];
 			int tile = teamGrid[Get1DIndex(next.x, next.y)];
 			if (tile == Maze::TILE_FOG) needReplan = true; // about to step into unknown
 			else
@@ -3860,7 +4430,7 @@ void SceneMovement_Week03::PathFind(GameObject* go, const MazePt& goal, int& mov
 		if (needReplan)
 		{
 
-			havePlan = false;
+			go->havePlan = false;
 			planningToFrontier = false;
 
 			// ALWAYS try to go toward goal first.
@@ -3868,34 +4438,45 @@ void SceneMovement_Week03::PathFind(GameObject* go, const MazePt& goal, int& mov
 			AStar(go, go->curr, goal);
 
 			// if we have at least 2 nodes, we can move (path[0]=curr, path[1]=next)
-			havePlan = (go->path.size() > 1);
+			go->havePlan = (go->path.size() > 1);
 
-			if (!havePlan)
+			if (!go->havePlan)
 			{
 				MazePt frontier;
 				if (!TryFindFrontierTarget(go, goal, frontier))
 					return;
 
 				bool ok = AStar(go, go->curr, frontier);
-				havePlan = (go->path.size() > 1);
-				if (!havePlan) return;
+				go->havePlan = (go->path.size() > 1);
+				if (!go->havePlan) return;
 
 				planningToFrontier = true;
 			}
 
-			pathIndex = 1;
+			go->pathIndex = 1;
 		}
 
 		// ---- Take exactly one step along current plan ----
-		MazePt next = go->path[pathIndex];
+		MazePt next = go->path[go->pathIndex];
 		int stepCost = GetTileCost(teamGrid[Get1DIndex(next.x, next.y)]);
+
+		int idx = Get1DIndex(next.x, next.y);
+
+		std::cout << "STEP to (" << next.x << "," << next.y << ")"
+			<< " teamGrid=" << teamGrid[idx]
+			<< " realMap=" << m_maze.m_grid[idx] 
+			<< "\n";
+
+		auto raw = teamGrid[idx];
+		std::cout << "raw=" << (int)raw
+			<< " signed=" << (int)(signed char)raw << "\n";
 
 		if (stepCost > moveBudget)
 			return;
 
 		moveBudget -= stepCost;
 		go->curr = next;
-		++pathIndex;
+		go->pathIndex++;
 
 		if (planningToFrontier)
 		{
