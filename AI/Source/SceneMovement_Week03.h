@@ -33,7 +33,7 @@ public:
 	virtual GameObject* SpawnUnit(GameObject::SIDE side, Vector3 pos, GameObject::GAMEOBJECT_TYPE type = GameObject::GO_NONE);
 	virtual GameObject* SpawnMetalUnit(GameObject::SIDE side, Vector3 pos, GameObject::GAMEOBJECT_TYPE type = GameObject::GO_NONE);
 	void SpawnGrid3x3(GameObject::SIDE side,const Vector3& centerPos,GameObject::GAMEOBJECT_TYPE type);
-	Vector3 SpawnMortarArea(GameObject::SIDE side);
+	MazePt SpawnMortarArea(GameObject::SIDE side);
 
 	void RenderGOBar(GameObject* go, float vertScale);
 	void RenderGOBar(GameObject* go, float vertScale, Vector3 pos);
@@ -140,6 +140,8 @@ protected:
 	GameObject* RevealUnit(const MazePt& p);
 
 	bool IsInAtkRange(GameObject* go, GameObject* target);
+
+	bool IsInAtkRange(GameObject* go, MazePt& targetPt);
 
 	GameObject* PickClosestVisibleTarget(GameObject* go);
 

@@ -404,6 +404,7 @@ GameObject* SceneMovement_Week03::SpawnUnit(GameObject::SIDE side, Vector3 pos, 
 		unit->type = GameObject::GO_MECHANIC;
 		unit->viewRange = 2;
 		unit->atkRange = 1;
+		unit->useMoves = 3;
 	}
 	else if ((type == GameObject::GO_SCOUT))
 	{
@@ -451,6 +452,9 @@ GameObject* SceneMovement_Week03::SpawnMetalUnit(GameObject::SIDE side, Vector3 
 	{
 		unit = FetchGO(GameObject::GO_MORTAR);
 		unit->type = GameObject::GO_MORTAR;
+		unit->viewRange = 5;
+		unit->atkRange = 4;
+		unit->useMoves = 2;
 	}
 
 	unit->sm->SetNextState("None");
@@ -530,30 +534,34 @@ void SceneMovement_Week03::SpawnGrid3x3(GameObject::SIDE side,
 	}
 }
 
-Vector3 SceneMovement_Week03::SpawnMortarArea(GameObject::SIDE side)
+MazePt SceneMovement_Week03::SpawnMortarArea(GameObject::SIDE side)
 {
-	Vector3 center;
-	for(std::vector<GameObject*>::iterator it = m_goList.begin(); it != m_goList.end(); ++it)
+	// Blue side rectangle:
+	// (2,7) (2,13) (4,7) (4,13)
+	const int xMinBlue = 2;
+	const int xMaxBlue = 4;
+	const int yMin = 7;
+	const int yMax = 13;
+
+	const int mirrorX = 20; // red side anchor
+
+	int xMin = xMinBlue;
+	int xMax = xMaxBlue;
+
+	if (side == GameObject::SIDE_BLUE)
 	{
-		GameObject* go = (GameObject*)*it;
-		if (!go->active)
-			continue;
-		if (go->type == GameObject::GO_SPAWNMORTARAREA && go->side == side)
-		{
-			center = go->pos;
-		}
+		// Mirror across X
+		xMin = mirrorX - xMaxBlue; // 20 - 4 = 16
+		xMax = mirrorX - xMinBlue; // 20 - 2 = 18
 	}
-	float halfWidthTiles = 0.75;
-	float halfHeightTiles = 1.25;
-	// pick random tile offset within [-halfWidthTiles, +halfWidthTiles]
-	int gx = Math::RandIntMinMax(-halfWidthTiles, halfWidthTiles);
-	int gy = Math::RandIntMinMax(-halfHeightTiles, halfHeightTiles);
 
-	// convert tile offset → world space
-	float x = center.x + gx * m_gridSize + m_gridSize * 0.5f;
-	float y = center.y + gy * m_gridSize + m_gridSize * 0.5f;
+	// Safety ordering
+	if (xMin > xMax) std::swap(xMin, xMax);
 
-	return Vector3(x, y, center.z);
+	int x = xMin + rand() % (xMax - xMin + 1);
+	int y = yMin + rand() % (yMax - yMin + 1);
+
+	return MazePt{ x, y };
 }
 
 SceneMovement_Week03::ArmyStats SceneMovement_Week03::ComputeArmyStats(GameObject::SIDE mySide)
@@ -823,12 +831,21 @@ bool SceneMovement_Week03::DecideSpawn(GameObject* spawner)
 		bestType == GameObject::GO_SUPPORT ||
 		bestType == GameObject::GO_MECHANIC)
 	{
-		SpawnUnit(spawner->side, randomPos, bestType);
+		GameObject* go = SpawnUnit(spawner->side, randomPos, bestType);
+
+		go->curr.Set(spawner->curr.x, spawner->curr.y);
+		RevealAround(go, go->viewRange);
+		go->stack.push_back(go->curr); //triggers dfs
+		b_visited[Get1DIndex(spawner->curr.x, spawner->curr.y)] = true;
 	}
 	// Metal-based units → SpawnMetalUnit
 	else if (bestType == GameObject::GO_TANK)
 	{
-		SpawnMetalUnit(spawner->side, randomPos, bestType);
+		GameObject* go = SpawnMetalUnit(spawner->side, randomPos, bestType);
+		go->curr.Set(spawner->curr.x, spawner->curr.y);
+		RevealAround(go, go->viewRange);
+		go->stack.push_back(go->curr); //triggers dfs
+		b_visited[Get1DIndex(spawner->curr.x, spawner->curr.y)] = true;
 	}	
 	else if (bestType == GameObject::GO_MORTAR)
 	{
@@ -915,21 +932,60 @@ void SceneMovement_Week03::Update(double dt)
 	{
 		bSpaceState = true;
 		if (!gamePlaying) {
+
+			gamePlaying = true;
+
+
 			//Vector3 randomPos = RandomPointInRing(m_spawners[0]->pos, 3.75, 10);
-			GameObject* uni1 = SpawnMetalUnit(GameObject::SIDE_BLUE, Vector3(999,999,999), GameObject::GO_TANK);
-			uni1->curr.Set(15, 6);
+			GameObject* uni1 = SpawnUnit(GameObject::SIDE_RED, Vector3(999,999,999), GameObject::GO_MECHANIC);
+			uni1->curr.Set(4, 6);
 			RevealAround(uni1,uni1->viewRange);
 			uni1->stack.push_back(uni1->curr); //triggers dfs
-			b_visited[Get1DIndex(15, 6)] = true;
+			b_visited[Get1DIndex(4, 6)] = true;
 			ref = uni1;
-			//uni1 = SpawnMetalUnit(GameObject::SIDE_BLUE, Vector3(999, 999, 999), GameObject::GO_TANK);
-			//uni1->curr.Set(15, 5);
-			//RevealAround(uni1, uni1->viewRange);
-			//uni1->stack.push_back(uni1->curr); //triggers dfs
-			//b_visited[Get1DIndex(4, 5)] = true;
-			//ref = uni1;
+
+			uni1 = SpawnUnit(GameObject::SIDE_RED, Vector3(999, 999, 999), GameObject::GO_MECHANIC);
+			uni1->curr.Set(4, 13);
+			RevealAround(uni1, uni1->viewRange);
+			uni1->stack.push_back(uni1->curr); //triggers dfs
+			b_visited[Get1DIndex(4, 13)] = true;
+			ref = uni1;
 
 			uni1 = SpawnUnit(GameObject::SIDE_BLUE, Vector3(999, 999, 999), GameObject::GO_MECHANIC);
+			uni1->curr.Set(15, 13);
+			RevealAround(uni1, uni1->viewRange);
+			uni1->stack.push_back(uni1->curr); //triggers dfs
+			b_visited[Get1DIndex(15, 13)] = true;
+			ref = uni1;
+
+			uni1 = SpawnUnit(GameObject::SIDE_BLUE, Vector3(999, 999, 999), GameObject::GO_MECHANIC);
+			uni1->curr.Set(15, 6);
+			RevealAround(uni1, uni1->viewRange);
+			uni1->stack.push_back(uni1->curr); //triggers dfs
+			b_visited[Get1DIndex(15, 6)] = true;
+
+			uni1 = SpawnUnit(GameObject::SIDE_RED, Vector3(999, 999, 999), GameObject::GO_ATTACKER);
+			uni1->curr.Set(4, 6);
+			RevealAround(uni1, uni1->viewRange);
+			uni1->stack.push_back(uni1->curr); //triggers dfs
+			b_visited[Get1DIndex(4, 6)] = true;
+			ref = uni1;
+
+			uni1 = SpawnUnit(GameObject::SIDE_RED, Vector3(999, 999, 999), GameObject::GO_ATTACKER);
+			uni1->curr.Set(4, 13);
+			RevealAround(uni1, uni1->viewRange);
+			uni1->stack.push_back(uni1->curr); //triggers dfs
+			b_visited[Get1DIndex(4, 13)] = true;
+			ref = uni1;
+
+			uni1 = SpawnUnit(GameObject::SIDE_BLUE, Vector3(999, 999, 999), GameObject::GO_ATTACKER);
+			uni1->curr.Set(15, 13);
+			RevealAround(uni1, uni1->viewRange);
+			uni1->stack.push_back(uni1->curr); //triggers dfs
+			b_visited[Get1DIndex(15, 13)] = true;
+			ref = uni1;
+
+			uni1 = SpawnUnit(GameObject::SIDE_BLUE, Vector3(999, 999, 999), GameObject::GO_ATTACKER);
 			uni1->curr.Set(15, 6);
 			RevealAround(uni1, uni1->viewRange);
 			uni1->stack.push_back(uni1->curr); //triggers dfs
@@ -954,8 +1010,8 @@ void SceneMovement_Week03::Update(double dt)
 		bVState = true;
 
 		for (GameObject* go : m_goList)
-			if (go->active && go->type == GameObject::GO_TANK)
-				go->health -= 20;
+			if (go->active && go->type == GameObject::GO_MECHANIC)
+				go->sm->SetNextState("Building");
 		//Vector3 randomPos = RandomPointInRing(m_spawners[2]->pos, 3.75, 10);
 		//SpawnGrid3x3(GameObject::SIDE_RED, randomPos, GameObject::GO_ATTACKER);
 
@@ -1669,7 +1725,7 @@ void SceneMovement_Week03::Update(double dt)
 	}
 	for (int i = 0; i < m_goList.size(); i++) {
 		if (!m_goList[i]->active) continue;
-		if (m_goList[i]->type == GameObject::GO_SUPPORT)
+		if (m_goList[i]->type == GameObject::GO_TANK)
 			std::cout << "2 " << m_goList[i]->health << std::endl;
 	}
 	static constexpr float TURN_TIME = 0.5f;
@@ -1688,6 +1744,7 @@ void SceneMovement_Week03::Update(double dt)
 		// ---- PHASE 1: PRE-REVEAL (sense before moving) ----
 		for (GameObject* go : m_goList)
 		{
+			if (gamePlaying == false) break;
 			if (go->type == GameObject::GO_SPAWNMORTARAREA) continue;
 			if (go->type == GameObject::GO_MAINBASE) continue;
 			if (go->type == GameObject::GO_SPAWNER) continue;
@@ -1702,8 +1759,10 @@ void SceneMovement_Week03::Update(double dt)
 		}
 
 		// ---- MOVE PHASE (only this side) ----
-		for (GameObject* go : m_goList)
+		for (int i = 0; i < m_goList.size(); ++i)
 		{
+			if (gamePlaying == false) break;
+			GameObject* go = m_goList[i];
 			if (go->type == GameObject::GO_SPAWNMORTARAREA) continue;
 			if (!go->active) continue;
 			if (go->side != sideThisTurn) continue;
@@ -2119,14 +2178,14 @@ void SceneMovement_Week03::Update(double dt)
 
 				if (go->panicking)
 				{
-					//MessageWRU msgCheckMech = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_MECHANIC_HEAL, 200.0f);
-					//Handle(&msgCheckMech);
-					//if (go->external != NULL) {
-					//	if (go->external->active) {
-					//		MessageAskHelp msgAskHelp = MessageAskHelp(go);
-					//		go->external->Handle(&msgAskHelp);
-					//	}
-					//}
+					MessageWRU msgCheckMech = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_MECHANIC_HEAL, 200.0f);
+					Handle(&msgCheckMech);
+					if (go->external != NULL) {
+						if (go->external->active) {
+							MessageAskHelp msgAskHelp = MessageAskHelp(go);
+							go->external->Handle(&msgAskHelp);
+						}
+					}
 				}
 				if (go->atkTarget != NULL && go->atkTarget->active)
 				{
@@ -2149,25 +2208,148 @@ void SceneMovement_Week03::Update(double dt)
 				break;
 			case GameObject::GO_MECHANIC:
 				if (go->sm->GetCurrentState() == "Healthy") {
-					//if (go->nearest == NULL || !go->nearest->active) {
-					//	MessageWRU msgCheckSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200.0f);
-					//	Handle(&msgCheckSpawner);
-					//}
-					//else
-					//{
-					//	if (go->nearest->type == GameObject::GO_SPAWNER)
-					//	{
-					//		go->choice = MechanicNeedGet(go->nearest);
-					//	}
-					//	else { go->choice = 0; }
-					go->choice = 1;
-						MessageWRU msgCheckMaterial = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_MAT, 200);
-						Handle(&msgCheckMaterial);
-						if (go->ptTarget.x != 999)
-						{
-							std::cout << "FoundSomething";
+					if (go->nearest == NULL || !go->nearest->active) {
+						MessageWRU msgCheckSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200.0f);
+						Handle(&msgCheckSpawner);
+					}
+					else
+					{
+						if (go->gotten == false) { //havent gotten material yet
+							if (go->nearest->type == GameObject::GO_SPAWNER)
+							{
+								go->choice = MechanicNeedGet(go->nearest);
+							}
+							else { go->choice = 0; }
+							MessageWRU msgCheckMaterial = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_MAT, 200);
+							Handle(&msgCheckMaterial);
+							if (go->ptTarget.x != 999)
+							{
+								if (IsInAtkRange(go, go->ptTarget)) //if material is in range
+								{
+									int target = Get1DIndex(go->ptTarget.x, go->ptTarget.y);
+									while (go->currMoves > 0)
+									{
+										if (m_maze.m_grid[target] == Maze::TILE_EMPTY)
+										{
+											go->gotten = true;
+											go->currMoves = 0;
+											continue;
+										}
+										m_maze.m_gridHealth[target] -= 5;
+										go->gotten = true;
+										go->matAmount++;
+										go->currMoves--;
+									}
+								}
+								else //if material is not in range, go to it
+								{
+									PathFind(go, go->ptTarget, go->currMoves, go->atkRange);
+
+									if (IsInAtkRange(go, go->ptTarget))
+									{
+										int target = Get1DIndex(go->ptTarget.x, go->ptTarget.y);
+										while (go->currMoves > 0)
+										{
+											if (m_maze.m_grid[target] == Maze::TILE_EMPTY)
+											{
+												go->gotten = true;
+												go->currMoves = 0;
+												continue;
+											}
+											m_maze.m_gridHealth[target] -= 5;
+											go->gotten = true;
+											go->matAmount++;
+											go->currMoves--;
+											std::cout << m_maze.m_gridHealth[target] << std::endl;
+										}
+									}
+								}
+							}
 						}
-					//}
+						else { //go back to spawner
+							PathFind(go, go->nearest->currNodes[0], go->currMoves, 0);
+							if (IsInAtkRange(go,go->nearest->currNodes[0]))
+							{
+								go->gotten = false;
+								if (go->choice != 0)
+								{
+									if (go->choice == 1)
+									{
+										go->nearest->woodenLogs += go->matAmount;
+									}
+									else if (go->choice == 2)
+									{
+										go->nearest->metalParts += go->matAmount;
+									}
+									go->matAmount = 0;
+								}
+							}
+						}
+					}
+				}
+				else if (go->sm->GetCurrentState() == "Healing")
+				{
+					if (go->healTarget != NULL && go->healTarget->active)
+					{
+						if (!IsInAtkRange(go, go->healTarget))
+						{
+							PathFind(go, go->healTarget->curr, go->currMoves, go->atkRange);
+							if (go->currMoves > 0 && go->healTarget && go->healTarget->active && IsInAtkRange(go, go->healTarget))
+							{
+								go->HandleAction("");
+							}
+						}
+						else {
+							go->HandleAction("");
+						}
+					}
+				}
+				else if (go->sm->GetCurrentState() == "Hurt")
+				{
+					MessageWRU nearestSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200);
+					Handle(&nearestSpawner);
+					if (go->nearest == NULL) continue;
+					PathFind(go, go->nearest->currNodes[0], go->currMoves, 1);
+					for (MazePt node : go->nearest->currNodes)
+					{
+						if (node.x == go->curr.x && node.y == go->curr.y) {
+							while (go->currMoves > 0)
+							{
+								if (go->health <= 100) {
+									go->health += 7;
+								}
+								else { go->health = 100; }
+								go->currMoves -= 1;
+							}
+						}
+					}
+				}
+				else if (go->sm->GetCurrentState() == "Building")
+				{
+					if (go->ptTarget.x == 999 )
+						go->ptTarget = SpawnMortarArea(go->side);
+					else
+					{
+						if (IsInAtkRange(go, go->ptTarget))
+						{
+							PostOffice::GetInstance()->Send("Scene", new MessageSpawnMortar(go));
+							go->sm->SetNextState("Healthy");
+							go->currMoves -= go->useMoves;
+						}
+						else
+						{
+							PathFind(go, go->ptTarget, go->currMoves, 1);
+						}
+					}
+}
+				break;
+			case GameObject::GO_MORTAR:
+				if(go->atkTarget != NULL && go->atkTarget->active)
+				{
+					if (IsInAtkRange(go, go->atkTarget))
+					{
+						go->HandleAction("");
+					}
 				}
 				break;
 			}
@@ -2177,6 +2359,7 @@ void SceneMovement_Week03::Update(double dt)
 		// ---- REVEAL PHASE (only this side) ----
 		for (GameObject* go : m_goList)
 		{
+			if (gamePlaying == false) break;
 			if (go->type == GameObject::GO_SPAWNMORTARAREA) continue;
 			if (go->type == GameObject::GO_MAINBASE) continue;
 			if (go->type == GameObject::GO_SPAWNER) continue;
@@ -2219,6 +2402,27 @@ void SceneMovement_Week03::Update(double dt)
 			if (go->health <= 0) {
 
 				--m_objectCount;
+			}
+		}
+	}
+
+	//updating maze
+	for (int row = (int)m_noGrid - 1; row >= 0; --row)
+	{
+		for (int col = 0; col < (int)m_noGrid; ++col)
+		{
+			int t = m_maze.m_grid[row * m_noGrid + col];
+			int tHealth = m_maze.m_gridHealth[row * m_noGrid + col];
+			if (t == Maze::TILE_EMPTY || t == Maze::TILE_FOG) continue;
+			if (tHealth <= 0)
+			{
+				m_maze.m_grid[row * m_noGrid + col] = Maze::TILE_EMPTY;
+				m_maze.m_gridHealth[row * m_noGrid + col] = 0;
+				m_myGrid[row * m_noGrid + col] = Maze::TILE_EMPTY;
+				r_grid[row * m_noGrid + col] = Maze::TILE_FOG;
+				b_grid[row * m_noGrid + col] = Maze::TILE_FOG;
+				b_visited[row * m_noGrid + col] = false;
+				r_visited[row * m_noGrid + col] = false;
 			}
 		}
 	}
@@ -2414,7 +2618,6 @@ void SceneMovement_Week03::CountingGO()
 
 void SceneMovement_Week03::RenderGOBar(GameObject* go, float vertScale)
 {
-	if (go->type == GameObject::GO_SPAWNER) return;
 	float healthRatio = go->health / go->maxHealth;
 	float energyRatio = go->energy / go->maxEnergy;
 	float barWidth = go->scale.x / 1.8f;
@@ -2821,8 +3024,7 @@ void SceneMovement_Week03::RenderGO(GameObject* go)
 		break;
 	}
 	case GameObject::GO_MORTAR:
-	{
-		std::string state = go->sm->GetCurrentState();
+	{	std::string state = go->sm->GetCurrentState();
 		if (state == "Death") break;
 
 		bool isBlue = (go->side == GameObject::SIDE_BLUE);
@@ -2832,7 +3034,10 @@ void SceneMovement_Week03::RenderGO(GameObject* go)
 			geo = isBlue ? GEO_MORTAR1_PANIC : GEO_MORTAR2_PANIC;
 
 		modelStack.PushMatrix();
-		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
+		modelStack.Translate(m_gridOffset + m_gridSize * go->curr.x,
+			m_gridOffset + m_gridSize *
+			go->curr.y,
+			6);
 		modelStack.Rotate(180, 0, 0, 1);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
 		RenderMesh(meshList[geo], false);
@@ -3047,9 +3252,12 @@ bool SceneMovement_Week03::Handle(Message* message)
 
 	MessageSpawnMortar* msgSpawnMor = dynamic_cast<MessageSpawnMortar*>(message);
 	if (msgSpawnMor) {
-		SpawnMetalUnit(msgSpawnMor->go->side, msgSpawnMor->go->pos, GameObject::GO_MORTAR);
+		GameObject* mor = SpawnMetalUnit(msgSpawnMor->go->side, msgSpawnMor->go->pos, GameObject::GO_MORTAR);
+		mor->curr.Set(msgSpawnMor->go->ptTarget.x, msgSpawnMor->go->ptTarget.y);
+		RevealAround(mor, mor->viewRange);
+		mor->stack.push_back(mor->curr); //triggers dfs
+		b_visited[Get1DIndex(mor->curr.x, mor->curr.y)] = true;
 	}
-
 
 
 	MessageWRU* messageWRU = dynamic_cast<MessageWRU*>(message);
@@ -3064,6 +3272,7 @@ bool SceneMovement_Week03::Handle(Message* message)
 			MessageWRU::ALLYACTIVECOUNT,
 			MessageWRU::ATTACKERCOUNT,
 			MessageWRU::NEAREST_GOLDENORB,
+			MessageWRU::NEAREST_MAT,
 		};
 		bool keepNearest = false;
 		// Loop through the array
@@ -3081,6 +3290,9 @@ bool SceneMovement_Week03::Handle(Message* message)
 			go->nearest = nullptr;
 		}
 
+		GameObject* nearestSpawner = nullptr;
+
+		GameObject* mainBase = nullptr;
 		float nearestDistance = FLT_MAX;
 		float highestEnergy = FLT_MIN;
 
@@ -3090,19 +3302,29 @@ bool SceneMovement_Week03::Handle(Message* message)
 			if (!go2->active)
 				continue;
 
-			if (messageWRU->type == MessageWRU::NEAREST_SPAWNER && go2->type == GameObject::GO_SPAWNER && go->side == go2->side)
+			if (messageWRU->type == MessageWRU::NEAREST_SPAWNER && go->side == go2->side)
 			{
-				float distance = abs(go->curr.x - go2->curr.x) + abs(go->curr.y - go2->curr.y);
-				if (distance < messageWRU->threshold && distance < nearestDistance)
+				if (go2->type == GameObject::GO_MAINBASE && go2->active)
 				{
-					nearestDistance = distance;
-					go->nearest = go2;
+					mainBase = go2;
+				}
+
+				// only consider ALIVE spawners
+				if (go2->type == GameObject::GO_SPAWNER && go2->active)
+				{
+					float distance = std::abs(go->curr.x - go2->curr.x) + std::abs(go->curr.y - go2->curr.y);
+					if (distance < messageWRU->threshold && distance < nearestDistance)
+					{
+						nearestDistance = distance;
+						go->nearest = go2;
+					}
 				}
 			}
 			else if (messageWRU->type == MessageWRU::NEAREST_MAT)
 			{
 				Maze::TILE_CONTENT t = Maze::TILE_WOODENLOG;
-				if (go->choice == 2) { t == Maze::TILE_ORE; }
+				if (go->choice == 2) 
+				{ t = Maze::TILE_ORE; }
 
 				MazePt mat;
 
@@ -3399,7 +3621,10 @@ bool SceneMovement_Week03::Handle(Message* message)
 				}
 			}
 		}
-
+		if (messageWRU->type == MessageWRU::NEAREST_SPAWNER && go->nearest == nullptr)
+		{
+			go->nearest = mainBase;
+		}
 		return true;
 	}
 	return false;
@@ -3658,7 +3883,7 @@ void SceneMovement_Week03::Render()
 				RenderMesh(meshList[GEO_LOG], true);
 				break;
 			case Maze::TILE_EMPTY:
-				//RenderMesh(meshList[GEO_FLOOR], false);
+				RenderMesh(meshList[GEO_FLOOR], false);
 				break;
 			}
 			modelStack.PopMatrix();
@@ -4582,6 +4807,14 @@ bool SceneMovement_Week03::IsInAtkRange(GameObject* go, GameObject* target)
 	MazePt b = target->curr;   // if atkTarget is a GameObject*
 
 	return HeuristicManhattan(a, b) <= go->atkRange;
+}
+
+bool SceneMovement_Week03::IsInAtkRange(GameObject* go, MazePt& targetPt)
+{
+	if (go == nullptr) return false;
+
+	MazePt a = go->curr;
+	return HeuristicManhattan(a, targetPt) <= go->atkRange;
 }
 
 GameObject* SceneMovement_Week03::PickClosestVisibleTarget(GameObject* go)

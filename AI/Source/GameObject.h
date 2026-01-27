@@ -108,6 +108,8 @@ struct GameObject : public ObjectBase
 
 	int choice = 0;
 	MazePt ptTarget = MazePt(999,999);
+	bool gotten = false;
+	int matAmount = 0;
 
 	//for tank only
 	bool panicking = false;

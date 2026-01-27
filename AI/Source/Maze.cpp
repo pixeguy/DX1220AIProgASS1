@@ -25,15 +25,17 @@ void Maze::Generate(unsigned key, unsigned size, MazePt start, float wallLoad)
 	start.y = Math::Clamp(start.y, 0, (int)size - 1);
 	wallLoad = Math::Clamp(wallLoad, 0.f, 0.8f);
 
-	float oreLoad = 0.025f;
+	float oreLoad = 0.015f;
 	oreLoad = Math::Clamp(oreLoad, 0.f, 0.5f);
 
-	float woodLoad = 0.025f;
+	float woodLoad = 0.015f;
 	woodLoad = Math::Clamp(woodLoad, 0.f, 0.5f);
 
 	unsigned total = size * size;
 	m_grid.resize(total);
+	m_gridHealth.resize(total);
 	std::fill(m_grid.begin(), m_grid.end(), TILE_EMPTY);
+	std::fill(m_gridHealth.begin(), m_gridHealth.end(), 0);
 	unsigned startId = start.y * size + start.x;
 	srand(key);
 	for (int i = 0; i < (int)total * wallLoad;)
@@ -44,6 +46,7 @@ void Maze::Generate(unsigned key, unsigned size, MazePt start, float wallLoad)
 		if (m_grid[chosen] == TILE_EMPTY)
 		{
 			m_grid[chosen] = TILE_WALL;
+			m_gridHealth[chosen] = 100;
 			++i;
 		}
 	}
@@ -56,6 +59,7 @@ void Maze::Generate(unsigned key, unsigned size, MazePt start, float wallLoad)
 		if (m_grid[chosen] == TILE_EMPTY)
 		{
 			m_grid[chosen] = TILE_ORE;
+			m_gridHealth[chosen] = 100;
 			++i;
 		}
 	}
@@ -67,6 +71,7 @@ void Maze::Generate(unsigned key, unsigned size, MazePt start, float wallLoad)
 		if (m_grid[chosen] == TILE_EMPTY)
 		{
 			m_grid[chosen] = TILE_WOODENLOG;
+			m_gridHealth[chosen] = 100;
 			++i;
 		}
 	}

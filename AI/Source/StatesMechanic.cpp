@@ -21,6 +21,7 @@ void StateMechanicHealthy::Enter()
 	go->target = go->pos;
 	go->nearest = NULL;
 	go->actionSpeed = 0.06;
+	go->ptTarget = MazePt(999, 999);
 }
 
 void StateMechanicHealthy::Update(double dt)
@@ -41,17 +42,23 @@ void StateMechanicHealthy::Update(double dt)
 	}
 	if (go->steps >= 3)
 	{
+		/*go->matAmount = 0;
+		go->gotten = false;*/
 		//go->sm->SetNextState("Hiding");
 		//return;
 	}
 	if (go->health <= 40)
 	{
+		go->matAmount = 0;
+		go->gotten = false;
 		go->sm->SetNextState("Hurt");
 		return;
 	}
 	//go->sm->SetNextState("Building");
 	if(go->healTarget != NULL && go->healTarget->active == true)
 	{
+		go->matAmount = 0;
+		go->gotten = false;
 		go->sm->SetNextState("Healing");
 		return;
 	}
@@ -137,17 +144,17 @@ void StateMechanicHealing::Update(double dt)
 		go->sm->SetNextState("Death");
 		return;
 	}
-	if (go->specialTarget != NULL && go->specialTarget->active == true)
-	{
-		go->nearest = go->specialTarget;
-		go->sm->SetNextState("GoldenChase");
-		return;
-	}
-	if (go->steps >= 3)
-	{
-		go->sm->SetNextState("Hiding");
-		return;
-	}
+	//if (go->specialTarget != NULL && go->specialTarget->active == true)
+	//{
+	//	go->nearest = go->specialTarget;
+	//	go->sm->SetNextState("GoldenChase");
+	//	return;
+	//}
+	//if (go->steps >= 3)
+	//{
+	//	go->sm->SetNextState("Hiding");
+	//	return;
+	//}
 	if (go->health <= 40)
 	{
 		go->sm->SetNextState("Hurt");
@@ -186,19 +193,19 @@ void StateMechanicHealing::Update(double dt)
 		}
 	}
 
-	if (go->nearest) {
-		if ((go->nearest->pos - go->pos).Length() < m_gridSize * 3)
-		{
-			go->moving = false;
-			if (go->EnergyReduce(go->actionSpeed))
-			{
-				go->nearest->health += 2;
-			}
-		}
-		else {
-			go->moving = true;
-		}
-	}
+	//if (go->nearest) {
+	//	if ((go->nearest->pos - go->pos).Length() < m_gridSize * 3)
+	//	{
+	//		go->moving = false;
+	//		if (go->EnergyReduce(go->actionSpeed))
+	//		{
+	//			go->nearest->health += 2;
+	//		}
+	//	}
+	//	else {
+	//		go->moving = true;
+	//	}
+	//}
 }
 
 void StateMechanicHealing::Exit()
@@ -224,6 +231,7 @@ void StateMechanicBuilding::Enter()
 	go->nearest = NULL;
 	go->energy = 0;
 	go->normalTarget = Vector3(0, 0, 0);
+	go->ptTarget = MazePt(999, 999);
 }
 
 void StateMechanicBuilding::Update(double dt)
@@ -239,11 +247,11 @@ void StateMechanicBuilding::Update(double dt)
 		go->sm->SetNextState("GoldenChase");
 		return;
 	}
-	if (go->steps >= 3)
-	{
-		go->sm->SetNextState("Hiding");
-		return;
-	}
+	//if (go->steps >= 3)
+	//{
+	//	go->sm->SetNextState("Hiding");
+	//	return;
+	//}
 	if (go->health <= 40)
 	{
 		go->sm->SetNextState("Hurt");
@@ -267,21 +275,21 @@ void StateMechanicBuilding::Update(double dt)
 			go->moveDown = true;
 	}
 
-	float distance = 999;
-	distance = (go->pos - go->normalTarget).Length();
-	
-	if (distance < m_gridSize) //grid size is 5
-	{
-		go->moving = false;
-		if (go->EnergyReduce(0.05))
-		{
-			PostOffice::GetInstance()->Send("Scene", new MessageSpawnMortar(go));
-			go->sm->SetNextState("Healthy");
-		}
-	}
-	else {
-		go->moving = true;
-	}
+	//float distance = 999;
+	//distance = (go->pos - go->normalTarget).Length();
+	//
+	//if (distance < m_gridSize) //grid size is 5
+	//{
+	//	go->moving = false;
+	//	if (go->EnergyReduce(0.05))
+	//	{
+	//		PostOffice::GetInstance()->Send("Scene", new MessageSpawnMortar(go));
+	//		go->sm->SetNextState("Healthy");
+	//	}
+	//}
+	//else {
+	//	go->moving = true;
+	//}
 }
 
 void StateMechanicBuilding::Exit()
@@ -328,53 +336,53 @@ void StateMechanicHurt::Update(double dt)
 		go->sm->SetNextState("Hiding");
 		return;
 	}
-	if (go->nearest) {
-		go->moveLeft = go->moveRight = go->moveUp = go->moveDown = false;
-		float diffX = go->nearest->pos.x - go->pos.x;
-		float diffY = go->nearest->pos.y - go->pos.y;
-		if (fabs(diffX) > fabs(diffY))
-		{
-			if (diffX > 0)
-				go->moveRight = true;
-			else
-				go->moveLeft = true;
-		}
-		else
-		{
-			if (diffY > 0)
-				go->moveUp = true;
-			else
-				go->moveDown = true;
-		}
-	}
+	//if (go->nearest) {
+	//	go->moveLeft = go->moveRight = go->moveUp = go->moveDown = false;
+	//	float diffX = go->nearest->pos.x - go->pos.x;
+	//	float diffY = go->nearest->pos.y - go->pos.y;
+	//	if (fabs(diffX) > fabs(diffY))
+	//	{
+	//		if (diffX > 0)
+	//			go->moveRight = true;
+	//		else
+	//			go->moveLeft = true;
+	//	}
+	//	else
+	//	{
+	//		if (diffY > 0)
+	//			go->moveUp = true;
+	//		else
+	//			go->moveDown = true;
+	//	}
+	//}
 
-	//if close enough to a spawner
-	float distance = 999;
-	if (go->nearest != NULL)
-	{
-		distance = (go->pos - go->nearest->pos).Length();
-	}
-	if (distance < 5) //grid size is 5
-	{
-		GameObject* go2 = go->nearest;
-		go->moving = false;
-		if (go->EnergyReduce(go->actionSpeed))
-		{
-			if (go->choice != 0)
-			{
-				if (go->choice == 1)
-				{
-					go->nearest->woodenLogs++;
-				}
-				else if (go->choice == 2)
-				{
-					go->nearest->metalParts++;
-				}
-			}
-		}
-	}
-	else { go->moving = true;
-	}
+	////if close enough to a spawner
+	//float distance = 999;
+	//if (go->nearest != NULL)
+	//{
+	//	distance = (go->pos - go->nearest->pos).Length();
+	//}
+	//if (distance < 5) //grid size is 5
+	//{
+	//	GameObject* go2 = go->nearest;
+	//	go->moving = false;
+	//	if (go->EnergyReduce(go->actionSpeed))
+	//	{
+	//		if (go->choice != 0)
+	//		{
+	//			if (go->choice == 1)
+	//			{
+	//				go->nearest->woodenLogs++;
+	//			}
+	//			else if (go->choice == 2)
+	//			{
+	//				go->nearest->metalParts++;
+	//			}
+	//		}
+	//	}
+	//}
+	//else { go->moving = true;
+	//}
 }
 
 void StateMechanicHurt::Exit()

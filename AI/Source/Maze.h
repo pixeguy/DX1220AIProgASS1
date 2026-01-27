@@ -50,6 +50,7 @@ public:
 	bool IsPassable(Maze::TILE_CONTENT tile);
 	bool NonMats(Maze::TILE_CONTENT tile);
 	std::vector<TILE_CONTENT> m_grid;
+	std::vector<int> m_gridHealth;
 
 private:
 	//Do not make these public

@@ -108,7 +108,7 @@ void GameObject::HandleAction(std::string e)
 		}
 		break;
 	case GO_SUPPORT:
-		while (currMoves > 0) {
+		while (currMoves > 0 && healTarget && healTarget->active) {
 			if (sm->GetCurrentState() == "Healing")
 				if (healTarget->health <= 100) {
 					healTarget->health += 5;
@@ -118,43 +118,65 @@ void GameObject::HandleAction(std::string e)
 				if (healTarget->health <= 100) {
 					healTarget->health += 10;
 				}
-				else { healTarget->health = 100; }			
+				else { healTarget->health = 100; }
 			currMoves -= 1;
 		}
 	case GO_TANK:
-		if (sm->GetCurrentState() == "Suicide") {
+		if (sm->GetCurrentState() == "Suicide") { //suicide running towards enemy
 			for (GameObject* go : hits) {
-				go->lastAttacker = this;
-				go->health -= 12;
-				std::cout << "got hit" << std::endl;
+				if (go != NULL && go->active) {
+					go->lastAttacker = this;
+					go->health -= 12;
+					std::cout << "got hit" << std::endl;
+				}
 			}
 			hits.clear();
 			nearest = NULL;
 			active = false;
 			type = GameObject::GO_NONE;
 		}
-		else
+		else //normal hitting, decide how big impact depending on what im targetting
 		{
-			if (atkTarget->type == GO_SPAWNER || atkTarget->type == GO_MAINBASE) {
-				while (currMoves > 0 && atkTarget && atkTarget->active)
-				{
-					for (GameObject* go : hits) {
-						go->lastAttacker = this;
-						go->health -= 10;
-						std::cout << "got hit" << std::endl;
+			if (atkTarget && atkTarget->active) {
+				if (atkTarget->type == GO_SPAWNER || atkTarget->type == GO_MAINBASE) {
+					while (currMoves > 0)
+					{
+						for (GameObject* go : hits) {
+							go->lastAttacker = this;
+							go->health -= 10;
+							std::cout << "got hit" << std::endl;
+						}
+						currMoves--;
 					}
-					currMoves--;
+					hits.clear();
 				}
-				hits.clear();
-			}
-			else {
-				while (currMoves > 0 && atkTarget && atkTarget->active)
-				{
-					atkTarget->lastAttacker = this;
-					atkTarget->health -= 10;
-					currMoves--;
+				else {
+					while (currMoves > 0)
+					{
+						atkTarget->lastAttacker = this;
+						atkTarget->health -= 10;
+						currMoves--;
+					}
 				}
 			}
+		}
+		break;
+	case GO_MECHANIC:
+		while (currMoves > 0 && healTarget && healTarget->active) {
+			if (sm->GetCurrentState() == "Healing")
+				if (healTarget->health <= 100) {
+					healTarget->health += 5;
+				}
+				else { healTarget->health = 100; }
+			currMoves -= 1;
+		}
+		break;
+	case GO_MORTAR:
+		while (currMoves > 0 && atkTarget != NULL && atkTarget->active)
+		{
+			atkTarget->lastAttacker = this;
+			atkTarget->health -= 15;
+			currMoves--;
 		}
 		break;
 	}

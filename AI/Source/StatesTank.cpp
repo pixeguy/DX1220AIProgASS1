@@ -26,7 +26,7 @@ void StateTankHealthy::Enter()
 
 void StateTankHealthy::Update(double dt)
 {
-	if (go->health < 40)
+	if (go->health < 60)
 	{
 		go->actionSpeed = 0.19f;
 		go->panicking = true;
