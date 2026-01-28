@@ -66,6 +66,8 @@ public:
 	ArmyStats ComputeArmyStats(GameObject::SIDE mySide);
 	bool DecideSpawn(GameObject* spawner);
 
+	bool DecideEvent();
+
 	float timeCounter = 0;
 
 	// material thresholds
@@ -101,6 +103,12 @@ public:
 	bool goldenEvent = false;
 
 protected:
+	int turnSinceEvent = 0;
+
+	int maxTurns = 10;
+	int minTurns = 4;
+	int randTurns = 0;
+
 	std::vector<GameObject*> m_projList;
 	std::vector<GameObject*> m_spawners;
 	std::vector<GameObject*> m_goList;

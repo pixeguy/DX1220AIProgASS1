@@ -110,6 +110,8 @@ void SceneMovement_Week03::Init()
 
 	//DFS(m_start);
 	CarveUntilNoFog();
+
+	randTurns = 2;// Math::RandIntMinMax(minTurns, maxTurns);
 }
 
 GameObject* SceneMovement_Week03::FetchGO(GameObject::GAMEOBJECT_TYPE type)
@@ -852,6 +854,13 @@ bool SceneMovement_Week03::DecideSpawn(GameObject* spawner)
 		MessageMechanicBuild msg = MessageMechanicBuild(spawner);
 		Handle(&msg);
 	}
+	return true;
+}
+
+bool SceneMovement_Week03::DecideEvent()
+{
+	m_maze.ConvertWallsToResources(m_mazeKey, m_start, 0.05f, 0.05f);
+	m_myGrid = m_maze.m_grid;
 	return true;
 }
 
@@ -1723,11 +1732,11 @@ void SceneMovement_Week03::Update(double dt)
 		}
 		//std::cout << proj->target << std::endl;
 	}
-	for (int i = 0; i < m_goList.size(); i++) {
-		if (!m_goList[i]->active) continue;
-		if (m_goList[i]->type == GameObject::GO_TANK)
-			std::cout << "2 " << m_goList[i]->health << std::endl;
-	}
+	//for (int i = 0; i < m_goList.size(); i++) {
+	//	if (!m_goList[i]->active) continue;
+	//	if (m_goList[i]->type == GameObject::GO_TANK)
+	//		std::cout << "2 " << m_goList[i]->health << std::endl;
+	//}
 	static constexpr float TURN_TIME = 0.5f;
 	static float timer = 0.f;
 	// 6.	SceneTurn::Update - add code to support a turn-based system. Read this pseudo codes and try to implement on your own. The solution will be provided during lesson time.
@@ -1737,9 +1746,21 @@ void SceneMovement_Week03::Update(double dt)
 	{
 		timer = 0.f;
 
-		if (m_activeSide == GameObject::SIDE_RED) ++m_turn;
+		if (m_activeSide == GameObject::SIDE_RED)
+		{
+			m_turn++;
+			turnSinceEvent++;
+		}
 		 
 		GameObject::SIDE sideThisTurn = m_activeSide;
+
+		if (turnSinceEvent == randTurns)
+		{
+			DecideEvent();
+			turnSinceEvent = 0;
+			randTurns = 2;// Math::RandIntMinMax(minTurns, maxTurns);
+		}
+
 
 		// ---- PHASE 1: PRE-REVEAL (sense before moving) ----
 		for (GameObject* go : m_goList)

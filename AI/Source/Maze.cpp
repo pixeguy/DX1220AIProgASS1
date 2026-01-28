@@ -92,6 +92,74 @@ void Maze::Generate(unsigned key, unsigned size, MazePt start, float wallLoad)
 	m_numMove = 0;
 }
 
+void Maze::ConvertWallsToResources(unsigned key, MazePt start,
+	float oreFromWallsLoad, float woodFromWallsLoad)
+{
+	if (m_size == 0 || m_grid.empty()) return;
+
+	start.x = Math::Clamp(start.x, 0, (int)m_size - 1);
+	start.y = Math::Clamp(start.y, 0, (int)m_size - 1);
+	unsigned startId = start.y * m_size + start.x;
+
+	oreFromWallsLoad = Math::Clamp(oreFromWallsLoad, 0.f, 1.f);
+	woodFromWallsLoad = Math::Clamp(woodFromWallsLoad, 0.f, 1.f);
+
+	// Collect all wall indices (excluding start)
+	std::vector<unsigned> wallIds;
+	wallIds.reserve(m_grid.size());
+	for (unsigned i = 0; i < (unsigned)m_grid.size(); ++i)
+	{
+		if (i == startId) continue;
+		if (m_grid[i] == TILE_WALL)
+			wallIds.push_back(i);
+	}
+
+	if (wallIds.empty()) return;
+
+	// Shuffle walls (so the converted ones are random but no repeats)
+	srand(key);
+	for (int i = (int)wallIds.size() - 1; i > 0; --i)
+	{
+		int j = rand() % (i + 1);
+		std::swap(wallIds[i], wallIds[j]);
+	}
+
+	int wallCount = (int)wallIds.size();
+	int oreCount = (int)(wallCount * oreFromWallsLoad);
+	int woodCount = (int)(wallCount * woodFromWallsLoad);
+
+	// Safety: can't convert more than we have
+	if (oreCount + woodCount > wallCount)
+	{
+		// scale down proportionally (simple + safe)
+		float sum = oreFromWallsLoad + woodFromWallsLoad;
+		if (sum > 0.f)
+		{
+			oreCount = (int)(wallCount * (oreFromWallsLoad / sum));
+			woodCount = (int)(wallCount * (woodFromWallsLoad / sum));
+		}
+		// final clamp
+		if (oreCount + woodCount > wallCount)
+			woodCount = wallCount - oreCount;
+	}
+
+	// First chunk -> ore
+	for (int k = 0; k < oreCount; ++k)
+	{
+		unsigned idx = wallIds[k];
+		m_grid[idx] = TILE_ORE;
+		m_gridHealth[idx] = 100;
+	}
+
+	// Next chunk -> wood
+	for (int k = oreCount; k < oreCount + woodCount; ++k)
+	{
+		unsigned idx = wallIds[k];
+		m_grid[idx] = TILE_WOODENLOG;
+		m_gridHealth[idx] = 100;
+	}
+}
+
 unsigned Maze::GetKey()
 {
 	return m_key;

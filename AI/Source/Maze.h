@@ -38,6 +38,7 @@ public:
 	Maze();
 	~Maze();
 	void Generate(unsigned key, unsigned size, MazePt start, float wallLoad);
+	void ConvertWallsToResources(unsigned key, MazePt start, float oreFromWallsLoad, float woodFromWallsLoad);
 	bool Move(DIRECTION direction);
 	unsigned GetKey();
 	unsigned GetSize();
