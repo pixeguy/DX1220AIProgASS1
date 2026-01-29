@@ -57,18 +57,12 @@ void SceneMovement_Week03::Init()
 	auto* rBase = InitMainBase(GameObject::SIDE_RED, Vector3(0 + m_gridSize, m_worldHeight / 2, 0.f));
 	FillCurrNodes2x2FromWorld(rBase);
 
-	float yPull = 5;
-	auto* bs1 = InitSpawner(GameObject::SIDE_BLUE, Vector3((m_worldWidth / 4) * 3, (m_worldHeight / 4) + yPull, 0.f));
+	float yPull = 0;
+	auto* bs1 = InitSpawner(GameObject::SIDE_BLUE, Vector3((m_worldWidth / 4) * 3, (m_worldHeight / 2) + yPull, 0.f));
 	FillCurrNodes2x2FromWorld(bs1);
 
-	auto* bs2 = InitSpawner(GameObject::SIDE_BLUE, Vector3((m_worldWidth / 4) * 3, (m_worldHeight / 4) * 3 - yPull, 0.f));
-	FillCurrNodes2x2FromWorld(bs2);
-
-	auto* rs1 = InitSpawner(GameObject::SIDE_RED, Vector3((m_worldWidth / 4), (m_worldHeight / 4) + yPull, 0.f));
+	auto* rs1 = InitSpawner(GameObject::SIDE_RED, Vector3((m_worldWidth / 4), (m_worldHeight / 2) + yPull, 0.f));
 	FillCurrNodes2x2FromWorld(rs1);
-
-	auto* rs2 = InitSpawner(GameObject::SIDE_RED, Vector3((m_worldWidth / 4), (m_worldHeight / 4) * 3 - yPull, 0.f));
-	FillCurrNodes2x2FromWorld(rs2);
 
 	InitMortarSpawner(GameObject::SIDE_BLUE, Vector3((m_worldWidth / 2) + m_gridSize * 3, (m_worldHeight / 2), 0.f));
 	InitMortarSpawner(GameObject::SIDE_RED, Vector3((m_worldWidth / 2) - m_gridSize * 3, (m_worldHeight / 2), 0.f));
@@ -83,8 +77,7 @@ void SceneMovement_Week03::Init()
 
 	m_start.Set(0, 0);
 	m_mazeKey = 2;
-	m_wallLoad = 0.3f;
-	m_maze.Generate(m_mazeKey, m_noGrid, m_start, m_wallLoad); //Generate new maze
+	m_maze.Generate(m_mazeKey, m_noGrid, m_start); //Generate new maze
 	m_myGrid.resize(m_noGrid * m_noGrid);
 	visGrid.resize(m_noGrid * m_noGrid);
 	m_visited.resize(m_noGrid * m_noGrid);
@@ -102,16 +95,15 @@ void SceneMovement_Week03::Init()
 	m_myGrid[m_start.y * m_noGrid + m_start.x] = Maze::TILE_GRASS;
 
 	Carve2x2Both(0, 9, Maze::TILE_GRASS);
-	Carve2x2Both(4, 5, Maze::TILE_GRASS);
-	Carve2x2Both(4, 13, Maze::TILE_GRASS);
+	Carve2x2Both(4, 9, Maze::TILE_GRASS);
 
 	Carve2x2Both(18, 9, Maze::TILE_GRASS);
-	Carve2x2Both(14, 5, Maze::TILE_GRASS);
-	Carve2x2Both(14, 13, Maze::TILE_GRASS);
+	Carve2x2Both(14, 9, Maze::TILE_GRASS);
 
 	//DFS(m_start);
 	CarveUntilNoFog();
 
+	turnsToNextWeather = SetTurnsToNextWeather();
 	randTurns = 2;// Math::RandIntMinMax(minTurns, maxTurns);
 }
 
@@ -273,8 +265,8 @@ GameObject* SceneMovement_Week03::InitMainBase(GameObject::SIDE side, Vector3 po
 	mainBase->sm->SetNextState("Healthy");
 	mainBase->maxEnergy = 100;
 	mainBase->energy = 0;
-	mainBase->maxHealth = 900;
-	mainBase->health = 900;
+	mainBase->maxHealth = 350;
+	mainBase->health = 350;
 	mainBase->moving = false;
 	mainBase->viewRange = 0;
 	mainBase->atkRange = 0;
@@ -308,8 +300,8 @@ GameObject* SceneMovement_Week03::InitSpawner(GameObject::SIDE side, Vector3 pos
 	float random = Math::RandFloatMinMax(0.f, 25.f);
 	spawner->energy = random;
 	spawner->maxEnergy = 100;
-	spawner->maxHealth = 700;
-	spawner->health = 700;
+	spawner->maxHealth = 350;
+	spawner->health = 350;
 	spawner->sm->SetNextState("Healthy");
 	spawner->woodenLogs = spawner->metalParts = 0;
 	spawner->moving = false;
@@ -990,58 +982,32 @@ void SceneMovement_Week03::Update(double dt)
 
 			//Vector3 randomPos = RandomPointInRing(m_spawners[0]->pos, 3.75, 10);
 			GameObject* uni1 = SpawnUnit(GameObject::SIDE_RED, Vector3(999,999,999), GameObject::GO_MECHANIC);
-			uni1->curr.Set(4, 6);
+			uni1->curr.Set(4, 9);
 			RevealAround(uni1,uni1->viewRange);
 			uni1->stack.push_back(uni1->curr); //triggers dfs
-			b_visited[Get1DIndex(4, 6)] = true;
-			ref = uni1;
-
-			uni1 = SpawnUnit(GameObject::SIDE_RED, Vector3(999, 999, 999), GameObject::GO_MECHANIC);
-			uni1->curr.Set(4, 13);
-			RevealAround(uni1, uni1->viewRange);
-			uni1->stack.push_back(uni1->curr); //triggers dfs
-			b_visited[Get1DIndex(4, 13)] = true;
+			b_visited[Get1DIndex(4, 9)] = true;
 			ref = uni1;
 
 			uni1 = SpawnUnit(GameObject::SIDE_BLUE, Vector3(999, 999, 999), GameObject::GO_MECHANIC);
-			uni1->curr.Set(15, 13);
+			uni1->curr.Set(15, 9);
 			RevealAround(uni1, uni1->viewRange);
 			uni1->stack.push_back(uni1->curr); //triggers dfs
-			b_visited[Get1DIndex(15, 13)] = true;
-			ref = uni1;
-
-			uni1 = SpawnUnit(GameObject::SIDE_BLUE, Vector3(999, 999, 999), GameObject::GO_MECHANIC);
-			uni1->curr.Set(15, 6);
-			RevealAround(uni1, uni1->viewRange);
-			uni1->stack.push_back(uni1->curr); //triggers dfs
-			b_visited[Get1DIndex(15, 6)] = true;
-
-			uni1 = SpawnUnit(GameObject::SIDE_RED, Vector3(999, 999, 999), GameObject::GO_ATTACKER);
-			uni1->curr.Set(4, 6);
-			RevealAround(uni1, uni1->viewRange);
-			uni1->stack.push_back(uni1->curr); //triggers dfs
-			b_visited[Get1DIndex(4, 6)] = true;
+			b_visited[Get1DIndex(15, 9)] = true;
 			ref = uni1;
 
 			uni1 = SpawnUnit(GameObject::SIDE_RED, Vector3(999, 999, 999), GameObject::GO_ATTACKER);
-			uni1->curr.Set(4, 13);
+			uni1->curr.Set(4, 9);
 			RevealAround(uni1, uni1->viewRange);
 			uni1->stack.push_back(uni1->curr); //triggers dfs
-			b_visited[Get1DIndex(4, 13)] = true;
+			b_visited[Get1DIndex(4, 9)] = true;
 			ref = uni1;
 
 			uni1 = SpawnUnit(GameObject::SIDE_BLUE, Vector3(999, 999, 999), GameObject::GO_ATTACKER);
-			uni1->curr.Set(15, 13);
+			uni1->curr.Set(15, 9);
 			RevealAround(uni1, uni1->viewRange);
 			uni1->stack.push_back(uni1->curr); //triggers dfs
-			b_visited[Get1DIndex(15, 13)] = true;
+			b_visited[Get1DIndex(15, 9)] = true;
 			ref = uni1;
-
-			uni1 = SpawnUnit(GameObject::SIDE_BLUE, Vector3(999, 999, 999), GameObject::GO_ATTACKER);
-			uni1->curr.Set(15, 6);
-			RevealAround(uni1, uni1->viewRange);
-			uni1->stack.push_back(uni1->curr); //triggers dfs
-			b_visited[Get1DIndex(15, 6)] = true;
 			//randomPos = RandomPointInRing(m_spawners[1]->pos, 3.75, 10);
 			//uni1 = SpawnUnit(GameObject::SIDE_BLUE, randomPos, GameObject::GO_MECHANIC);
 			//randomPos = RandomPointInRing(m_spawners[2]->pos, 3.75, 10);
@@ -1943,7 +1909,7 @@ void SceneMovement_Week03::TurnSystem(float dt)
 				{
 					GameObject* spawner = *it;
 					if (spawner->active == false) { continue; }
-					spawner->energy += 3.5; // dont wanna use EnergyReduce function, i want energy to stop at max
+					spawner->energy += 6; // dont wanna use EnergyReduce function, i want energy to stop at max
 
 					if (spawner->energy >= spawner->maxEnergy)
 					{
@@ -2576,6 +2542,7 @@ void SceneMovement_Week03::TurnSystem(float dt)
 				m_unitsActedThisRound = 0;
 				m_turn++;
 				turnSinceEvent++;
+				turnsToNextWeather--;
 			}
 
 			if (turnSinceEvent == randTurns)
@@ -2584,11 +2551,18 @@ void SceneMovement_Week03::TurnSystem(float dt)
 				turnSinceEvent = 0;
 				randTurns = 2;// Math::RandIntMinMax(minTurns, maxTurns);
 			}
+
+			if (turnsToNextWeather == 0)
+			{
+				SetNextWeather();
+				turnsToNextWeather = SetTurnsToNextWeather();
+			}
 			m_currentUnit = nullptr;
 			currentStage = PRE;
 			break;
 		}
 	}
+	std::cout << currentWeather << std::endl;
 }
 
 std::string GetTimeString(float timeCounter)
@@ -3948,9 +3922,9 @@ void SceneMovement_Week03::Render()
 			modelStack.Scale(m_gridSize, m_gridSize, m_gridSize);
 			modelStack.Rotate(180, 0, 0, 1);
 
+			std::vector<Maze::TILE_CONTENT> grid = m_currentUnit == nullptr ? m_maze.m_grid : visGrid;
 
-
-			switch (visGrid[row * m_noGrid + col])
+			switch (grid[row * m_noGrid + col])
 			{
 			case Maze::TILE_WALL:
 				RenderMesh(meshList[GEO_WALL], false);
@@ -3970,6 +3944,10 @@ void SceneMovement_Week03::Render()
 			case Maze::TILE_GRASS:
 				meshList[GEO_GRASS]->material.kAmbient.Set(1.f, 1.f, 1.f);
 				RenderMesh(meshList[GEO_GRASS], true);
+				break;
+			case Maze::TILE_WATER:
+				meshList[GEO_WATER]->material.kAmbient.Set(1.f, 1.f, 1.f);
+				RenderMesh(meshList[GEO_WATER], true);
 				break;
 			case Maze::TILE_SNOW:
 				meshList[GEO_SNOW]->material.kAmbient.Set(1.f, 1.f, 1.f);
@@ -4038,6 +4016,10 @@ void SceneMovement_Week03::Render()
 			case Maze::TILE_GRASS:
 				meshList[GEO_GRASS]->material.kAmbient.Set(1.f, 1.f, 1.f);
 				RenderMesh(meshList[GEO_GRASS], true);
+				break;
+			case Maze::TILE_WATER:
+				meshList[GEO_WATER]->material.kAmbient.Set(1.f, 1.f, 1.f);
+				RenderMesh(meshList[GEO_WATER], true);
 				break;
 			case Maze::TILE_SNOW:
 				meshList[GEO_SNOW]->material.kAmbient.Set(1.f, 1.f, 1.f);
@@ -5003,6 +4985,44 @@ bool SceneMovement_Week03::IsVisibleToCurrentUnit(GameObject* go)
 
 	int idx = Get1DIndex(go->curr.x, go->curr.y);
 	return visGrid[idx] != 0;
+}
+
+int SceneMovement_Week03::SetTurnsToNextWeather()
+{
+	int turns = 0;
+	switch (currentWeather)
+	{
+	case FOREST: turns = 4; break;
+	case MIDWINTER: turns = 2; break;
+	case WINTER: turns = 4; break;
+	case MIDWINTERFOREST: turns = 2; break;
+	case MIDDESERT: turns = 3; break;
+	case DESERT: turns = 3; break;
+	case MIDDESERTFOREST: turns = 2; break;
+	}
+	return turns += Math::RandIntMinMax(-1,1);
+}
+
+void SceneMovement_Week03::SetNextWeather()
+{
+	std::vector<int> changed;
+	switch (currentWeather)
+	{
+	case FOREST: currentWeather = MIDWINTER; m_maze.ConvertTerrainForWinter(m_mazeKey, m_start, changed, 0.4, 0.05, 0.05, 0.35); break;
+	case MIDWINTER: currentWeather = WINTER; m_maze.ConvertTerrainForWinter(m_mazeKey, m_start, changed, 1, 0.05, 0.05, 1);  break;
+	case WINTER: currentWeather = MIDWINTERFOREST; m_maze.RevertBiomeOverlayToForest(m_mazeKey, m_start, changed, Maze::TILE_SNOW, 0.55, 0.05, Maze::TILE_ICE, 0.60);  break;
+	case MIDWINTERFOREST: currentWeather = FOREST; m_maze.RevertBiomeOverlayToForest(m_mazeKey, m_start, changed, Maze::TILE_SNOW, 1, 0.1, Maze::TILE_ICE, 1);  break;
+	}
+	ResetTilesToFog(changed);
+}
+
+void SceneMovement_Week03::ResetTilesToFog(std::vector<int>& changedTiles)
+{
+	for (unsigned idx : changedTiles)
+	{
+		b_grid[idx] = Maze::TILE_FOG;
+		r_grid[idx] = Maze::TILE_FOG;
+	}
 }
 
 void SceneMovement_Week03::Exit()

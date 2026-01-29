@@ -42,7 +42,7 @@ void SceneMaze::Init()
 	// Exercise Week 07
 	m_start.Set(0, 0);
 	m_mazeKey = 0;
-	m_maze.Generate(m_mazeKey, m_noGrid, m_start, 0.3);
+	m_maze.Generate(m_mazeKey, m_noGrid, m_start);
 	m_myGrid.resize(m_noGrid * m_noGrid);
 	m_visited.resize(m_noGrid * m_noGrid);
 	m_previous.resize(m_noGrid * m_noGrid);

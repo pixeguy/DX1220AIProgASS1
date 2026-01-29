@@ -63,6 +63,9 @@ public:
 	};
 	void CalcNeededUnits();
 	bool IsVisibleToCurrentUnit(GameObject* go);
+	int SetTurnsToNextWeather();
+	void SetNextWeather();
+	void ResetTilesToFog(std::vector<int>& changedTiles);
 	int MechanicNeedGet(GameObject* spawner);
 	ArmyStats ComputeArmyStats(GameObject::SIDE mySide);
 	bool DecideSpawn(GameObject* spawner);
@@ -113,6 +116,10 @@ public:
 
 	bool gamePlaying = false;
 	bool goldenEvent = false;
+
+	enum WorldWeather {FOREST, MIDWINTER, WINTER, MIDWINTERFOREST, MIDDESERT, DESERT, MIDDESERTFOREST};
+	WorldWeather currentWeather = WorldWeather::FOREST;
+	int turnsToNextWeather = 0;
 
 protected:
 	int turnSinceEvent = 0;

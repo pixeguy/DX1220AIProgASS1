@@ -34,7 +34,7 @@ void SceneHex::Init()
 	m_start.Set(0, 0);
 	m_mazeKey = 0;
 	m_wallLoad = 0.3f;
-	m_maze.Generate(m_mazeKey, m_noGrid, m_start, m_wallLoad); //Generate new maze
+	m_maze.Generate(m_mazeKey, m_noGrid, m_start); //Generate new maze
 	m_myGrid.resize(m_noGrid * m_noGrid);
 	m_visited.resize(m_noGrid * m_noGrid);
 	m_previous.resize(m_noGrid * m_noGrid);

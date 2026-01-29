@@ -43,8 +43,11 @@ public:
 	};
 	Maze();
 	~Maze();
-	void Generate(unsigned key, unsigned size, MazePt start, float wallLoad);
+	void Generate(unsigned key, unsigned size, MazePt start);
 	void ConvertWallsToResources(unsigned key, MazePt start, float oreFromWallsLoad, float woodFromWallsLoad);
+	void ConvertTerrainForWinter(unsigned key, MazePt start, std::vector<int>& outChangedIdx, float grassToSnowLoad, float treeToSnowLoad, float treeToGrassLoad, float waterToIceLoad);
+	void ConvertTerrainForDesert(unsigned key, MazePt start, std::vector<int>& outChangedIdx, float grassToSandLoad, float treeToSandLoad, float treeToGrassLoad, float waterToSandLoad);
+	void RevertBiomeOverlayToForest(unsigned key, MazePt start, std::vector<int>& outChangedIdx, TILE_CONTENT groundFromTile, float groundToGrassLoad, float groundToTreeLoad, TILE_CONTENT liquidFromTile, float liquidToWaterLoad);
 	bool Move(DIRECTION direction);
 	unsigned GetKey();
 	unsigned GetSize();
