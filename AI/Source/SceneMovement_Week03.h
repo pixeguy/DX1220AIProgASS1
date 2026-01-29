@@ -62,12 +62,24 @@ public:
 		GameObject::SIDE side;
 	};
 	void CalcNeededUnits();
+	bool IsVisibleToCurrentUnit(GameObject* go);
 	int MechanicNeedGet(GameObject* spawner);
 	ArmyStats ComputeArmyStats(GameObject::SIDE mySide);
 	bool DecideSpawn(GameObject* spawner);
 
 	bool DecideEvent();
+	enum stage { PRE,MOVE,POST };
+	stage currentStage;
+	float timer = 0;
+	void TurnSystem(float dt);
 
+	GameObject* GetNextActiveUnit();
+	int CountActiveUnits();
+	int m_turnCursor = 0;
+	int m_unitsActedThisRound = 0;
+	int m_roundSizeCached = 0;
+	GameObject* m_currentUnit = nullptr;
+	std::vector<Maze::TILE_CONTENT> visGrid;
 	float timeCounter = 0;
 
 	// material thresholds
@@ -152,6 +164,8 @@ protected:
 	bool IsInAtkRange(GameObject* go, MazePt& targetPt);
 
 	GameObject* PickClosestVisibleTarget(GameObject* go);
+
+	void GetVisibleTileIndicesNow(const GameObject* go);
 
 	GameObject::SIDE GetSide(GameObject* go);
 	GameObject::SIDE m_activeSide = GameObject::SIDE_BLUE;

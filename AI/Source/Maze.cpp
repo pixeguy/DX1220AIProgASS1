@@ -34,7 +34,7 @@ void Maze::Generate(unsigned key, unsigned size, MazePt start, float wallLoad)
 	unsigned total = size * size;
 	m_grid.resize(total);
 	m_gridHealth.resize(total);
-	std::fill(m_grid.begin(), m_grid.end(), TILE_EMPTY);
+	std::fill(m_grid.begin(), m_grid.end(), TILE_GRASS);
 	std::fill(m_gridHealth.begin(), m_gridHealth.end(), 0);
 	unsigned startId = start.y * size + start.x;
 	srand(key);
@@ -43,7 +43,7 @@ void Maze::Generate(unsigned key, unsigned size, MazePt start, float wallLoad)
 		unsigned chosen = rand() % total;
 		if (chosen == startId)
 			continue;
-		if (m_grid[chosen] == TILE_EMPTY)
+		if (m_grid[chosen] == TILE_GRASS)
 		{
 			m_grid[chosen] = TILE_WALL;
 			m_gridHealth[chosen] = 100;
@@ -56,7 +56,7 @@ void Maze::Generate(unsigned key, unsigned size, MazePt start, float wallLoad)
 		unsigned chosen = rand() % total;
 		if (chosen == startId) continue;
 
-		if (m_grid[chosen] == TILE_EMPTY)
+		if (m_grid[chosen] == TILE_GRASS)
 		{
 			m_grid[chosen] = TILE_ORE;
 			m_gridHealth[chosen] = 100;
@@ -68,7 +68,7 @@ void Maze::Generate(unsigned key, unsigned size, MazePt start, float wallLoad)
 		unsigned chosen = rand() % total;
 		if (chosen == startId) continue;
 
-		if (m_grid[chosen] == TILE_EMPTY)
+		if (m_grid[chosen] == TILE_GRASS)
 		{
 			m_grid[chosen] = TILE_WOODENLOG;
 			m_gridHealth[chosen] = 100;
@@ -269,7 +269,7 @@ Maze::TILE_CONTENT Maze::See(MazePt tile)
 
 bool Maze::IsPassable(Maze::TILE_CONTENT tile)
 {
-	if (tile == Maze::TILE_WALL || tile == Maze::TILE_ORE || tile == Maze::TILE_FOG || tile == Maze::TILE_WOODENLOG) return false;
+	if (tile == Maze::TILE_WALL || tile == Maze::TILE_ORE || tile == Maze::TILE_FOG || tile == Maze::TILE_WOODENLOG || tile == Maze::TILE_WATER) return false;
 	return true;
 }
 
@@ -277,4 +277,10 @@ bool Maze::NonMats(Maze::TILE_CONTENT tile)
 {
 	if (tile == Maze::TILE_WALL || tile == Maze::TILE_FOG) return false;
 	return true;
+}
+
+bool Maze::IsEmpty(Maze::TILE_CONTENT tile)
+{
+	if (tile == Maze::TILE_EMPTY || tile == Maze::TILE_GRASS || tile == Maze::TILE_SNOW || tile == Maze::TILE_SAND || tile == Maze::TILE_LAVA || tile == Maze::TILE_ICE) return true;
+	return false;
 }

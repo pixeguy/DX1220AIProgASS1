@@ -86,6 +86,7 @@ void SceneMovement_Week03::Init()
 	m_wallLoad = 0.3f;
 	m_maze.Generate(m_mazeKey, m_noGrid, m_start, m_wallLoad); //Generate new maze
 	m_myGrid.resize(m_noGrid * m_noGrid);
+	visGrid.resize(m_noGrid * m_noGrid);
 	m_visited.resize(m_noGrid * m_noGrid);
 	m_previous.resize(m_noGrid * m_noGrid);
 	b_grid.resize(m_noGrid * m_noGrid);
@@ -98,15 +99,15 @@ void SceneMovement_Week03::Init()
 	std::fill(r_grid.begin(), r_grid.end(), Maze::TILE_FOG);
 	std::fill(b_visited.begin(), b_visited.end(), false);
 	std::fill(r_visited.begin(), r_visited.end(), false);
-	m_myGrid[m_start.y * m_noGrid + m_start.x] = Maze::TILE_EMPTY;
+	m_myGrid[m_start.y * m_noGrid + m_start.x] = Maze::TILE_GRASS;
 
-	Carve2x2Both(0, 9, Maze::TILE_EMPTY);
-	Carve2x2Both(4, 5, Maze::TILE_EMPTY);
-	Carve2x2Both(4, 13, Maze::TILE_EMPTY);
+	Carve2x2Both(0, 9, Maze::TILE_GRASS);
+	Carve2x2Both(4, 5, Maze::TILE_GRASS);
+	Carve2x2Both(4, 13, Maze::TILE_GRASS);
 
-	Carve2x2Both(18, 9, Maze::TILE_EMPTY);
-	Carve2x2Both(14, 5, Maze::TILE_EMPTY);
-	Carve2x2Both(14, 13, Maze::TILE_EMPTY);
+	Carve2x2Both(18, 9, Maze::TILE_GRASS);
+	Carve2x2Both(14, 5, Maze::TILE_GRASS);
+	Carve2x2Both(14, 13, Maze::TILE_GRASS);
 
 	//DFS(m_start);
 	CarveUntilNoFog();
@@ -380,9 +381,9 @@ GameObject* SceneMovement_Week03::SpawnUnit(GameObject::SIDE side, Vector3 pos, 
 	{
 		unit = FetchGO(GameObject::GO_ATTACKER);
 		unit->type = GameObject::GO_ATTACKER;
-		unit->viewRange = 2;
-		unit->atkRange = 1;
-		unit->useMoves = 3;
+		unit->viewRange = 3;
+		unit->atkRange = 2;
+		unit->useMoves = 5;
 	}
 	else if ((useRandom && random < AttackerRate + RangedRate && random > AttackerRate) || type == GameObject::GO_RANGED)
 	{
@@ -390,7 +391,7 @@ GameObject* SceneMovement_Week03::SpawnUnit(GameObject::SIDE side, Vector3 pos, 
 		unit->type = GameObject::GO_RANGED;
 		unit->viewRange = 4;
 		unit->atkRange = 3;
-		unit->useMoves = 2;
+		unit->useMoves = 4;
 	}
 	else if ((useRandom && random < AttackerRate + RangedRate + SupportRate && random > AttackerRate + RangedRate) || type == GameObject::GO_SUPPORT)
 	{
@@ -398,15 +399,15 @@ GameObject* SceneMovement_Week03::SpawnUnit(GameObject::SIDE side, Vector3 pos, 
 		unit->type = GameObject::GO_SUPPORT;
 		unit->viewRange = 3;
 		unit->atkRange = 2;
-		unit->useMoves = 2;
+		unit->useMoves = 4;
 	}
 	else if ((useRandom && random < 100 && random > AttackerRate + RangedRate + SupportRate) || type == GameObject::GO_MECHANIC)
 	{
 		unit = FetchGO(GameObject::GO_MECHANIC);
 		unit->type = GameObject::GO_MECHANIC;
-		unit->viewRange = 2;
+		unit->viewRange = 3;
 		unit->atkRange = 1;
-		unit->useMoves = 3;
+		unit->useMoves = 6;
 	}
 	else if ((type == GameObject::GO_SCOUT))
 	{
@@ -418,8 +419,8 @@ GameObject* SceneMovement_Week03::SpawnUnit(GameObject::SIDE side, Vector3 pos, 
 
 	// i need to set a blank state first, in order to access the Enter() of the first actual state
 	unit->sm->SetNextState("None");
-	unit->maxHealth = 300;
-	unit->health = 300;
+	unit->maxHealth = 150;
+	unit->health = 150;
 	unit->maxEnergy = 10;
 	unit->energy = 0;
 
@@ -446,22 +447,22 @@ GameObject* SceneMovement_Week03::SpawnMetalUnit(GameObject::SIDE side, Vector3 
 	{
 		unit = FetchGO(GameObject::GO_TANK);
 		unit->type = GameObject::GO_TANK;
-		unit->viewRange = 3;
-		unit->atkRange = 2;
-		unit->useMoves = 2;
+		unit->viewRange = 6;
+		unit->atkRange = 3;
+		unit->useMoves = 5;
 	}
 	else if ((useRandom && random < TankRate + MortarRate && random > TankRate) || type == GameObject::GO_MORTAR)
 	{
 		unit = FetchGO(GameObject::GO_MORTAR);
 		unit->type = GameObject::GO_MORTAR;
-		unit->viewRange = 5;
-		unit->atkRange = 4;
-		unit->useMoves = 2;
+		unit->viewRange = 7;
+		unit->atkRange = 5;
+		unit->useMoves = 3;
 	}
 
 	unit->sm->SetNextState("None");
-	unit->maxHealth = 400;
-	unit->health = 400;
+	unit->maxHealth = 250;
+	unit->health = 250;
 	unit->maxEnergy = 10;
 	unit->energy = 0;
 
@@ -862,6 +863,48 @@ bool SceneMovement_Week03::DecideEvent()
 	m_maze.ConvertWallsToResources(m_mazeKey, m_start, 0.05f, 0.05f);
 	m_myGrid = m_maze.m_grid;
 	return true;
+}
+
+GameObject* SceneMovement_Week03::GetNextActiveUnit()
+{
+	const int n = (int)m_goList.size();
+	if (n == 0) return nullptr;
+
+	for (int tries = 0; tries < n; ++tries)
+	{
+		m_turnCursor = (m_turnCursor + 1) % n;
+		GameObject* go = m_goList[m_turnCursor];
+
+		if (!go) continue;
+		if (!go->active) continue;
+		if (go->type == GameObject::GO_SPAWNMORTARAREA) continue;
+		if (go->type == GameObject::GO_MAINBASE) continue;
+		if (go->type == GameObject::GO_SPAWNER) continue;
+
+		return go;
+	}
+	return nullptr;
+}
+
+int SceneMovement_Week03::CountActiveUnits()
+{
+	int number = 0;
+	const int n = (int)m_goList.size();
+	if (n == 0) return 0;
+
+	for (int tries = 0; tries < n; ++tries)
+	{
+		GameObject* go = m_goList[tries];
+
+		if (!go) continue;
+		if (!go->active) continue;
+		if (go->type == GameObject::GO_SPAWNMORTARAREA) continue;
+		if (go->type == GameObject::GO_MAINBASE) continue;
+		if (go->type == GameObject::GO_SPAWNER) continue;
+
+		number++;
+	}
+	return number;
 }
 
 void SceneMovement_Week03::Update(double dt)
@@ -1607,30 +1650,30 @@ void SceneMovement_Week03::Update(double dt)
 
 
 	//loop through all spawners
-	for (std::vector<GameObject*>::iterator it = m_spawners.begin(); it != m_spawners.end(); ++it)
-	{
-		GameObject* spawner = *it;
-		if (spawner->active == false) { continue; }
-		spawner->energy += 0.13; // dont wanna use EnergyReduce function, i want energy to stop at max
+	//for (std::vector<GameObject*>::iterator it = m_spawners.begin(); it != m_spawners.end(); ++it)
+	//{
+	//	GameObject* spawner = *it;
+	//	if (spawner->active == false) { continue; }
+	//	spawner->energy += 0.13; // dont wanna use EnergyReduce function, i want energy to stop at max
 
-		if (spawner->energy >= spawner->maxEnergy)
-		{
-			if (DecideSpawn(spawner))
-			{
-				spawner->energy = 0;
-			}
-			else
-			{
-				spawner->energy = spawner->maxEnergy;
-			}
-		}
-		
-		//debug spawner materials
-		if (spawner->woodenLogs != 0)
-		{
-			//std::cout << "Logs: " << spawner->woodenLogs << "  Metal: " << spawner->metalParts << std::endl;
-		}
-	}
+	//	if (spawner->energy >= spawner->maxEnergy)
+	//	{
+	//		if (DecideSpawn(spawner))
+	//		{
+	//			spawner->energy = 0;
+	//		}
+	//		else
+	//		{
+	//			spawner->energy = spawner->maxEnergy;
+	//		}
+	//	}
+	//	
+	//	//debug spawner materials
+	//	if (spawner->woodenLogs != 0)
+	//	{
+	//		//std::cout << "Logs: " << spawner->woodenLogs << "  Metal: " << spawner->metalParts << std::endl;
+	//	}
+	//}
 
 
 	//loop through all projectiles
@@ -1738,55 +1781,200 @@ void SceneMovement_Week03::Update(double dt)
 	//		std::cout << "2 " << m_goList[i]->health << std::endl;
 	//}
 	static constexpr float TURN_TIME = 0.5f;
-	static float timer = 0.f;
 	// 6.	SceneTurn::Update - add code to support a turn-based system. Read this pseudo codes and try to implement on your own. The solution will be provided during lesson time.
 	//remember to declare and initialize m_turn
+	TurnSystem(dt);
+
+	//check for death buildings and units
+	{
+		for (std::vector<GameObject*>::iterator it = m_goList.begin(); it != m_goList.end(); ++it)
+		{
+			GameObject* go = (GameObject*)*it;
+			if (!go->active)
+				continue;
+			if (go->health <= 0) {
+				//go->sm->SetNextState("Death");
+
+				//go->type = GameObject::GO_NONE;
+				//go->active = false;
+				--m_objectCount;
+			}
+		}
+
+		for (std::vector<GameObject*>::iterator it = m_spawners.begin(); it != m_spawners.end(); ++it)
+		{
+			GameObject* go = (GameObject*)*it;
+			if (!go->active)
+				continue;
+			if (go->health <= 0) {
+
+				--m_objectCount;
+			}
+		}
+	}
+
+	//updating maze
+	for (int row = (int)m_noGrid - 1; row >= 0; --row)
+	{
+		for (int col = 0; col < (int)m_noGrid; ++col)
+		{
+			int t = m_maze.m_grid[row * m_noGrid + col];
+			int tHealth = m_maze.m_gridHealth[row * m_noGrid + col];
+			if (m_maze.IsEmpty(m_maze.m_grid[row * m_noGrid + col]) || t == Maze::TILE_FOG) continue;
+			if (tHealth <= 0)
+			{
+				m_maze.m_grid[row * m_noGrid + col] = Maze::TILE_GRASS;
+				m_maze.m_gridHealth[row * m_noGrid + col] = 0;
+				m_myGrid[row * m_noGrid + col] = Maze::TILE_GRASS;
+				r_grid[row * m_noGrid + col] = Maze::TILE_FOG;
+				b_grid[row * m_noGrid + col] = Maze::TILE_FOG;
+				b_visited[row * m_noGrid + col] = false;
+				r_visited[row * m_noGrid + col] = false;
+			}
+		}
+	}
+
+	//Movement Section
+	//for (std::vector<GameObject*>::iterator it = m_goList.begin(); it != m_goList.end(); ++it)
+	//{
+	//	GameObject* go = (GameObject*)*it;
+	//	if (!go->active)
+	//		continue;
+	//	Vector3 dir = go->target - go->pos;
+
+	{
+		//	//use additive speed so i can add on whenever i want
+		//	go->finalMoveSpeed = (go->moveSpeed * 5) + go->supportSpeed;
+		//	//if (go->type == GameObject::GO_RANGED) { std::cout << dir.Length() << std::endl; }
+		//	if (go->moving == true) {
+		//		if (dir.Length() < go->finalMoveSpeed * dt * m_speed)
+		//		{
+		//			//GO->pos reach target
+		//			go->pos = go->target;
+		//			
+		//			if (go->moveRight)
+		//				go->target = go->pos + Vector3(m_gridSize, 0, 0);
+
+		//			else if (go->moveLeft)
+		//				go->target = go->pos + Vector3(-m_gridSize, 0, 0);
+
+		//			else if (go->moveUp)
+		//				go->target = go->pos + Vector3(0, m_gridSize, 0);
+
+		//			else if (go->moveDown)
+		//				go->target = go->pos + Vector3(0, -m_gridSize, 0);
+
+		//			else
+		//				go->target = go->pos; // no movement allowed
+
+		//			if (go->target.x < 0 || go->target.x > m_noGrid * m_gridSize || go->target.y < 0 || go->target.y > m_noGrid * m_gridSize)
+		//				go->target = go->pos;
+		//		}
+		//		else
+		//		{
+		//			try
+		//			{
+		//				dir.Normalize();
+		//				go->pos += dir * go->finalMoveSpeed * static_cast<float>(dt) * m_speed;
+		//			}
+		//			catch (DivideByZero)
+		//			{
+		//			}
+		//		}
+		//	}
+		//}
+		//for (std::vector<GameObject*>::iterator it = m_projList.begin(); it != m_projList.end(); ++it)
+		//{
+		//	GameObject* go = (GameObject*)*it;
+		//	if (!go->active)
+		//		continue;
+		//	Vector3 dir = go->target - go->pos;
+		//	if (dir.Length() < go->moveSpeed * dt * m_speed)
+		//	{
+		//		//GO->pos reach target
+		//		go->pos = go->target;
+		//	}
+		//	else
+		//	{
+		//		try
+		//		{
+		//			dir.Normalize();
+		//			go->pos += dir * go->moveSpeed * static_cast<float>(dt) * m_speed;
+		//		}
+		//		catch (DivideByZero)
+		//		{
+		//		}
+		//	}
+		//}
+	}
+
+	//Counting objects
+	CountingGO();
+	timeCounter += dt;
+	
+	gameStateString = GameState();
+	if (gameStateString == "Red Side Wins!" || gameStateString == "Blue Side Wins!")
+	{
+		gamePlaying = false;
+	}
+}
+
+void SceneMovement_Week03::TurnSystem(float dt)
+{
 	timer += m_speed * dt;
 	if (timer > 1.0f)
 	{
 		timer = 0.f;
-
-		if (m_activeSide == GameObject::SIDE_RED)
+		std::cout << "timer" << std::endl;
+		if (m_currentUnit == nullptr)
 		{
-			m_turn++;
-			turnSinceEvent++;
+			GameObject* go = GetNextActiveUnit();
+			if (!go) return;
+
+			m_currentUnit = go;
+
+			if (m_unitsActedThisRound == 0)
+				m_roundSizeCached = CountActiveUnits();
+
+			currentStage = stage::PRE;
+
+			{
+				for (std::vector<GameObject*>::iterator it = m_spawners.begin(); it != m_spawners.end(); ++it)
+				{
+					GameObject* spawner = *it;
+					if (spawner->active == false) { continue; }
+					spawner->energy += 3.5; // dont wanna use EnergyReduce function, i want energy to stop at max
+
+					if (spawner->energy >= spawner->maxEnergy)
+					{
+						if (DecideSpawn(spawner))
+						{
+							spawner->energy = 0;
+						}
+						else
+						{
+							spawner->energy = spawner->maxEnergy;
+						}
+					}
+				}
+			}
 		}
-		 
-		GameObject::SIDE sideThisTurn = m_activeSide;
 
-		if (turnSinceEvent == randTurns)
+		GameObject* go = m_currentUnit;
+
+
+		switch (currentStage)
 		{
-			DecideEvent();
-			turnSinceEvent = 0;
-			randTurns = 2;// Math::RandIntMinMax(minTurns, maxTurns);
-		}
-
-
-		// ---- PHASE 1: PRE-REVEAL (sense before moving) ----
-		for (GameObject* go : m_goList)
-		{
-			if (gamePlaying == false) break;
-			if (go->type == GameObject::GO_SPAWNMORTARAREA) continue;
-			if (go->type == GameObject::GO_MAINBASE) continue;
-			if (go->type == GameObject::GO_SPAWNER) continue;
-			if (!go->active) continue;
-			if (go->side != sideThisTurn) continue;
+		case PRE:
 
 			RevealAround(go, go->viewRange);
-
-			// target pick (with stickiness recommended)
 			if (!go->visibleTargets.empty())
 				go->atkTarget = PickClosestVisibleTarget(go);
-		}
 
-		// ---- MOVE PHASE (only this side) ----
-		for (int i = 0; i < m_goList.size(); ++i)
-		{
-			if (gamePlaying == false) break;
-			GameObject* go = m_goList[i];
-			if (go->type == GameObject::GO_SPAWNMORTARAREA) continue;
-			if (!go->active) continue;
-			if (go->side != sideThisTurn) continue;
+			currentStage = stage::MOVE;
+			return;
+		case MOVE:
+			// ---- MOVE PHASE (only this side) ----
 			go->currMoves = go->useMoves;
 			switch (go->type)
 			{
@@ -1915,86 +2103,86 @@ void SceneMovement_Week03::Update(double dt)
 				}
 				break;
 			case GameObject::GO_SUPPORT:
+			{
+				go->alliesActiveCount = 0;
+				MessageWRU allyCount = MessageWRU(go, MessageWRU::SEARCH_TYPE::ALLYACTIVECOUNT, 500);
+				Handle(&allyCount);
+			}
+			if (go->sm->GetCurrentState() == "Healing")
+			{
+				if (go->healTarget != NULL && go->healTarget->active)
 				{
-					go->alliesActiveCount = 0;
-					MessageWRU allyCount = MessageWRU(go, MessageWRU::SEARCH_TYPE::ALLYACTIVECOUNT, 500);
-					Handle(&allyCount);
-				}
-				if (go->sm->GetCurrentState() == "Healing")
-				{
-					if (go->healTarget != NULL && go->healTarget->active)
+					if (!IsInAtkRange(go, go->healTarget))
 					{
-						if (!IsInAtkRange(go, go->healTarget))
+						PathFind(go, go->healTarget->curr, go->currMoves, go->atkRange);
+						if (go->currMoves > 0 && go->healTarget && go->healTarget->active && IsInAtkRange(go, go->healTarget))
 						{
-							PathFind(go, go->healTarget->curr, go->currMoves, go->atkRange);
-							if (go->currMoves > 0 && go->healTarget && go->healTarget->active && IsInAtkRange(go, go->healTarget))
-							{
-								go->HandleAction("");
-							}
-						}
-						else {
 							go->HandleAction("");
 						}
 					}
+					else {
+						go->HandleAction("");
+					}
 				}
-				if (go->sm->GetCurrentState() == "UrgentHealing")
+			}
+			if (go->sm->GetCurrentState() == "UrgentHealing")
+			{
+				if (go->healTarget != NULL && go->healTarget->active)
 				{
-					if (go->healTarget != NULL && go->healTarget->active)
+					if (!IsInAtkRange(go, go->healTarget))
 					{
-						if (!IsInAtkRange(go, go->healTarget))
+						PathFind(go, go->healTarget->curr, go->currMoves, go->atkRange);
+						if (go->currMoves > 0 && go->healTarget && go->healTarget->active && IsInAtkRange(go, go->healTarget))
 						{
-							PathFind(go, go->healTarget->curr, go->currMoves, go->atkRange);
-							if (go->currMoves > 0 && go->healTarget && go->healTarget->active && IsInAtkRange(go, go->healTarget))
-							{
-								go->HandleAction("");
-							}
-						}
-						else {
 							go->HandleAction("");
 						}
 					}
+					else {
+						go->HandleAction("");
+					}
 				}
-				if (go->sm->GetCurrentState() == "Hurt")
+			}
+			if (go->sm->GetCurrentState() == "Hurt")
+			{
+				MessageWRU nearestSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200);
+				Handle(&nearestSpawner);
+				if (go->nearest == NULL) break;
+				PathFind(go, go->nearest->currNodes[0], go->currMoves, 1);
+				for (MazePt node : go->nearest->currNodes)
 				{
-					MessageWRU nearestSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200);
-					Handle(&nearestSpawner);
-					if (go->nearest == NULL) continue;
-					PathFind(go, go->nearest->currNodes[0], go->currMoves, 1);
-					for(MazePt node : go->nearest->currNodes)
-					{
-						if (node.x == go->curr.x && node.y == go->curr.y) {
-							while (go->currMoves > 0)
-							{
-								if (go->health <= 100) {
-									go->health += 7;
-								}
-								else { go->health = 100; }
-								go->currMoves -= 1;
+					if (node.x == go->curr.x && node.y == go->curr.y) {
+						while (go->currMoves > 0)
+						{
+							if (go->health <= 100) {
+								go->health += 7;
 							}
+							else { go->health = 100; }
+							go->currMoves -= 1;
 						}
 					}
 				}
-				if (go->sm->GetCurrentState() == "Hiding")
+			}
+			if (go->sm->GetCurrentState() == "Hiding")
+			{
+				MessageWRU nearestSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200);
+				Handle(&nearestSpawner);
+				if (go->nearest == NULL) { break; }
+				PathFind(go, go->nearest->currNodes[0], go->currMoves, 1);
+				for (MazePt node : go->nearest->currNodes)
 				{
-					MessageWRU nearestSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200);
-					Handle(&nearestSpawner);
-					if (go->nearest == NULL) { continue; }
-					PathFind(go, go->nearest->currNodes[0], go->currMoves, 1);
-					for (MazePt node : go->nearest->currNodes)
-					{
-						if (node.x == go->curr.x && node.y == go->curr.y) {
-							while (go->currMoves > 0)
-							{
-								if (go->health <= 100) {
-									go->health += 5;
-								}
-								else { go->health = 100; }
-								go->currMoves -= 1;
+					if (node.x == go->curr.x && node.y == go->curr.y) {
+						while (go->currMoves > 0)
+						{
+							if (go->health <= 100) {
+								go->health += 5;
 							}
+							else { go->health = 100; }
+							go->currMoves -= 1;
 						}
 					}
 				}
-				break;
+			}
+			break;
 			case GameObject::GO_RANGED:
 				if (go->sm->GetCurrentState() == "Healthy")
 				{
@@ -2122,102 +2310,59 @@ void SceneMovement_Week03::Update(double dt)
 				}
 				break;
 			case GameObject::GO_TANK:
-				{
-					MessageWRU msgCheckFrontline = MessageWRU(go, MessageWRU::SEARCH_TYPE::FURTHEST_FRONTLINE, 200);
-					Handle(&msgCheckFrontline);
+			{
+				MessageWRU msgCheckFrontline = MessageWRU(go, MessageWRU::SEARCH_TYPE::FURTHEST_FRONTLINE, 200);
+				Handle(&msgCheckFrontline);
+			}
+			if (go->sm->GetCurrentState() == "Healthy")
+			{
+				if (go->nearest == NULL || go->nearest->active == false) {
+					go->sm->SetNextState("SoloHealthy");
+					break;
 				}
-				if (go->sm->GetCurrentState() == "Healthy")
-				{
-					if (go->nearest == NULL || go->nearest->active == false) {
-							go->sm->SetNextState("SoloHealthy");
-							continue;
-					}
-					int redOrBlue = (go->side == GameObject::SIDE_BLUE) ? -2 : 2;
-					MazePt target = MazePt(go->nearest->curr.x + redOrBlue, go->nearest->curr.y);
-					PathFind(go, target, go->currMoves, 0);
+				int redOrBlue = (go->side == GameObject::SIDE_BLUE) ? -2 : 2;
+				MazePt target = MazePt(go->nearest->curr.x + redOrBlue, go->nearest->curr.y);
+				PathFind(go, target, go->currMoves, 0);
+			}
+			else if (go->sm->GetCurrentState() == "SoloHealthy")
+			{
+				if (go->nearest != NULL && go->nearest->active == true) {
+					go->sm->SetNextState("Healthy");
+					break;
 				}
-				else if (go->sm->GetCurrentState() == "SoloHealthy")
-				{
-					if (go->nearest != NULL && go->nearest->active == true) {
-						go->sm->SetNextState("Healthy");
-						continue;
-					}
-					else {
-						if (go->atkTarget == NULL || !go->atkTarget->active) {
-							while (go->currMoves > 0)
-							{
-								int before = go->currMoves;
-								DFSOnce(go, go->currMoves);   // spends tile cost
-
-								// if DFS couldn't move (blocked / too expensive), stop
-								if (go->currMoves == before)
-									break;
-
-								// reveal after moving too (so the newly reached tile reveals)
-								RevealAround(go, go->viewRange);
-
-								if (go->atkTarget != nullptr)
-									break;
-							}
-						}
-					}
-				}
-				else if (go->sm->GetCurrentState() == "Suicide")
-				{
-					if (go->atkTarget != NULL && go->atkTarget->active)
-					{
-						if (go->curr.x == go->atkTarget->curr.x && go->curr.y == go->atkTarget->curr.y)
+				else {
+					if (go->atkTarget == NULL || !go->atkTarget->active) {
+						while (go->currMoves > 0)
 						{
-							MessageWRU msgAreaDamage = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY_INAREA, 1);
-							Handle(&msgAreaDamage);
-							go->HandleAction("");
-						}
-						else
-						{
-							PathFind(go, go->atkTarget->curr, go->currMoves, 0);
-							if (go->currMoves > 0 && go->atkTarget && go->atkTarget->active && IsInAtkRange(go, go->atkTarget))
-							{
-								MessageWRU msgAreaDamage = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY_INAREA, 1);
-								Handle(&msgAreaDamage);
-								go->HandleAction("");
-							}
-						}
+							int before = go->currMoves;
+							DFSOnce(go, go->currMoves);   // spends tile cost
 
-						if (go->turnCounter == 3)
-						{
-							MessageWRU msgAreaDamage = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY_INAREA, 1);
-							Handle(&msgAreaDamage);
-							go->HandleAction("");
-						}
-						go->turnCounter++;
-					}
-				}
-				else if (go->sm->GetCurrentState() == "Death")
-				{
+							// if DFS couldn't move (blocked / too expensive), stop
+							if (go->currMoves == before)
+								break;
 
-				}
+							// reveal after moving too (so the newly reached tile reveals)
+							RevealAround(go, go->viewRange);
 
-				if (go->panicking)
-				{
-					MessageWRU msgCheckMech = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_MECHANIC_HEAL, 200.0f);
-					Handle(&msgCheckMech);
-					if (go->external != NULL) {
-						if (go->external->active) {
-							MessageAskHelp msgAskHelp = MessageAskHelp(go);
-							go->external->Handle(&msgAskHelp);
+							if (go->atkTarget != nullptr)
+								break;
 						}
 					}
 				}
+			}
+			else if (go->sm->GetCurrentState() == "Suicide")
+			{
 				if (go->atkTarget != NULL && go->atkTarget->active)
 				{
-					if (IsInAtkRange(go, go->atkTarget))
+					if (go->curr.x == go->atkTarget->curr.x && go->curr.y == go->atkTarget->curr.y)
 					{
 						MessageWRU msgAreaDamage = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY_INAREA, 1);
 						Handle(&msgAreaDamage);
 						go->HandleAction("");
 					}
-					else {
-						PathFind(go, go->atkTarget->curr, go->currMoves, go->atkRange);
+					else
+					{
+						PathFind(go, go->atkTarget->curr, go->currMoves, 0);
 						if (go->currMoves > 0 && go->atkTarget && go->atkTarget->active && IsInAtkRange(go, go->atkTarget))
 						{
 							MessageWRU msgAreaDamage = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY_INAREA, 1);
@@ -2225,8 +2370,51 @@ void SceneMovement_Week03::Update(double dt)
 							go->HandleAction("");
 						}
 					}
+
+					if (go->turnCounter == 3)
+					{
+						MessageWRU msgAreaDamage = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY_INAREA, 1);
+						Handle(&msgAreaDamage);
+						go->HandleAction("");
+					}
+					go->turnCounter++;
 				}
-				break;
+			}
+			else if (go->sm->GetCurrentState() == "Death")
+			{
+
+			}
+
+			if (go->panicking)
+			{
+				MessageWRU msgCheckMech = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_MECHANIC_HEAL, 200.0f);
+				Handle(&msgCheckMech);
+				if (go->external != NULL) {
+					if (go->external->active) {
+						MessageAskHelp msgAskHelp = MessageAskHelp(go);
+						go->external->Handle(&msgAskHelp);
+					}
+				}
+			}
+			if (go->atkTarget != NULL && go->atkTarget->active)
+			{
+				if (IsInAtkRange(go, go->atkTarget))
+				{
+					MessageWRU msgAreaDamage = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY_INAREA, 1);
+					Handle(&msgAreaDamage);
+					go->HandleAction("");
+				}
+				else {
+					PathFind(go, go->atkTarget->curr, go->currMoves, go->atkRange);
+					if (go->currMoves > 0 && go->atkTarget && go->atkTarget->active && IsInAtkRange(go, go->atkTarget))
+					{
+						MessageWRU msgAreaDamage = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_ENEMY_INAREA, 1);
+						Handle(&msgAreaDamage);
+						go->HandleAction("");
+					}
+				}
+			}
+			break;
 			case GameObject::GO_MECHANIC:
 				if (go->sm->GetCurrentState() == "Healthy") {
 					if (go->nearest == NULL || !go->nearest->active) {
@@ -2250,7 +2438,7 @@ void SceneMovement_Week03::Update(double dt)
 									int target = Get1DIndex(go->ptTarget.x, go->ptTarget.y);
 									while (go->currMoves > 0)
 									{
-										if (m_maze.m_grid[target] == Maze::TILE_EMPTY)
+										if (m_maze.IsEmpty(m_maze.m_grid[target]))
 										{
 											go->gotten = true;
 											go->currMoves = 0;
@@ -2271,7 +2459,7 @@ void SceneMovement_Week03::Update(double dt)
 										int target = Get1DIndex(go->ptTarget.x, go->ptTarget.y);
 										while (go->currMoves > 0)
 										{
-											if (m_maze.m_grid[target] == Maze::TILE_EMPTY)
+											if (m_maze.IsEmpty(m_maze.m_grid[target]))
 											{
 												go->gotten = true;
 												go->currMoves = 0;
@@ -2289,14 +2477,14 @@ void SceneMovement_Week03::Update(double dt)
 						}
 						else { //go back to spawner
 							PathFind(go, go->nearest->currNodes[0], go->currMoves, 0);
-							if (IsInAtkRange(go,go->nearest->currNodes[0]))
+							if (IsInAtkRange(go, go->nearest->currNodes[0]))
 							{
 								go->gotten = false;
 								if (go->choice != 0)
 								{
 									if (go->choice == 1)
 									{
-										go->nearest->woodenLogs += go->matAmount;
+										go->nearest->woodenLogs += (go->matAmount * 1.5f); //slightly skew for wood abit
 									}
 									else if (go->choice == 2)
 									{
@@ -2329,7 +2517,7 @@ void SceneMovement_Week03::Update(double dt)
 				{
 					MessageWRU nearestSpawner = MessageWRU(go, MessageWRU::SEARCH_TYPE::NEAREST_SPAWNER, 200);
 					Handle(&nearestSpawner);
-					if (go->nearest == NULL) continue;
+					if (go->nearest == NULL) break;
 					PathFind(go, go->nearest->currNodes[0], go->currMoves, 1);
 					for (MazePt node : go->nearest->currNodes)
 					{
@@ -2347,7 +2535,7 @@ void SceneMovement_Week03::Update(double dt)
 				}
 				else if (go->sm->GetCurrentState() == "Building")
 				{
-					if (go->ptTarget.x == 999 )
+					if (go->ptTarget.x == 999)
 						go->ptTarget = SpawnMortarArea(go->side);
 					else
 					{
@@ -2362,10 +2550,10 @@ void SceneMovement_Week03::Update(double dt)
 							PathFind(go, go->ptTarget, go->currMoves, 1);
 						}
 					}
-}
+				}
 				break;
 			case GameObject::GO_MORTAR:
-				if(go->atkTarget != NULL && go->atkTarget->active)
+				if (go->atkTarget != NULL && go->atkTarget->active)
 				{
 					if (IsInAtkRange(go, go->atkTarget))
 					{
@@ -2374,162 +2562,32 @@ void SceneMovement_Week03::Update(double dt)
 				}
 				break;
 			}
-		}
-		
-
-		// ---- REVEAL PHASE (only this side) ----
-		for (GameObject* go : m_goList)
-		{
-			if (gamePlaying == false) break;
-			if (go->type == GameObject::GO_SPAWNMORTARAREA) continue;
-			if (go->type == GameObject::GO_MAINBASE) continue;
-			if (go->type == GameObject::GO_SPAWNER) continue;
-			if (!go->active) continue;
-			if (go->side != sideThisTurn) continue;
-
- 			RevealAround(go, go->viewRange);
-			if (go->visibleTargets.size() > 0)
+			currentStage = stage::POST;
+			return;
+		case POST:
+			// ---- REVEAL PHASE (only this side) ----
+			RevealAround(go, go->viewRange);
+			if (!go->visibleTargets.empty())
 				go->atkTarget = PickClosestVisibleTarget(go);
-		}
 
-		// ---- flip to the other side for next tick ----
-		m_activeSide = (m_activeSide == GameObject::SIDE_BLUE)
-			? GameObject::SIDE_RED
-			: GameObject::SIDE_BLUE;
-
-	}
-
-	//check for death buildings and units
-	{
-		for (std::vector<GameObject*>::iterator it = m_goList.begin(); it != m_goList.end(); ++it)
-		{
-			GameObject* go = (GameObject*)*it;
-			if (!go->active)
-				continue;
-			if (go->health <= 0) {
-				//go->sm->SetNextState("Death");
-
-				//go->type = GameObject::GO_NONE;
-				//go->active = false;
-				--m_objectCount;
-			}
-		}
-
-		for (std::vector<GameObject*>::iterator it = m_spawners.begin(); it != m_spawners.end(); ++it)
-		{
-			GameObject* go = (GameObject*)*it;
-			if (!go->active)
-				continue;
-			if (go->health <= 0) {
-
-				--m_objectCount;
-			}
-		}
-	}
-
-	//updating maze
-	for (int row = (int)m_noGrid - 1; row >= 0; --row)
-	{
-		for (int col = 0; col < (int)m_noGrid; ++col)
-		{
-			int t = m_maze.m_grid[row * m_noGrid + col];
-			int tHealth = m_maze.m_gridHealth[row * m_noGrid + col];
-			if (t == Maze::TILE_EMPTY || t == Maze::TILE_FOG) continue;
-			if (tHealth <= 0)
+			m_unitsActedThisRound++;
+			if (m_unitsActedThisRound >= m_roundSizeCached)
 			{
-				m_maze.m_grid[row * m_noGrid + col] = Maze::TILE_EMPTY;
-				m_maze.m_gridHealth[row * m_noGrid + col] = 0;
-				m_myGrid[row * m_noGrid + col] = Maze::TILE_EMPTY;
-				r_grid[row * m_noGrid + col] = Maze::TILE_FOG;
-				b_grid[row * m_noGrid + col] = Maze::TILE_FOG;
-				b_visited[row * m_noGrid + col] = false;
-				r_visited[row * m_noGrid + col] = false;
+				m_unitsActedThisRound = 0;
+				m_turn++;
+				turnSinceEvent++;
 			}
+
+			if (turnSinceEvent == randTurns)
+			{
+				DecideEvent();
+				turnSinceEvent = 0;
+				randTurns = 2;// Math::RandIntMinMax(minTurns, maxTurns);
+			}
+			m_currentUnit = nullptr;
+			currentStage = PRE;
+			break;
 		}
-	}
-
-	//Movement Section
-	//for (std::vector<GameObject*>::iterator it = m_goList.begin(); it != m_goList.end(); ++it)
-	//{
-	//	GameObject* go = (GameObject*)*it;
-	//	if (!go->active)
-	//		continue;
-	//	Vector3 dir = go->target - go->pos;
-
-	{
-		//	//use additive speed so i can add on whenever i want
-		//	go->finalMoveSpeed = (go->moveSpeed * 5) + go->supportSpeed;
-		//	//if (go->type == GameObject::GO_RANGED) { std::cout << dir.Length() << std::endl; }
-		//	if (go->moving == true) {
-		//		if (dir.Length() < go->finalMoveSpeed * dt * m_speed)
-		//		{
-		//			//GO->pos reach target
-		//			go->pos = go->target;
-		//			
-		//			if (go->moveRight)
-		//				go->target = go->pos + Vector3(m_gridSize, 0, 0);
-
-		//			else if (go->moveLeft)
-		//				go->target = go->pos + Vector3(-m_gridSize, 0, 0);
-
-		//			else if (go->moveUp)
-		//				go->target = go->pos + Vector3(0, m_gridSize, 0);
-
-		//			else if (go->moveDown)
-		//				go->target = go->pos + Vector3(0, -m_gridSize, 0);
-
-		//			else
-		//				go->target = go->pos; // no movement allowed
-
-		//			if (go->target.x < 0 || go->target.x > m_noGrid * m_gridSize || go->target.y < 0 || go->target.y > m_noGrid * m_gridSize)
-		//				go->target = go->pos;
-		//		}
-		//		else
-		//		{
-		//			try
-		//			{
-		//				dir.Normalize();
-		//				go->pos += dir * go->finalMoveSpeed * static_cast<float>(dt) * m_speed;
-		//			}
-		//			catch (DivideByZero)
-		//			{
-		//			}
-		//		}
-		//	}
-		//}
-		//for (std::vector<GameObject*>::iterator it = m_projList.begin(); it != m_projList.end(); ++it)
-		//{
-		//	GameObject* go = (GameObject*)*it;
-		//	if (!go->active)
-		//		continue;
-		//	Vector3 dir = go->target - go->pos;
-		//	if (dir.Length() < go->moveSpeed * dt * m_speed)
-		//	{
-		//		//GO->pos reach target
-		//		go->pos = go->target;
-		//	}
-		//	else
-		//	{
-		//		try
-		//		{
-		//			dir.Normalize();
-		//			go->pos += dir * go->moveSpeed * static_cast<float>(dt) * m_speed;
-		//		}
-		//		catch (DivideByZero)
-		//		{
-		//		}
-		//	}
-		//}
-	}
-
-	//Counting objects
-	CountingGO();
-	timeCounter += dt;
-	
-	gameStateString = GameState();
-	if (gameStateString == "Red Side Wins!" || gameStateString == "Blue Side Wins!")
-	{
-		gamePlaying = false;
 	}
 }
 
@@ -2728,6 +2786,8 @@ void SceneMovement_Week03::RenderGOBar(GameObject* go, float vertScale, Vector3 
 void SceneMovement_Week03::RenderGO(GameObject* go)
 {
 	std::ostringstream ss;
+	if (!IsVisibleToCurrentUnit(go))
+		return;
 	switch (go->type)
 	{
 	case GameObject::GO_NPC: //Render GO_NPC
@@ -2744,7 +2804,7 @@ void SceneMovement_Week03::RenderGO(GameObject* go)
 	break;
 	case GameObject::GO_MAINBASE:
 		modelStack.PushMatrix();
-		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
+		modelStack.Translate(go->pos.x, go->pos.y, 5.5);
 		modelStack.Rotate(180, 0, 0, 1);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
 		if (go->side == GameObject::SIDE_RED)
@@ -2776,7 +2836,7 @@ void SceneMovement_Week03::RenderGO(GameObject* go)
 		break;
 	case GameObject::GO_SPAWNER:
 		modelStack.PushMatrix();
-		modelStack.Translate(go->pos.x, go->pos.y, zOffset);
+		modelStack.Translate(go->pos.x, go->pos.y, 5.5);
 		//modelStack.Rotate(180, 0, 0, 1);
 		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
 		if (go->side == GameObject::SIDE_RED)
@@ -3855,6 +3915,7 @@ void SceneMovement_Week03::Render()
 	RenderMesh(meshList[GEO_BG], false);
 	modelStack.PopMatrix();
 
+	GetVisibleTileIndicesNow(m_currentUnit);
 	zOffset = 0;
 	for (std::vector<GameObject*>::iterator it = m_goList.begin(); it != m_goList.end(); ++it)
 	{
@@ -3876,7 +3937,8 @@ void SceneMovement_Week03::Render()
 	}
 	RenderDebugGO(GameObject::SIDE_BLUE, 35);
 	RenderDebugGO(GameObject::SIDE_RED,75);
-	
+
+
 	for (int row = 0; row < m_noGrid; ++row)
 	{
 		for (int col = 0; col < m_noGrid; ++col)
@@ -3884,16 +3946,18 @@ void SceneMovement_Week03::Render()
 			modelStack.PushMatrix();
 			modelStack.Translate(m_gridOffset + m_gridSize * col, m_gridOffset + m_gridSize * row, 5);
 			modelStack.Scale(m_gridSize, m_gridSize, m_gridSize);
-			// Exercise Week 08
-			// b.Render the tiles using m_maze.m_grid instead of m_myGrid
-			switch (m_myGrid[row * m_noGrid + col])
+			modelStack.Rotate(180, 0, 0, 1);
+
+
+
+			switch (visGrid[row * m_noGrid + col])
 			{
 			case Maze::TILE_WALL:
 				RenderMesh(meshList[GEO_WALL], false);
 				break;
 			case Maze::TILE_FOG:
-				meshList[GEO_WHITEQUAD]->material.kAmbient.Set(0.f, 0.f, 0.f);
-				RenderMesh(meshList[GEO_WHITEQUAD], true);
+				meshList[GEO_FOG]->material.kAmbient.Set(0.f, 0.f, 0.f);
+				RenderMesh(meshList[GEO_FOG], true);
 				break;
 			case Maze::TILE_ORE:
 				meshList[GEO_ORE]->material.kAmbient.Set(1.f, 1.f, 1.f);
@@ -3902,6 +3966,26 @@ void SceneMovement_Week03::Render()
 			case Maze::TILE_WOODENLOG:
 				meshList[GEO_LOG]->material.kAmbient.Set(1.f, 1.f, 1.f);
 				RenderMesh(meshList[GEO_LOG], true);
+				break;
+			case Maze::TILE_GRASS:
+				meshList[GEO_GRASS]->material.kAmbient.Set(1.f, 1.f, 1.f);
+				RenderMesh(meshList[GEO_GRASS], true);
+				break;
+			case Maze::TILE_SNOW:
+				meshList[GEO_SNOW]->material.kAmbient.Set(1.f, 1.f, 1.f);
+				RenderMesh(meshList[GEO_SNOW], true);
+				break;
+			case Maze::TILE_ICE:
+				meshList[GEO_ICE]->material.kAmbient.Set(1.f, 1.f, 1.f);
+				RenderMesh(meshList[GEO_ICE], true);
+				break;
+			case Maze::TILE_SAND:
+				meshList[GEO_SAND]->material.kAmbient.Set(1.f, 1.f, 1.f);
+				RenderMesh(meshList[GEO_SAND], true);
+				break;
+			case Maze::TILE_LAVA:
+				meshList[GEO_LAVA]->material.kAmbient.Set(1.f, 1.f, 1.f);
+				RenderMesh(meshList[GEO_LAVA], true);
 				break;
 			case Maze::TILE_EMPTY:
 				RenderMesh(meshList[GEO_FLOOR], false);
@@ -3931,6 +4015,7 @@ void SceneMovement_Week03::Render()
 			10.0f
 		);
 		modelStack.Scale(miniSize, miniSize, miniSize);
+		modelStack.Rotate(180, 0, 0, 1);
 		if (b)
 		{			
 			switch (b_grid[cellY * m_noGrid + cellX])
@@ -3949,6 +4034,26 @@ void SceneMovement_Week03::Render()
 			case Maze::TILE_WOODENLOG:
 				meshList[GEO_LOG]->material.kAmbient.Set(1.f, 1.f, 1.f);
 				RenderMesh(meshList[GEO_LOG], true);
+				break;
+			case Maze::TILE_GRASS:
+				meshList[GEO_GRASS]->material.kAmbient.Set(1.f, 1.f, 1.f);
+				RenderMesh(meshList[GEO_GRASS], true);
+				break;
+			case Maze::TILE_SNOW:
+				meshList[GEO_SNOW]->material.kAmbient.Set(1.f, 1.f, 1.f);
+				RenderMesh(meshList[GEO_SNOW], true);
+				break;
+			case Maze::TILE_ICE:
+				meshList[GEO_ICE]->material.kAmbient.Set(1.f, 1.f, 1.f);
+				RenderMesh(meshList[GEO_ICE], true);
+				break;
+			case Maze::TILE_SAND:
+				meshList[GEO_SAND]->material.kAmbient.Set(1.f, 1.f, 1.f);
+				RenderMesh(meshList[GEO_SAND], true);
+				break;
+			case Maze::TILE_LAVA:
+				meshList[GEO_LAVA]->material.kAmbient.Set(1.f, 1.f, 1.f);
+				RenderMesh(meshList[GEO_LAVA], true);
 				break;
 			case Maze::TILE_EMPTY:
 				RenderMesh(meshList[GEO_FLOOR], false);
@@ -4257,8 +4362,8 @@ void SceneMovement_Week03::CarveUntilNoFog()
 					{
 						//std::cout << ny << " , " << nx << std::endl;
 						// carve the fog tile (idx) in the TRUE grid
-						m_maze.m_grid[nidx] = Maze::TILE_EMPTY;
-						m_myGrid[nidx] = Maze::TILE_EMPTY; // optional immediate reveal
+						m_maze.m_grid[nidx] = Maze::TILE_GRASS;
+						m_myGrid[nidx] = Maze::TILE_GRASS; // optional immediate reveal
 						carved = true;
 						break;
 					}
@@ -4487,7 +4592,11 @@ int SceneMovement_Week03::GetTileCost(Maze::TILE_CONTENT tile)
 {
 
 	if (!m_maze.IsPassable(tile)) return INT_MAX; 
-	if (tile == Maze::TILE_EMPTY) return 1; // example
+	if (tile == Maze::TILE_GRASS) return 1; 
+	if (tile == Maze::TILE_SNOW) return 3;
+	if (tile == Maze::TILE_ICE) return 2;
+	if (tile == Maze::TILE_SAND) return 2;
+	if (tile == Maze::TILE_LAVA) return 3;
 	return 1;
 }
 
@@ -4598,9 +4707,9 @@ void SceneMovement_Week03::RevealAround(GameObject* go, int range)
 	// choose team grid ONCE
 	std::vector<Maze::TILE_CONTENT>& teamGrid =
 		(go->side == GameObject::SIDE_BLUE) ? b_grid : r_grid;
-
-	// mark current as empty
-	teamGrid[Get1DIndex(curr.x, curr.y)] = Maze::TILE_EMPTY;
+	
+	int idx = Get1DIndex(go->curr.x, go->curr.y);
+	teamGrid[idx] = m_maze.m_grid[idx];
 
 	for (int dy = -range; dy <= range; ++dy)
 	{
@@ -4856,6 +4965,44 @@ GameObject* SceneMovement_Week03::PickClosestVisibleTarget(GameObject* go)
 		}
 	}
 	return best;
+}
+
+void SceneMovement_Week03::GetVisibleTileIndicesNow(const GameObject* go)
+{
+	std::fill(visGrid.begin(), visGrid.end(), Maze::TILE_FOG);
+	if (!go) return;
+
+	int range = go->viewRange;
+	MazePt curr = go->curr;
+
+	for (int dy = -range; dy <= range; ++dy)
+	{
+		for (int dx = -range; dx <= range; ++dx)
+		{
+			if (abs(dx) + abs(dy) > range) continue;
+
+			int x = curr.x + dx;
+			int y = curr.y + dy;
+			if (!IsWithinBoundary(x) || !IsWithinBoundary(y)) continue;
+
+			visGrid[Get1DIndex(x, y)] = m_maze.m_grid[Get1DIndex(x, y)];
+		}
+	}
+}
+
+bool SceneMovement_Week03::IsVisibleToCurrentUnit(GameObject* go) 
+{
+	if (!go || !go->active) return false;
+	if (!m_currentUnit) return true;          // fallback: render all
+	if (go == m_currentUnit) return true;     // always render self
+
+	// objects without a grid tile position (projectiles etc.) you can decide:
+	// return true; or do distance check
+	if (!IsWithinBoundary(go->curr.x) || !IsWithinBoundary(go->curr.y))
+		return true;
+
+	int idx = Get1DIndex(go->curr.x, go->curr.y);
+	return visGrid[idx] != 0;
 }
 
 void SceneMovement_Week03::Exit()

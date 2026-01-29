@@ -148,6 +148,13 @@ public:
 		GEO_BULLET2,
 		GEO_ORE,
 		GEO_LOG,
+		GEO_GRASS,
+		GEO_SNOW,
+		GEO_SAND,
+		GEO_WATER,
+		GEO_LAVA,
+		GEO_ICE,
+		GEO_FOG,
 		NUM_GEOMETRY,
 	};
 public:

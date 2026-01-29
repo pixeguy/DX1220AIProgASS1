@@ -20,6 +20,12 @@ public:
 		TILE_EMPTY = 1,
 		TILE_ORE = 2,
 		TILE_WOODENLOG = 3,
+		TILE_GRASS,
+		TILE_SNOW,
+		TILE_SAND,
+		TILE_WATER,
+		TILE_ICE,
+		TILE_LAVA,
 		TILE_NULL,
 	};
 	enum DIRECTION
@@ -50,6 +56,7 @@ public:
 	TILE_CONTENT See(MazePt tile);
 	bool IsPassable(Maze::TILE_CONTENT tile);
 	bool NonMats(Maze::TILE_CONTENT tile);
+	bool IsEmpty(Maze::TILE_CONTENT tile);
 	std::vector<TILE_CONTENT> m_grid;
 	std::vector<int> m_gridHealth;
 

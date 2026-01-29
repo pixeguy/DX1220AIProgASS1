@@ -340,6 +340,30 @@ void SceneBase::Init()
 
 		meshList[GEO_LOG] = MeshBuilder::GenerateQuad("Log", Color(1, 1, 1));
 		meshList[GEO_LOG]->textureID = LoadTGA("Image//WoodenLog.tga");
+
+		meshList[GEO_GRASS] = MeshBuilder::GenerateQuad("grass", Color(1, 1, 1));
+		meshList[GEO_GRASS]->textureID = LoadTGA("Image//grassTile.tga");
+
+		meshList[GEO_SNOW] = MeshBuilder::GenerateQuad("snow", Color(1, 1, 1));
+		meshList[GEO_SNOW]->textureID = LoadTGA("Image//snowTile.tga");
+
+		meshList[GEO_SAND] = MeshBuilder::GenerateQuad("sand", Color(1, 1, 1));
+		meshList[GEO_SAND]->textureID = LoadTGA("Image//sandTile.tga");
+
+		meshList[GEO_WATER] = MeshBuilder::GenerateQuad("water", Color(1, 1, 1));
+		meshList[GEO_WATER]->textureID = LoadTGA("Image/waterTile.tga");
+
+		meshList[GEO_ICE] = MeshBuilder::GenerateQuad("iceTile", Color(1, 1, 1));
+		meshList[GEO_ICE]->textureID = LoadTGA("Image//iceTile.tga");
+
+		meshList[GEO_LAVA] = MeshBuilder::GenerateQuad("lava", Color(1, 1, 1));
+		meshList[GEO_LAVA]->textureID = LoadTGA("Image//lavaTile.tga");
+
+		meshList[GEO_WALL] = MeshBuilder::GenerateQuad("wall", Color(1, 1, 1));
+		meshList[GEO_WALL]->textureID = LoadTGA("Image//wallTile.tga");
+
+		meshList[GEO_FOG] = MeshBuilder::GenerateQuad("fog", Color(1, 1, 1));
+		meshList[GEO_FOG]->textureID = LoadTGA("Image//fogTile.tga");
 	}
 	meshList[GEO_TEXT]->material.kAmbient.Set(1, 0, 0);
 
@@ -353,8 +377,6 @@ void SceneBase::Init()
 
 	//week 7
 	meshList[GEO_WHITEQUAD] = MeshBuilder::GenerateQuad("whitequad", Color(1, 1, 1));
-	meshList[GEO_WALL] = MeshBuilder::GenerateQuad("wall", Color(1, 1, 1));
-	meshList[GEO_WALL]->textureID = LoadTGA("Image//wall.tga");
 	meshList[GEO_FLOOR] = MeshBuilder::GenerateQuad("floor", Color(1, 1, 1));
 	meshList[GEO_FLOOR]->textureID = LoadTGA("Image//floor.tga");
 	meshList[GEO_AGENT] = MeshBuilder::GenerateQuad("agent", Color(1, 1, 1));
