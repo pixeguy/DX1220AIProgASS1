@@ -4996,6 +4996,7 @@ int SceneMovement_Week03::SetTurnsToNextWeather()
 	case MIDWINTER: turns = 2; break;
 	case WINTER: turns = 4; break;
 	case MIDWINTERFOREST: turns = 2; break;
+	case FOREST2: turns = 4; break;
 	case MIDDESERT: turns = 3; break;
 	case DESERT: turns = 3; break;
 	case MIDDESERTFOREST: turns = 2; break;
@@ -5011,7 +5012,8 @@ void SceneMovement_Week03::SetNextWeather()
 	case FOREST: currentWeather = MIDWINTER; m_maze.ConvertTerrainForWinter(m_mazeKey, m_start, changed, 0.4, 0.05, 0.05, 0.35); break;
 	case MIDWINTER: currentWeather = WINTER; m_maze.ConvertTerrainForWinter(m_mazeKey, m_start, changed, 1, 0.05, 0.05, 1);  break;
 	case WINTER: currentWeather = MIDWINTERFOREST; m_maze.RevertBiomeOverlayToForest(m_mazeKey, m_start, changed, Maze::TILE_SNOW, 0.55, 0.05, Maze::TILE_ICE, 0.60);  break;
-	case MIDWINTERFOREST: currentWeather = FOREST; m_maze.RevertBiomeOverlayToForest(m_mazeKey, m_start, changed, Maze::TILE_SNOW, 1, 0.1, Maze::TILE_ICE, 1);  break;
+	case MIDWINTERFOREST: currentWeather = FOREST2; m_maze.RevertBiomeOverlayToForest(m_mazeKey, m_start, changed, Maze::TILE_SNOW, 1, 0.1, Maze::TILE_ICE, 1);  break;
+	case FOREST2: currentWeather = MIDDESERT; m_maze.RevertBiomeOverlayToForest(m_mazeKey, m_start, changed, Maze::TILE_SNOW, 1, 0.1, Maze::TILE_ICE, 1);  break;
 	}
 	ResetTilesToFog(changed);
 }

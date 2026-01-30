@@ -117,7 +117,7 @@ public:
 	bool gamePlaying = false;
 	bool goldenEvent = false;
 
-	enum WorldWeather {FOREST, MIDWINTER, WINTER, MIDWINTERFOREST, MIDDESERT, DESERT, MIDDESERTFOREST};
+	enum WorldWeather {FOREST, MIDWINTER, WINTER, MIDWINTERFOREST,FOREST2, MIDDESERT, DESERT, MIDDESERTFOREST};
 	WorldWeather currentWeather = WorldWeather::FOREST;
 	int turnsToNextWeather = 0;
 
