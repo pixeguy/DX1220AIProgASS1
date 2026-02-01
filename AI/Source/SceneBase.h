@@ -155,6 +155,7 @@ public:
 		GEO_LAVA,
 		GEO_ICE,
 		GEO_FOG,
+		GEO_MAGMA,
 		NUM_GEOMETRY,
 	};
 public:

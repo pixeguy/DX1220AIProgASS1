@@ -88,7 +88,7 @@ StateMortarDeath::~StateMortarDeath()
 
 void StateMortarDeath::Enter()
 {
-	PostOffice::GetInstance()->Send("Scene", new MessageSpawnBigMorBomb(go));	
+	//PostOffice::GetInstance()->Send("Scene", new MessageSpawnBigMorBomb(go));	
 	go->moveSpeed = 0;
 	go->actionSpeed = 0.3;
 	go->target = go->pos;

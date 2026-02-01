@@ -199,4 +199,10 @@ struct MessageMechanicBuild : public Message
 	GameObject* go;
 };
 
+struct MessageMeteorSpawn : public Message
+{
+	MessageMeteorSpawn(MazePt* coord) : coord(coord) {}
+	MazePt* coord;
+};
+
 #endif

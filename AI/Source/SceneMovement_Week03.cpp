@@ -674,10 +674,10 @@ bool SceneMovement_Week03::DecideSpawn(GameObject* spawner)
 	float needMortar = (((0.0f) > (mortarRatio - rMortar)) ? (0.0f) : (mortarRatio - rMortar));
 
 	//special cases
-	if (spawner->woodenLogs < lowWoodThreshold || spawner->metalParts < lowMetalThreshold)
-	{
-		needMech += 0.2f;
-	}
+	//if (spawner->woodenLogs < lowWoodThreshold || spawner->metalParts < lowMetalThreshold)
+	//{
+	//	needMech += 0.2f;
+	//}
 
 	// Helper 
 	auto TypeName = [](GameObject::GAMEOBJECT_TYPE t) -> const char*
@@ -852,8 +852,76 @@ bool SceneMovement_Week03::DecideSpawn(GameObject* spawner)
 
 bool SceneMovement_Week03::DecideEvent()
 {
-	m_maze.ConvertWallsToResources(m_mazeKey, m_start, 0.05f, 0.05f);
-	m_myGrid = m_maze.m_grid;
+	int choice = Math::RandIntMinMax(0, 2); // or rand() % 3 if you don't have Math helper
+
+	switch (choice)
+	{
+	case 0: // tornado
+	{
+		std::vector<bool> canWalk(m_goList.size(), true);
+
+		for (int step = 0; step < 2; ++step)
+		{
+			for (int i = 0; i < (int)m_goList.size(); ++i)
+			{
+				GameObject* go = m_goList[i];
+				if (!go || !go->active) continue;
+				if (go->type == GameObject::GO_SPAWNMORTARAREA) continue;
+				if (go->type == GameObject::GO_MAINBASE) continue;
+				if (go->type == GameObject::GO_SPAWNER) continue;
+				if (!canWalk[i]) continue;
+
+				int nx = go->curr.x;
+				int ny = go->curr.y + 1;
+
+				if (nx < 0 || nx >= (int)m_noGrid || ny < 0 || ny >= (int)m_noGrid)
+				{
+					canWalk[i] = false;
+					continue;
+				}
+
+				int ind = Get1DIndex(nx, ny);
+				Maze::TILE_CONTENT top = m_maze.m_grid[ind];
+
+				if (m_maze.IsPassable(top))
+				{
+					go->curr = MazePt(nx, ny);
+					RevealAround(go, go->viewRange);
+				}
+				else
+				{
+					canWalk[i] = false;
+				}
+			}
+		}
+		break;
+	}
+
+	case 1: // meteor
+	{
+		std::cout << "Meteorrrr" << std::endl;
+
+		// Example: pick a random tile in bounds (customize your allowed area)
+		int x = rand() % (int)m_noGrid;
+		int y = rand() % (int)m_noGrid;
+
+		MazePt* meteorPt = new MazePt(x, y);
+		MessageMeteorSpawn spawnMeteor(meteorPt);
+		Handle(&spawnMeteor);
+
+		break;
+	}
+
+	case 2: // more resources
+	{
+		std::cout << "More resources!" << std::endl;
+
+		m_maze.ConvertWallsToResources(m_mazeKey, m_start, 0.05f, 0.05f);
+		m_myGrid = m_maze.m_grid;
+
+		break;
+	}
+	}
 	return true;
 }
 
@@ -1800,6 +1868,39 @@ void SceneMovement_Week03::Update(double dt)
 		}
 	}
 
+
+	//update units on certain tiles
+	for (int row = (int)m_noGrid - 1; row >= 0; --row)
+	{
+		for (int col = 0; col < (int)m_noGrid; ++col)
+		{
+			Maze::TILE_CONTENT tile = m_maze.m_grid[row * m_noGrid + col];
+			MazePt point = MazePt(col, row);
+
+			if (!m_maze.IsPassable(tile)) //tile changed to not passable so kill unit, eg. ice change to water so flood unit
+			{
+				std::vector<GameObject*> units = GetUnitsAtTile(point);
+				for (GameObject* unit : units)
+				{
+					unit->health = 0;
+					std::cout << "Unit drowned!" << std::endl;
+					continue;
+				}
+			}
+			if (tile == Maze::TILE_LAVA) //damage units on lava
+			{
+				std::vector<GameObject*> units = GetUnitsAtTile(point);
+				for (GameObject* unit : units)
+				{
+					unit->health -= 10 * dt;
+					std::cout << "Unit Hurt By Lava!" << std::endl;
+					continue;
+				}
+			}
+		}
+	}
+
+
 	//Movement Section
 	//for (std::vector<GameObject*>::iterator it = m_goList.begin(); it != m_goList.end(); ++it)
 	//{
@@ -1888,38 +1989,46 @@ void SceneMovement_Week03::Update(double dt)
 void SceneMovement_Week03::TurnSystem(float dt)
 {
 	timer += m_speed * dt;
-	if (timer > 1.0f)
+	if (timer > 0.5f)
 	{
 		timer = 0.f;
-		std::cout << "timer" << std::endl;
 		if (m_currentUnit == nullptr)
 		{
-			GameObject* go = GetNextActiveUnit();
-			if (!go) return;
-
-			m_currentUnit = go;
-
-			if (m_unitsActedThisRound == 0)
-				m_roundSizeCached = CountActiveUnits();
-
-			currentStage = stage::PRE;
-
+			if (currentStage == stage::ROUND_MAP_BEFORE_EVENT ||
+				currentStage == stage::ROUND_EVENT ||
+				currentStage == stage::ROUND_MAP_AFTER_EVENT)
 			{
-				for (std::vector<GameObject*>::iterator it = m_spawners.begin(); it != m_spawners.end(); ++it)
-				{
-					GameObject* spawner = *it;
-					if (spawner->active == false) { continue; }
-					spawner->energy += 6; // dont wanna use EnergyReduce function, i want energy to stop at max
+				// stay null; let the switch handle the round stages
+			}
+			else
+			{
+				GameObject* go = GetNextActiveUnit();
+				if (!go) return;
 
-					if (spawner->energy >= spawner->maxEnergy)
+				m_currentUnit = go;
+
+				if (m_unitsActedThisRound == 0)
+					m_roundSizeCached = CountActiveUnits();
+
+				currentStage = stage::PRE;
+
+				{
+					for (std::vector<GameObject*>::iterator it = m_spawners.begin(); it != m_spawners.end(); ++it)
 					{
-						if (DecideSpawn(spawner))
+						GameObject* spawner = *it;
+						if (spawner->active == false) { continue; }
+						spawner->energy += 6; // dont wanna use EnergyReduce function, i want energy to stop at max
+
+						if (spawner->energy >= spawner->maxEnergy)
 						{
-							spawner->energy = 0;
-						}
-						else
-						{
-							spawner->energy = spawner->maxEnergy;
+							if (DecideSpawn(spawner))
+							{
+								spawner->energy = 0;
+							}
+							else
+							{
+								spawner->energy = spawner->maxEnergy;
+							}
 						}
 					}
 				}
@@ -1932,14 +2041,16 @@ void SceneMovement_Week03::TurnSystem(float dt)
 		switch (currentStage)
 		{
 		case PRE:
-
+		{
 			RevealAround(go, go->viewRange);
 			if (!go->visibleTargets.empty())
 				go->atkTarget = PickClosestVisibleTarget(go);
 
 			currentStage = stage::MOVE;
 			return;
+		}
 		case MOVE:
+		{
 			// ---- MOVE PHASE (only this side) ----
 			go->currMoves = go->useMoves;
 			switch (go->type)
@@ -1948,7 +2059,6 @@ void SceneMovement_Week03::TurnSystem(float dt)
 				DFSOnce(go, go->currMoves);
 				break;
 			case GameObject::GO_ATTACKER:
-				std::cout << go->health << std::endl;
 				if (go->sm->GetCurrentState() == "Healthy")
 				{
 					if (go->atkTarget == NULL || !go->atkTarget->active) {
@@ -1974,7 +2084,6 @@ void SceneMovement_Week03::TurnSystem(float dt)
 						if (IsInAtkRange(go, go->atkTarget))
 						{
 							go->HandleAction("");
-							std::cout << "attacking" << std::endl;
 						}
 						else {
 							PathFind(go, go->atkTarget->curr, go->currMoves, go->atkRange);
@@ -1984,7 +2093,6 @@ void SceneMovement_Week03::TurnSystem(float dt)
 									go->atkTarget->health -= 20;
 									go->currMoves -= 1;
 								}
-								std::cout << "attacking\n";
 							}
 						}
 					}
@@ -2038,7 +2146,6 @@ void SceneMovement_Week03::TurnSystem(float dt)
 						if (IsInAtkRange(go, go->atkTarget))
 						{
 							go->HandleAction("");
-							std::cout << "attacking" << std::endl;
 						}
 						else {
 							PathFind(go, go->atkTarget->curr, go->currMoves, go->atkRange);
@@ -2048,7 +2155,7 @@ void SceneMovement_Week03::TurnSystem(float dt)
 									go->atkTarget->health -= 20;
 									go->currMoves -= 1;
 								}
-								std::cout << "attacking\n";
+
 							}
 						}
 					}
@@ -2152,6 +2259,23 @@ void SceneMovement_Week03::TurnSystem(float dt)
 			case GameObject::GO_RANGED:
 				if (go->sm->GetCurrentState() == "Healthy")
 				{
+					if (go->atkTarget == NULL || !go->atkTarget->active) {
+						while (go->currMoves > 0)
+						{
+							int before = go->currMoves;
+							DFSOnce(go, go->currMoves);   // spends tile cost
+
+							// if DFS couldn't move (blocked / too expensive), stop
+							if (go->currMoves == before)
+								break;
+
+							// reveal after moving too (so the newly reached tile reveals)
+							RevealAround(go, go->viewRange);
+
+							if (go->atkTarget != nullptr)
+								break;
+						}
+					}
 					if (go->atkTarget != NULL && go->atkTarget->active)
 					{
 						if (HeuristicManhattan(go->curr, go->atkTarget->curr) <= 1)
@@ -2162,7 +2286,6 @@ void SceneMovement_Week03::TurnSystem(float dt)
 							if (go->currMoves > 0 && go->atkTarget && go->atkTarget->active && IsInAtkRange(go, go->atkTarget))
 							{
 								go->HandleAction("attack");
-								std::cout << "attacking\n";
 							}
 						}
 						else
@@ -2170,14 +2293,12 @@ void SceneMovement_Week03::TurnSystem(float dt)
 							if (IsInAtkRange(go, go->atkTarget))
 							{
 								go->HandleAction("");
-								std::cout << "attacking" << std::endl;
 							}
 							else {
 								PathFind(go, go->atkTarget->curr, go->currMoves, go->atkRange);
 								if (go->currMoves > 0 && go->atkTarget && go->atkTarget->active && IsInAtkRange(go, go->atkTarget))
 								{
 									go->HandleAction("attack");
-									std::cout << "attacking\n";
 								}
 							}
 						}
@@ -2203,7 +2324,6 @@ void SceneMovement_Week03::TurnSystem(float dt)
 							if (go->currMoves > 0 && go->atkTarget && go->atkTarget->active && IsInAtkRange(go, go->atkTarget))
 							{
 								go->HandleAction("attack");
-								std::cout << "attacking\n";
 							}
 						}
 						else
@@ -2211,14 +2331,12 @@ void SceneMovement_Week03::TurnSystem(float dt)
 							if (IsInAtkRange(go, go->atkTarget))
 							{
 								go->HandleAction("");
-								std::cout << "attacking" << std::endl;
 							}
 							else {
 								PathFind(go, go->atkTarget->curr, go->currMoves, go->atkRange);
 								if (go->currMoves > 0 && go->atkTarget && go->atkTarget->active && IsInAtkRange(go, go->atkTarget))
 								{
 									go->HandleAction("attack");
-									std::cout << "attacking\n";
 								}
 							}
 						}
@@ -2253,7 +2371,6 @@ void SceneMovement_Week03::TurnSystem(float dt)
 							if (go->currMoves > 0 && go->atkTarget && go->atkTarget->active && IsInAtkRange(go, go->atkTarget))
 							{
 								go->HandleAction("attack");
-								std::cout << "attacking\n";
 							}
 						}
 						else
@@ -2261,14 +2378,12 @@ void SceneMovement_Week03::TurnSystem(float dt)
 							if (IsInAtkRange(go, go->atkTarget))
 							{
 								go->HandleAction("");
-								std::cout << "attacking" << std::endl;
 							}
 							else {
 								PathFind(go, go->atkTarget->curr, go->currMoves, go->atkRange);
 								if (go->currMoves > 0 && go->atkTarget && go->atkTarget->active && IsInAtkRange(go, go->atkTarget))
 								{
 									go->HandleAction("attack");
-									std::cout << "attacking\n";
 								}
 							}
 						}
@@ -2435,7 +2550,6 @@ void SceneMovement_Week03::TurnSystem(float dt)
 											go->gotten = true;
 											go->matAmount++;
 											go->currMoves--;
-											std::cout << m_maze.m_gridHealth[target] << std::endl;
 										}
 									}
 								}
@@ -2530,26 +2644,65 @@ void SceneMovement_Week03::TurnSystem(float dt)
 			}
 			currentStage = stage::POST;
 			return;
+		}
 		case POST:
+		{
 			// ---- REVEAL PHASE (only this side) ----
 			RevealAround(go, go->viewRange);
 			if (!go->visibleTargets.empty())
 				go->atkTarget = PickClosestVisibleTarget(go);
 
 			m_unitsActedThisRound++;
-			if (m_unitsActedThisRound >= m_roundSizeCached)
+
+			bool lastUnit = (m_unitsActedThisRound >= m_roundSizeCached);
+
+			if (!lastUnit)
 			{
-				m_unitsActedThisRound = 0;
-				m_turn++;
-				turnSinceEvent++;
-				turnsToNextWeather--;
+				m_currentUnit = GetNextActiveUnit();
+				currentStage = PRE;
+				return;
 			}
+			//if (m_unitsActedThisRound >= m_roundSizeCached)
+			//{
+			//	m_unitsActedThisRound = 0;
+			//	m_turn++;
+			//	turnSinceEvent++;
+			//	turnsToNextWeather--;
+			//}
+
+			//if (turnSinceEvent == randTurns)
+			//{
+			//	DecideEvent();
+			//	turnSinceEvent = 0;
+			//	randTurns = 2;// Math::RandIntMinMax(minTurns, maxTurns);
+			//}
+
+			//if (turnsToNextWeather == 0)
+			//{
+			//	SetNextWeather();
+			//	turnsToNextWeather = SetTurnsToNextWeather();
+			//}
+			m_currentUnit = nullptr;
+			currentStage = ROUND_MAP_BEFORE_EVENT;
+			return;
+		}
+		case stage::ROUND_MAP_BEFORE_EVENT:
+		{
+			//hold for 1 turn showing map
+			currentStage = stage::ROUND_EVENT;
+			return;
+		}
+		case stage::ROUND_EVENT:
+		{
+			// Do event once per round
+			turnSinceEvent++;
+			turnsToNextWeather--;
 
 			if (turnSinceEvent == randTurns)
 			{
 				DecideEvent();
 				turnSinceEvent = 0;
-				randTurns = 2;// Math::RandIntMinMax(minTurns, maxTurns);
+				randTurns = 2; // or RandIntMinMax
 			}
 
 			if (turnsToNextWeather == 0)
@@ -2557,12 +2710,29 @@ void SceneMovement_Week03::TurnSystem(float dt)
 				SetNextWeather();
 				turnsToNextWeather = SetTurnsToNextWeather();
 			}
-			m_currentUnit = nullptr;
-			currentStage = PRE;
-			break;
+
+			currentStage = stage::ROUND_MAP_AFTER_EVENT;
+			return;
+		}
+		case stage::ROUND_MAP_AFTER_EVENT:
+		{
+			// Show map again after event (in case event changed tiles/visibility)
+			// RevealAll(); (if needed)
+
+			// NOW progress turn + reset round
+			m_turn++;
+			m_unitsActedThisRound = 0;
+
+			// cache next round size *before* you start selecting units again
+			m_roundSizeCached = CountActiveUnits();
+
+			// select first unit of next round
+			m_currentUnit = GetNextActiveUnit();
+			currentStage = stage::PRE;
+			return;
+		}
 		}
 	}
-	std::cout << currentWeather << std::endl;
 }
 
 std::string GetTimeString(float timeCounter)
@@ -2796,7 +2966,7 @@ void SceneMovement_Week03::RenderGO(GameObject* go)
 		}
 		else
 		{
-			modelStack.Translate(132.5, 50, zOffset);
+			modelStack.Translate(132.5, 60, zOffset);
 			RenderGOBar(go, 14, Vector3(0, -1.5, 0));
 		}
 		modelStack.Rotate(180, 0, 0, 1);
@@ -3190,6 +3360,27 @@ bool SceneMovement_Week03::Handle(Message* message)
 	MessageRevealUnit* msgRevealUnit = dynamic_cast<MessageRevealUnit*>(message);
 	if (msgRevealUnit) {
 			msgRevealUnit->spotter->atkTarget = msgRevealUnit->target;
+	}
+
+	MessageMeteorSpawn* msgMeteorSpawn = dynamic_cast<MessageMeteorSpawn*>(message);
+	if (msgMeteorSpawn) {
+		MazePt points[4];
+
+		points[0] = MazePt(msgMeteorSpawn->coord->x, msgMeteorSpawn->coord->y);
+		points[1] = MazePt(msgMeteorSpawn->coord->x + 1, msgMeteorSpawn->coord->y);
+		points[2] = MazePt(msgMeteorSpawn->coord->x, msgMeteorSpawn->coord->y + 1);
+		points[3] = MazePt(msgMeteorSpawn->coord->x + 1, msgMeteorSpawn->coord->y + 1);
+
+		for (MazePt p : points)
+		{
+			int ind = Get1DIndex(p.x, p.y);
+			m_maze.m_grid[ind] = Maze::TILE_MAGMA;
+			std::vector<GameObject*> affected = GetUnitsAtTile(p);
+			for (GameObject* go : affected)
+			{
+				go->health -= 70;
+			}
+		}
 	}
 
 	MessageMechanicBuild* msgMechBuild = dynamic_cast<MessageMechanicBuild*>(message);
@@ -3909,7 +4100,7 @@ void SceneMovement_Week03::Render()
 			RenderGO(go);
 		}
 	}
-	RenderDebugGO(GameObject::SIDE_BLUE, 35);
+	RenderDebugGO(GameObject::SIDE_BLUE, 50);
 	RenderDebugGO(GameObject::SIDE_RED,75);
 
 
@@ -3965,6 +4156,10 @@ void SceneMovement_Week03::Render()
 				meshList[GEO_LAVA]->material.kAmbient.Set(1.f, 1.f, 1.f);
 				RenderMesh(meshList[GEO_LAVA], true);
 				break;
+			case Maze::TILE_MAGMA:
+				meshList[GEO_MAGMA]->material.kAmbient.Set(1.f, 1.f, 1.f);
+				RenderMesh(meshList[GEO_MAGMA], true);
+				break;
 			case Maze::TILE_EMPTY:
 				RenderMesh(meshList[GEO_FLOOR], false);
 				break;
@@ -4002,8 +4197,8 @@ void SceneMovement_Week03::Render()
 				RenderMesh(meshList[GEO_WALL], false);
 				break;
 			case Maze::TILE_FOG:
-				meshList[GEO_WHITEQUAD]->material.kAmbient.Set(0.f, 0.f, 0.f);
-				RenderMesh(meshList[GEO_WHITEQUAD], true);
+				meshList[GEO_FOG]->material.kAmbient.Set(1.f, 1.f, 1.f);
+				RenderMesh(meshList[GEO_FOG], true);
 				break;
 			case Maze::TILE_ORE:
 				meshList[GEO_ORE]->material.kAmbient.Set(1.f, 0.f, 0.f);
@@ -4309,6 +4504,8 @@ void SceneMovement_Week03::DFS(MazePt curr)
 
 void SceneMovement_Week03::CarveUntilNoFog()
 {
+	std::fill(m_myGrid.begin(), m_myGrid.end(), Maze::TILE_FOG);
+	m_myGrid[m_start.y * m_noGrid + m_start.x] = Maze::TILE_GRASS;
 	while (true)
 	{
 		std::fill(m_visited.begin(), m_visited.end(), false);
@@ -4578,7 +4775,8 @@ int SceneMovement_Week03::GetTileCost(Maze::TILE_CONTENT tile)
 	if (tile == Maze::TILE_SNOW) return 3;
 	if (tile == Maze::TILE_ICE) return 2;
 	if (tile == Maze::TILE_SAND) return 2;
-	if (tile == Maze::TILE_LAVA) return 3;
+	if (tile == Maze::TILE_LAVA) return 4;
+	if (tile == Maze::TILE_MAGMA) return 5;
 	return 1;
 }
 
@@ -4878,6 +5076,46 @@ void SceneMovement_Week03::DFSOnce(GameObject* go, int& moveBudget)
 			}
 		}
 	}
+
+	{
+		std::vector<Maze::TILE_CONTENT>& teamGrid =
+			(go->side == GameObject::SIDE_BLUE) ? b_grid : r_grid;
+
+		MazePt best = curr;
+		int bestCost = INT_MAX;
+
+		for (int(&offset)[2] : offsets)
+		{
+			next.Set(curr.x + offset[0], curr.y + offset[1]);
+			if (!IsWithinBoundary(next.x) || !IsWithinBoundary(next.y))
+				continue;
+
+			int idx = Get1DIndex(next.x, next.y);
+
+			// teamGrid[idx] already known if visited, but safe if you want:
+			// teamGrid[idx] = m_maze.See(next);
+
+			int cost = GetTileCost(teamGrid[idx]);
+			if (cost == INT_MAX) continue;
+			if (cost > moveBudget) continue;
+
+
+			if (m_maze.IsPassable(teamGrid[idx])) {
+				if (cost < bestCost) { bestCost = cost; best = next; }
+				else if (cost == bestCost)
+				{
+					if (rand() % 2 == 0) best = next;
+				}
+			}
+		}
+
+		if (bestCost != INT_MAX)
+		{
+			moveBudget -= bestCost;
+			go->curr = best;
+			return;
+		}
+	}
 	//already fully explored all surrounding neighbours. time tobacktrack
 	stack.pop_back();
 	if (!stack.empty())
@@ -4992,14 +5230,14 @@ int SceneMovement_Week03::SetTurnsToNextWeather()
 	int turns = 0;
 	switch (currentWeather)
 	{
-	case FOREST: turns = 4; break;
-	case MIDWINTER: turns = 2; break;
-	case WINTER: turns = 4; break;
-	case MIDWINTERFOREST: turns = 2; break;
-	case FOREST2: turns = 4; break;
-	case MIDDESERT: turns = 3; break;
-	case DESERT: turns = 3; break;
-	case MIDDESERTFOREST: turns = 2; break;
+	case FOREST: turns = 3; break;
+	case MIDWINTER: turns = 1; break;
+	case WINTER: turns = 3; break;
+	case MIDWINTERFOREST: turns = 1; break;
+	case FOREST2: turns = 2; break;
+	case MIDDESERT: turns = 1; break;
+	case DESERT: turns = 2; break;
+	case MIDDESERTFOREST: turns = 1; break;
 	}
 	return turns += Math::RandIntMinMax(-1,1);
 }
@@ -5010,11 +5248,15 @@ void SceneMovement_Week03::SetNextWeather()
 	switch (currentWeather)
 	{
 	case FOREST: currentWeather = MIDWINTER; m_maze.ConvertTerrainForWinter(m_mazeKey, m_start, changed, 0.4, 0.05, 0.05, 0.35); break;
-	case MIDWINTER: currentWeather = WINTER; m_maze.ConvertTerrainForWinter(m_mazeKey, m_start, changed, 1, 0.05, 0.05, 1);  break;
+	case MIDWINTER: currentWeather = WINTER; m_maze.ConvertTerrainForWinter(m_mazeKey, m_start, changed, 1, 0.05, 0.05, 1); m_maze.ForceWinterAll(m_start, changed);  break;
 	case WINTER: currentWeather = MIDWINTERFOREST; m_maze.RevertBiomeOverlayToForest(m_mazeKey, m_start, changed, Maze::TILE_SNOW, 0.55, 0.05, Maze::TILE_ICE, 0.60);  break;
-	case MIDWINTERFOREST: currentWeather = FOREST2; m_maze.RevertBiomeOverlayToForest(m_mazeKey, m_start, changed, Maze::TILE_SNOW, 1, 0.1, Maze::TILE_ICE, 1);  break;
-	case FOREST2: currentWeather = MIDDESERT; m_maze.RevertBiomeOverlayToForest(m_mazeKey, m_start, changed, Maze::TILE_SNOW, 1, 0.1, Maze::TILE_ICE, 1);  break;
+	case MIDWINTERFOREST: currentWeather = FOREST2; m_maze.RevertBiomeOverlayToForest(m_mazeKey, m_start, changed, Maze::TILE_SNOW, 1, 0.1, Maze::TILE_ICE, 1); m_maze.ForceBackToGrassAndWater(m_start, changed);  break;
+	case FOREST2: currentWeather = MIDDESERT; m_maze.ConvertTerrainForDesert(m_mazeKey, m_start, changed, 0.4, 0.05, 0.05, 0.35); break;
+	case MIDDESERT: currentWeather = DESERT; m_maze.ConvertTerrainForDesert(m_mazeKey, m_start, changed, 1, 0.05, 0.05, 1); m_maze.ForceDesertAll(m_start, changed); break;
+	case DESERT: currentWeather = MIDDESERTFOREST; m_maze.RevertBiomeOverlayToForest(m_mazeKey, m_start, changed, Maze::TILE_SAND, 0.55, 0.05, Maze::TILE_LAVA, 0.60); break;
+	case MIDDESERTFOREST: currentWeather = FOREST; m_maze.RevertBiomeOverlayToForest(m_mazeKey, m_start, changed, Maze::TILE_SAND, 1, 0.1, Maze::TILE_LAVA, 1); m_maze.ForceBackToGrassAndWater(m_start, changed); break;
 	}
+	CarveUntilNoFog();
 	ResetTilesToFog(changed);
 }
 
@@ -5025,6 +5267,18 @@ void SceneMovement_Week03::ResetTilesToFog(std::vector<int>& changedTiles)
 		b_grid[idx] = Maze::TILE_FOG;
 		r_grid[idx] = Maze::TILE_FOG;
 	}
+}
+
+std::vector<GameObject*> SceneMovement_Week03::GetUnitsAtTile(MazePt& p) 
+{
+	std::vector<GameObject*> found;
+	for (GameObject* go : m_goList)
+	{
+		if (!go || !go->active) continue;
+		if (go->curr.x == p.x && go->curr.y == p.y)
+			found.push_back(go);
+	}
+	return found; // NRVO/move, fine
 }
 
 void SceneMovement_Week03::Exit()

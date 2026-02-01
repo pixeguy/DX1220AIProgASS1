@@ -66,12 +66,20 @@ public:
 	int SetTurnsToNextWeather();
 	void SetNextWeather();
 	void ResetTilesToFog(std::vector<int>& changedTiles);
+	std::vector<GameObject*> GetUnitsAtTile(MazePt& p);
 	int MechanicNeedGet(GameObject* spawner);
 	ArmyStats ComputeArmyStats(GameObject::SIDE mySide);
 	bool DecideSpawn(GameObject* spawner);
 
 	bool DecideEvent();
-	enum stage { PRE,MOVE,POST };
+	enum stage {
+		PRE,
+		MOVE,
+		POST,
+		ROUND_MAP_BEFORE_EVENT,
+		ROUND_EVENT,
+		ROUND_MAP_AFTER_EVENT
+	};
 	stage currentStage;
 	float timer = 0;
 	void TurnSystem(float dt);
@@ -109,7 +117,7 @@ public:
 	const int costAttacker = 2;
 	const int costRanged = 2;
 	const int costSupport = 3;
-	const int costMech = 2;
+	const int costMech = 3;
 	const int costTank = 4;
 	const int costMortar = 5;
 	const float costWeight = 1.0f; // tweak this later

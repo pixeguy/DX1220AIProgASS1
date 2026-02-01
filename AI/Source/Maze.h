@@ -26,6 +26,7 @@ public:
 		TILE_WATER,
 		TILE_ICE,
 		TILE_LAVA,
+		TILE_MAGMA,
 		TILE_NULL,
 	};
 	enum DIRECTION
@@ -47,6 +48,9 @@ public:
 	void ConvertWallsToResources(unsigned key, MazePt start, float oreFromWallsLoad, float woodFromWallsLoad);
 	void ConvertTerrainForWinter(unsigned key, MazePt start, std::vector<int>& outChangedIdx, float grassToSnowLoad, float treeToSnowLoad, float treeToGrassLoad, float waterToIceLoad);
 	void ConvertTerrainForDesert(unsigned key, MazePt start, std::vector<int>& outChangedIdx, float grassToSandLoad, float treeToSandLoad, float treeToGrassLoad, float waterToSandLoad);
+	void ForceWinterAll(MazePt start, std::vector<int>& outChangedIdx);
+	void ForceDesertAll(MazePt start, std::vector<int>& outChangedIdx);
+	void ForceBackToGrassAndWater(MazePt start, std::vector<int>& outChangedIdx);
 	void RevertBiomeOverlayToForest(unsigned key, MazePt start, std::vector<int>& outChangedIdx, TILE_CONTENT groundFromTile, float groundToGrassLoad, float groundToTreeLoad, TILE_CONTENT liquidFromTile, float liquidToWaterLoad);
 	bool Move(DIRECTION direction);
 	unsigned GetKey();

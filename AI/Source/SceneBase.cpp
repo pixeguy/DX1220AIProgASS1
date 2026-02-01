@@ -359,6 +359,9 @@ void SceneBase::Init()
 		meshList[GEO_LAVA] = MeshBuilder::GenerateQuad("lava", Color(1, 1, 1));
 		meshList[GEO_LAVA]->textureID = LoadTGA("Image//lavaTile.tga");
 
+		meshList[GEO_MAGMA] = MeshBuilder::GenerateQuad("magma", Color(1, 1, 1));
+		meshList[GEO_MAGMA]->textureID = LoadTGA("Image//magmaTile.tga");
+
 		meshList[GEO_WALL] = MeshBuilder::GenerateQuad("wall", Color(1, 1, 1));
 		meshList[GEO_WALL]->textureID = LoadTGA("Image//wallTile.tga");
 

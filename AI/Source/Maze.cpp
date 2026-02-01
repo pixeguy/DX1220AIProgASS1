@@ -59,7 +59,6 @@ void Maze::Generate(unsigned key, unsigned size, MazePt start)
 	for (int i = 0; i < (int)(total * oreLoad);)
 	{
 		unsigned chosen = rand() % total;
-		if (chosen == startId) continue;
 
 		if (m_grid[chosen] == TILE_GRASS)
 		{
@@ -71,7 +70,6 @@ void Maze::Generate(unsigned key, unsigned size, MazePt start)
 	for (int i = 0; i < (int)(total * woodLoad);)
 	{
 		unsigned chosen = rand() % total;
-		if (chosen == startId) continue;
 
 		if (m_grid[chosen] == TILE_GRASS)
 		{
@@ -83,7 +81,6 @@ void Maze::Generate(unsigned key, unsigned size, MazePt start)
 	for (int i = 0; i < (int)(total * waterLoad);)
 	{
 		unsigned chosen = rand() % total;
-		if (chosen == startId) continue;
 
 		if (m_grid[chosen] == TILE_GRASS)
 		{
@@ -126,7 +123,6 @@ void Maze::ConvertWallsToResources(unsigned key, MazePt start,
 	wallIds.reserve(m_grid.size());
 	for (unsigned i = 0; i < (unsigned)m_grid.size(); ++i)
 	{
-		if (i == startId) continue;
 		if (m_grid[i] == TILE_WALL)
 			wallIds.push_back(i);
 	}
@@ -207,7 +203,6 @@ void Maze::ConvertTerrainForWinter(unsigned key, MazePt start, std::vector<int>&
 
 		for (unsigned i = 0; i < (unsigned)m_grid.size(); ++i)
 		{
-			if (i == startId) continue;
 			if (m_grid[i] == TILE_GRASS)
 				grassIds.push_back(i);
 		}
@@ -242,7 +237,6 @@ void Maze::ConvertTerrainForWinter(unsigned key, MazePt start, std::vector<int>&
 
 		for (unsigned i = 0; i < (unsigned)m_grid.size(); ++i)
 		{
-			if (i == startId) continue;
 			if (m_grid[i] == TILE_WOODENLOG) // your tree tile
 				treeIds.push_back(i);
 		}
@@ -309,7 +303,6 @@ void Maze::ConvertTerrainForWinter(unsigned key, MazePt start, std::vector<int>&
 
 		for (unsigned i = 0; i < (unsigned)m_grid.size(); ++i)
 		{
-			if (i == startId) continue;
 			if (m_grid[i] == TILE_WATER)
 				waterIds.push_back(i);
 		}
@@ -369,7 +362,6 @@ void Maze::ConvertTerrainForDesert(
 
 		for (unsigned i = 0; i < (unsigned)m_grid.size(); ++i)
 		{
-			if (i == startId) continue;
 			if (m_grid[i] == TILE_GRASS)
 				grassIds.push_back(i);
 		}
@@ -403,7 +395,6 @@ void Maze::ConvertTerrainForDesert(
 
 		for (unsigned i = 0; i < (unsigned)m_grid.size(); ++i)
 		{
-			if (i == startId) continue;
 			if (m_grid[i] == TILE_WOODENLOG)
 				treeIds.push_back(i);
 		}
@@ -470,7 +461,6 @@ void Maze::ConvertTerrainForDesert(
 
 		for (unsigned i = 0; i < (unsigned)m_grid.size(); ++i)
 		{
-			if (i == startId) continue;
 			if (m_grid[i] == TILE_WATER)
 				waterIds.push_back(i);
 		}
@@ -483,15 +473,105 @@ void Maze::ConvertTerrainForDesert(
 		}
 
 		int waterCount = (int)waterIds.size();
-		int sandCount = (int)(waterCount * waterToSandLoad);
-		sandCount = Math::Clamp(sandCount, 0, waterCount);
+		int convertCount = (int)(waterCount * waterToSandLoad);
+		convertCount = Math::Clamp(convertCount, 0, waterCount);
 
-		for (int k = 0; k < sandCount; ++k)
+		for (int k = 0; k < convertCount; ++k)
 		{
 			unsigned idx = waterIds[k];
-			m_grid[idx] = TILE_SAND;   // NOTE: loses "used to be water" info
-			m_gridHealth[idx] = 0;
+
+			// random [0..1)
+			float r = (float)rand() / (float)(RAND_MAX);
+
+			if (r < 50)
+				m_grid[idx] = TILE_LAVA;
+			else
+				m_grid[idx] = TILE_SAND;
+
+			m_gridHealth[idx] = 0; // sand/lava = 0 hp (based on your rule for terrain)
 			outChangedIdx.push_back((int)idx);
+		}
+	}
+}
+
+void Maze::ForceWinterAll(MazePt start, std::vector<int>& outChangedIdx)
+{
+	if (m_size == 0 || m_grid.empty()) return;
+
+	start.x = Math::Clamp(start.x, 0, (int)m_size - 1);
+	start.y = Math::Clamp(start.y, 0, (int)m_size - 1);
+	unsigned startId = start.y * m_size + start.x;
+
+	for (unsigned i = 0; i < (unsigned)m_grid.size(); ++i)
+	{
+
+		if (m_grid[i] == TILE_GRASS)
+		{
+			m_grid[i] = TILE_SNOW;
+			m_gridHealth[i] = 0;
+			outChangedIdx.push_back((int)i);
+		}
+		else if (m_grid[i] == TILE_WATER)
+		{
+			m_grid[i] = TILE_ICE;
+			m_gridHealth[i] = 0;
+			outChangedIdx.push_back((int)i);
+		}
+	}
+}
+
+void Maze::ForceDesertAll(MazePt start, std::vector<int>& outChangedIdx)
+{
+	if (m_size == 0 || m_grid.empty()) return;
+
+	start.x = Math::Clamp(start.x, 0, (int)m_size - 1);
+	start.y = Math::Clamp(start.y, 0, (int)m_size - 1);
+	unsigned startId = start.y * m_size + start.x;
+
+	for (unsigned i = 0; i < (unsigned)m_grid.size(); ++i)
+	{
+
+		if (m_grid[i] == TILE_GRASS)
+		{
+			m_grid[i] = TILE_SAND;
+			m_gridHealth[i] = 0;
+			outChangedIdx.push_back((int)i);
+		}
+		else if (m_grid[i] == TILE_WATER)
+		{
+			m_grid[i] = TILE_LAVA;
+			m_gridHealth[i] = 0;
+			outChangedIdx.push_back((int)i);
+		}
+	}
+}
+
+void Maze::ForceBackToGrassAndWater(MazePt start, std::vector<int>& outChangedIdx)
+{
+	if (m_size == 0 || m_grid.empty()) return;
+
+	start.x = Math::Clamp(start.x, 0, (int)m_size - 1);
+	start.y = Math::Clamp(start.y, 0, (int)m_size - 1);
+	unsigned startId = start.y * m_size + start.x;
+
+	for (unsigned i = 0; i < (unsigned)m_grid.size(); ++i)
+	{
+
+		switch (m_grid[i])
+		{
+		case TILE_SNOW:
+		case TILE_SAND:
+			m_grid[i] = TILE_GRASS;
+			m_gridHealth[i] = 0;
+			outChangedIdx.push_back((int)i);
+			break;
+
+		case TILE_ICE:
+		case TILE_LAVA:
+			m_grid[i] = TILE_WATER;
+			m_gridHealth[i] = 0;
+			outChangedIdx.push_back((int)i);
+			break;
 		}
 	}
 }
@@ -742,12 +822,12 @@ bool Maze::IsPassable(Maze::TILE_CONTENT tile)
 
 bool Maze::NonMats(Maze::TILE_CONTENT tile)
 {
-	if (tile == Maze::TILE_WALL || tile == Maze::TILE_FOG) return false;
+	if (tile == Maze::TILE_WALL || tile == Maze::TILE_FOG || tile == Maze::TILE_WATER) return false;
 	return true;
 }
 
 bool Maze::IsEmpty(Maze::TILE_CONTENT tile)
 {
-	if (tile == Maze::TILE_EMPTY || tile == Maze::TILE_GRASS || tile == Maze::TILE_SNOW || tile == Maze::TILE_SAND || tile == Maze::TILE_LAVA || tile == Maze::TILE_ICE) return true;
+	if (tile == Maze::TILE_EMPTY || tile == Maze::TILE_GRASS || tile == Maze::TILE_SNOW || tile == Maze::TILE_SAND || tile == Maze::TILE_LAVA || tile == Maze::TILE_ICE || tile == Maze::TILE_MAGMA) return true;
 	return false;
 }
