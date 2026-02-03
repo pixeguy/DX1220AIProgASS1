@@ -171,18 +171,18 @@ void StateSupportHealing::Update(double dt)
 		m_go->sm->SetNextState("Hurt");
 		return;
 	}
+	if (m_go->healTarget == NULL || m_go->healTarget->active == false)
+	{
+		m_go->sm->SetNextState("Healthy");
+		m_go->healTarget = NULL;
+		return;
+	}
 	if (m_go->urgent)
 	{
 		m_go->sm->SetNextState("UrgentHealing");
 		return;
 	}
-	if (m_go->nearest->sm->GetCurrentState() == "Healthy") {
-		m_go->sm->SetNextState("Healthy");
-		m_go->healTarget = NULL;
-		return;
-	}
-	if (m_go->healTarget == NULL || m_go->healTarget->active == false)
-	{
+	if (m_go->healTarget->sm->GetCurrentState() == "Healthy") {
 		m_go->sm->SetNextState("Healthy");
 		m_go->healTarget = NULL;
 		return;
@@ -266,17 +266,17 @@ void StateSupportUrgentHealing::Update(double dt)
 		m_go->urgent = false;
 		return;
 	}
-	if (m_go->nearest->sm->GetCurrentState() != "NearDeath")
-	{
-		m_go->urgent = false;
-		m_go->sm->SetNextState("Healing");
-		return;
-	}
 	if (m_go->healTarget == NULL || m_go->healTarget->active == false)
 	{
 		m_go->sm->SetNextState("Healthy");
 		m_go->urgent = false;
 		m_go->healTarget = NULL;
+		return;
+	}
+	if (m_go->healTarget->sm->GetCurrentState() != "NearDeath")
+	{
+		m_go->urgent = false;
+		m_go->sm->SetNextState("Healing");
 		return;
 	}
 	//m_go->moveLeft = m_go->moveRight = m_go->moveUp = m_go->moveDown = false;

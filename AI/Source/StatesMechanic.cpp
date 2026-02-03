@@ -31,6 +31,13 @@ void StateMechanicHealthy::Update(double dt)
 		go->sm->SetNextState("Death");
 		return;
 	}
+	if (go->healTarget != NULL && go->healTarget->active == true)
+	{
+		go->matAmount = 0;
+		go->gotten = false;
+		go->sm->SetNextState("Healing");
+		return;
+	}
 	if (go->specialTarget != NULL && go->specialTarget->active == true)
 	{
 		go->nearest = go->specialTarget;
@@ -55,13 +62,6 @@ void StateMechanicHealthy::Update(double dt)
 		return;
 	}
 	//go->sm->SetNextState("Building");
-	if(go->healTarget != NULL && go->healTarget->active == true)
-	{
-		go->matAmount = 0;
-		go->gotten = false;
-		go->sm->SetNextState("Healing");
-		return;
-	}
 	//go->moveLeft = go->moveRight = go->moveUp = go->moveDown = false;
 	//if (go->nearest)
 	//{

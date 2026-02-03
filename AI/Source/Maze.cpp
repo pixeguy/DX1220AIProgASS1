@@ -30,10 +30,10 @@ void Maze::Generate(unsigned key, unsigned size, MazePt start)
 	float waterLoad = 0.15f;
 	waterLoad = Math::Clamp(waterLoad, 0.f, 0.5f);
 
-	float oreLoad = 0.02f;
+	float oreLoad = 0.05f;
 	oreLoad = Math::Clamp(oreLoad, 0.f, 0.5f);
 
-	float woodLoad = 0.02f;
+	float woodLoad = 0.05f;
 	woodLoad = Math::Clamp(woodLoad, 0.f, 0.5f);
 
 	unsigned total = size * size;

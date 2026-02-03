@@ -76,7 +76,7 @@ void SceneMovement_Week03::Init()
 	srand(time(NULL));
 
 	m_start.Set(0, 0);
-	m_mazeKey = 2;
+	m_mazeKey = Math::RandIntMinMax(0, 99);
 	m_maze.Generate(m_mazeKey, m_noGrid, m_start); //Generate new maze
 	m_myGrid.resize(m_noGrid * m_noGrid);
 	visGrid.resize(m_noGrid * m_noGrid);
@@ -265,8 +265,8 @@ GameObject* SceneMovement_Week03::InitMainBase(GameObject::SIDE side, Vector3 po
 	mainBase->sm->SetNextState("Healthy");
 	mainBase->maxEnergy = 100;
 	mainBase->energy = 0;
-	mainBase->maxHealth = 350;
-	mainBase->health = 350;
+	mainBase->maxHealth = 230;
+	mainBase->health = 230;
 	mainBase->moving = false;
 	mainBase->viewRange = 0;
 	mainBase->atkRange = 0;
@@ -300,8 +300,8 @@ GameObject* SceneMovement_Week03::InitSpawner(GameObject::SIDE side, Vector3 pos
 	float random = Math::RandFloatMinMax(0.f, 25.f);
 	spawner->energy = random;
 	spawner->maxEnergy = 100;
-	spawner->maxHealth = 350;
-	spawner->health = 350;
+	spawner->maxHealth = 225;
+	spawner->health = 225;
 	spawner->sm->SetNextState("Healthy");
 	spawner->woodenLogs = spawner->metalParts = 0;
 	spawner->moving = false;
@@ -453,8 +453,8 @@ GameObject* SceneMovement_Week03::SpawnMetalUnit(GameObject::SIDE side, Vector3 
 	}
 
 	unit->sm->SetNextState("None");
-	unit->maxHealth = 250;
-	unit->health = 250;
+	unit->maxHealth = 200;
+	unit->health = 200;
 	unit->maxEnergy = 10;
 	unit->energy = 0;
 
@@ -594,6 +594,11 @@ int SceneMovement_Week03::MechanicNeedGet(GameObject* spawner)
 	if (total <= 0)
 		total = 1;
 
+	if (stats.countPerType[(int)GameObject::GO_MECHANIC] == 0)
+	{
+		return 1; //need mechanic
+	}
+
 	// all the current ratios
 	float rAttacker = stats.countPerType[(int)GameObject::GO_ATTACKER] / (float)total;
 	float rRanged = stats.countPerType[(int)GameObject::GO_RANGED] / (float)total;
@@ -655,6 +660,29 @@ bool SceneMovement_Week03::DecideSpawn(GameObject* spawner)
 	int total = stats.total; //if 0, make it atleast 1
 	if (total <= 0)
 		total = 1;
+
+	if (stats.countPerType[(int)GameObject::GO_MECHANIC] == 0)
+	{
+		if (spawner->woodenLogs >= costMech)
+		{
+			spawner->woodenLogs -= costMech;
+
+			Vector3 randomPos = RandomPointInRing(spawner->pos, 3.75, 10);
+			GameObject* go = SpawnUnit(spawner->side, randomPos, GameObject::GO_MECHANIC);
+
+			go->curr.Set(spawner->curr.x, spawner->curr.y);
+			RevealAround(go, go->viewRange);
+			go->stack.push_back(go->curr);
+			b_visited[Get1DIndex(spawner->curr.x, spawner->curr.y)] = true;
+
+			return true;
+		}
+		else
+		{
+			// Not enough wood for mechanic
+			return false;
+		}
+	}
 
 	// all the current ratios
 	float rAttacker = stats.countPerType[(int)GameObject::GO_ATTACKER] / (float)total;
@@ -858,6 +886,7 @@ bool SceneMovement_Week03::DecideEvent()
 	{
 	case 0: // tornado
 	{
+		event = "Tornado";
 		std::vector<bool> canWalk(m_goList.size(), true);
 
 		for (int step = 0; step < 2; ++step)
@@ -899,7 +928,7 @@ bool SceneMovement_Week03::DecideEvent()
 
 	case 1: // meteor
 	{
-		std::cout << "Meteorrrr" << std::endl;
+		event = "Meteor";
 
 		// Example: pick a random tile in bounds (customize your allowed area)
 		int x = rand() % (int)m_noGrid;
@@ -914,7 +943,8 @@ bool SceneMovement_Week03::DecideEvent()
 
 	case 2: // more resources
 	{
-		std::cout << "More resources!" << std::endl;
+
+		event = "Resources";
 
 		m_maze.ConvertWallsToResources(m_mazeKey, m_start, 0.05f, 0.05f);
 		m_myGrid = m_maze.m_grid;
@@ -1017,7 +1047,6 @@ void SceneMovement_Week03::Update(double dt)
 		if (posX < m_noGrid * m_gridSize && posY < m_noGrid * m_gridSize) //ensure we're clicking within the board
 		{
 			m_end.Set(static_cast<int>(posX / m_gridSize), static_cast<int>(posY / m_gridSize));
-			std::cout << static_cast<int>(posX / m_gridSize) << " , " << static_cast<int>(posY / m_gridSize) << std::endl;
 			for (GameObject* go : m_goList)
 				if (go->active && go->type == GameObject::GO_NPC)
 					PathFind(go, m_end, go->currMoves,0);
@@ -1847,6 +1876,161 @@ void SceneMovement_Week03::Update(double dt)
 		}
 	}
 
+	//making units target bases if no atkTargets
+	{
+		MazePt redBase = MazePt(18, 9);
+		if (!redKnowsBlueBase) {
+			if (TeamMemoryContainsEnemyBase(redBase, b_grid))
+			{
+				for (GameObject* go : m_goList)
+				{
+					if (go->side == GameObject::SIDE_RED)
+					{
+						for (GameObject* unit : m_goList)
+						{
+							if (!unit || !unit->active) continue;
+							if (go->atkTarget != nullptr && go->atkTarget->active) continue;
+							// change GO_SPAWNER to whatever your base object type is
+							if (unit->type == GameObject::GO_MAINBASE && unit->side == GameObject::SIDE_BLUE)
+								redKnowsBlueBase = true;
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			for (GameObject* go : m_goList)
+			{
+				if (go->side == GameObject::SIDE_RED)
+				{
+					for (GameObject* unit : m_goList)
+					{
+						if (!unit || !unit->active) continue;
+						if (go->atkTarget != nullptr && go->atkTarget->active) continue;
+						// change GO_SPAWNER to whatever your base object type is
+						if (unit->type == GameObject::GO_MAINBASE && unit->side == GameObject::SIDE_BLUE)
+							go->atkTarget = unit;
+					}
+				}
+			}
+		}
+
+		MazePt redSpawner = MazePt(14, 9);
+		if (!redKnowsBlueSpawner)
+		{
+			if (TeamMemoryContainsEnemyBase(redSpawner, b_grid))
+			{
+				for (GameObject* go : m_goList)
+				{
+					if (go->side == GameObject::SIDE_RED)
+					{
+						for (GameObject* unit : m_goList)
+						{
+							if (!unit || !unit->active) continue;
+
+							if (unit->type == GameObject::GO_SPAWNER && unit->side == GameObject::SIDE_BLUE)
+								redKnowsBlueSpawner = true;
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			for (GameObject* go : m_goList)
+			{
+				if (go->side == GameObject::SIDE_RED)
+				{
+					for (GameObject* unit : m_goList)
+					{
+						if (!unit || !unit->active) continue;
+						if (go->atkTarget != nullptr && go->atkTarget->active) continue;
+						// change GO_SPAWNER to whatever your base object type is
+						if (unit->type == GameObject::GO_SPAWNER && unit->side == GameObject::SIDE_BLUE)
+							go->atkTarget = unit;
+					}
+				}
+			}
+		}
+
+		MazePt blueBase = MazePt(0, 9);
+		if (!blueKnowsRedBase)
+		{
+			if (TeamMemoryContainsEnemyBase(blueBase, r_grid))
+			{
+				for (GameObject* go : m_goList)
+				{
+					if (go->side == GameObject::SIDE_BLUE)
+					{
+						for (GameObject* unit : m_goList)
+						{
+							if (!unit || !unit->active) continue;
+
+							if (unit->type == GameObject::GO_MAINBASE && unit->side == GameObject::SIDE_RED)
+								blueKnowsRedBase = true;
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			for (GameObject* go : m_goList)
+			{
+				if (go->side == GameObject::SIDE_BLUE)
+				{
+					for (GameObject* unit : m_goList)
+					{
+						if (!unit || !unit->active) continue;
+						if (go->atkTarget != nullptr && go->atkTarget->active) continue;
+						// change GO_SPAWNER to whatever your base object type is
+						if (unit->type == GameObject::GO_MAINBASE && unit->side == GameObject::SIDE_RED)
+							go->atkTarget = unit;
+					}
+				}
+			}
+		}
+
+		MazePt blueSpawner = MazePt(4, 9);
+		if(!blueKnowsRedSpawner)
+		{
+			if (TeamMemoryContainsEnemyBase(blueSpawner, r_grid))
+			{
+				for (GameObject* go : m_goList)
+				{
+					if (go->side == GameObject::SIDE_BLUE)
+					{
+						for (GameObject* unit : m_goList)
+						{
+							if (!unit || !unit->active) continue;
+
+							if (unit->type == GameObject::GO_SPAWNER && unit->side == GameObject::SIDE_RED)
+								blueKnowsRedSpawner = true;
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			for (GameObject* go : m_goList)
+			{
+				if (go->side == GameObject::SIDE_BLUE)
+				{
+					for (GameObject* unit : m_goList)
+					{
+						if (!unit || !unit->active) continue;
+						if (go->atkTarget != nullptr && go->atkTarget->active) continue;
+						// change GO_SPAWNER to whatever your base object type is
+						if (unit->type == GameObject::GO_SPAWNER && unit->side == GameObject::SIDE_RED)
+							go->atkTarget = unit;
+					}
+				}
+			}
+		}
+	}
+
 	//updating maze
 	for (int row = (int)m_noGrid - 1; row >= 0; --row)
 	{
@@ -1854,7 +2038,7 @@ void SceneMovement_Week03::Update(double dt)
 		{
 			int t = m_maze.m_grid[row * m_noGrid + col];
 			int tHealth = m_maze.m_gridHealth[row * m_noGrid + col];
-			if (m_maze.IsEmpty(m_maze.m_grid[row * m_noGrid + col]) || t == Maze::TILE_FOG) continue;
+			if (!(t == Maze::TILE_WALL) && !(t == Maze::TILE_ORE) && !(t == Maze::TILE_MAGMA)) continue;
 			if (tHealth <= 0)
 			{
 				m_maze.m_grid[row * m_noGrid + col] = Maze::TILE_GRASS;
@@ -1882,8 +2066,8 @@ void SceneMovement_Week03::Update(double dt)
 				std::vector<GameObject*> units = GetUnitsAtTile(point);
 				for (GameObject* unit : units)
 				{
+					if (unit->type != GameObject::GO_SPAWNER && unit->type != GameObject::GO_MAINBASE) 
 					unit->health = 0;
-					std::cout << "Unit drowned!" << std::endl;
 					continue;
 				}
 			}
@@ -1893,7 +2077,6 @@ void SceneMovement_Week03::Update(double dt)
 				for (GameObject* unit : units)
 				{
 					unit->health -= 10 * dt;
-					std::cout << "Unit Hurt By Lava!" << std::endl;
 					continue;
 				}
 			}
@@ -1988,6 +2171,7 @@ void SceneMovement_Week03::Update(double dt)
 
 void SceneMovement_Week03::TurnSystem(float dt)
 {
+	if (!gamePlaying) return;
 	timer += m_speed * dt;
 	if (timer > 0.5f)
 	{
@@ -2012,26 +2196,6 @@ void SceneMovement_Week03::TurnSystem(float dt)
 
 				currentStage = stage::PRE;
 
-				{
-					for (std::vector<GameObject*>::iterator it = m_spawners.begin(); it != m_spawners.end(); ++it)
-					{
-						GameObject* spawner = *it;
-						if (spawner->active == false) { continue; }
-						spawner->energy += 6; // dont wanna use EnergyReduce function, i want energy to stop at max
-
-						if (spawner->energy >= spawner->maxEnergy)
-						{
-							if (DecideSpawn(spawner))
-							{
-								spawner->energy = 0;
-							}
-							else
-							{
-								spawner->energy = spawner->maxEnergy;
-							}
-						}
-					}
-				}
 			}
 		}
 
@@ -2704,6 +2868,10 @@ void SceneMovement_Week03::TurnSystem(float dt)
 				turnSinceEvent = 0;
 				randTurns = 2; // or RandIntMinMax
 			}
+			else
+			{
+				event = "None";
+			}
 
 			if (turnsToNextWeather == 0)
 			{
@@ -2729,6 +2897,45 @@ void SceneMovement_Week03::TurnSystem(float dt)
 			// select first unit of next round
 			m_currentUnit = GetNextActiveUnit();
 			currentStage = stage::PRE;
+
+
+			//spawner updates
+			{
+				for (std::vector<GameObject*>::iterator it = m_spawners.begin(); it != m_spawners.end(); ++it)
+				{
+					GameObject* spawner = *it;
+					if (spawner->active == false) { continue; }
+					spawner->energy += 30; // dont wanna use EnergyReduce function, i want energy to stop at max
+
+					if (spawner->energy >= spawner->maxEnergy)
+					{
+						if (DecideSpawn(spawner))
+						{
+							spawner->energy = 0;
+						}
+						else
+						{
+							spawner->energy = spawner->maxEnergy;
+						}
+					}
+				}
+			}
+			//tile updates
+			{
+				for (int row = (int)m_noGrid - 1; row >= 0; --row)
+				{
+					for (int col = 0; col < (int)m_noGrid; ++col)
+					{
+						int ind = row * m_noGrid + col;
+						int t = m_maze.m_grid[ind];
+						int tHealth = m_maze.m_gridHealth[ind];
+						if (t == Maze::TILE_MAGMA)
+						{
+							m_maze.m_gridHealth[ind] -= 50;
+						}
+					}
+				}
+			}
 			return;
 		}
 		}
@@ -2850,6 +3057,7 @@ void SceneMovement_Week03::RenderGOBar(GameObject* go, float vertScale)
 	modelStack.PushMatrix();
 	// shift left edge fixed: move half the reduced width to the left
 	float offsetX = -(barWidth * (1.f - healthRatio));
+
 	float offsetY = 3.5f;
 	modelStack.Translate(m_gridOffset + m_gridSize * go->curr.x + offsetX,
 		m_gridOffset + m_gridSize * go->curr.y - offsetY,
@@ -2860,31 +3068,11 @@ void SceneMovement_Week03::RenderGOBar(GameObject* go, float vertScale)
 
 	// draw the background (max health)
 	modelStack.PushMatrix();
-	modelStack.Translate(m_gridOffset + m_gridSize * go->curr.x + offsetX,
+	modelStack.Translate(m_gridOffset + m_gridSize * go->curr.x,
 		m_gridOffset + m_gridSize * go->curr.y - offsetY,
 		6);
 	modelStack.Scale(barWidth, barHeight, go->scale.z);
 	RenderMesh(meshList[GEO_MAXCUBE], false);
-	modelStack.PopMatrix();
-
-
-	modelStack.PushMatrix();
-	// shift left edge fixed: move half the reduced width to the left
-	float energyoffsetX = -(barWidth * (1.f - energyRatio));
-	offsetY = 4.9f;
-	modelStack.Translate(m_gridOffset + m_gridSize * go->curr.x + energyoffsetX,
-		m_gridOffset + m_gridSize * go->curr.y - offsetY,
-		6);
-	modelStack.Scale(barWidth * energyRatio, barHeight, go->scale.z);
-	RenderMesh(meshList[GEO_ENERGYCUBE], false);
-	modelStack.PopMatrix();
-
-	modelStack.PushMatrix();
-	modelStack.Translate(m_gridOffset + m_gridSize * go->curr.x + offsetX,
-		m_gridOffset + m_gridSize * go->curr.y - offsetY,
-		6);
-	modelStack.Scale(barWidth, barHeight, go->scale.z);
-	RenderMesh(meshList[GEO_MAXENERGYCUBE], false);
 	modelStack.PopMatrix();
 }
 
@@ -2910,21 +3098,95 @@ void SceneMovement_Week03::RenderGOBar(GameObject* go, float vertScale, Vector3 
 	modelStack.Scale(barWidth, barHeight, go->scale.z);
 	RenderMesh(meshList[GEO_MAXCUBE], false);
 	modelStack.PopMatrix();
+}
 
+void SceneMovement_Week03::RenderStructureOverlay(GameObject* go)
+{
+	if (!go) return;
+	if (!go->active) return;
 
-	modelStack.PushMatrix();
-	// shift left edge fixed: move half the reduced width to the left
-	float energyoffsetX = -(barWidth * (1.f - energyRatio));
-	modelStack.Translate(pos.x + energyoffsetX, pos.y - 4.9, zOffset);
-	modelStack.Scale(barWidth * energyRatio, barHeight, go->scale.z);
-	RenderMesh(meshList[GEO_ENERGYCUBE], false);
-	modelStack.PopMatrix();
+	std::ostringstream ss;
 
-	modelStack.PushMatrix();
-	modelStack.Translate(pos.x, pos.y - 4.9, zOffset);
-	modelStack.Scale(barWidth, barHeight, go->scale.z);
-	RenderMesh(meshList[GEO_MAXENERGYCUBE], false);
-	modelStack.PopMatrix();
+	switch (go->type)
+	{
+	case GameObject::GO_MAINBASE:
+	{
+		// --- Overlay copy (your 2nd base render) ---
+		modelStack.PushMatrix();
+
+		// you were using fixed positions for the overlay base
+		if (go->side == GameObject::SIDE_RED)
+			modelStack.Translate(132.5, 92.5, zOffset);
+		else
+			modelStack.Translate(132.5, 67.5, zOffset);
+
+		// bar offset in your code
+		RenderGOBar(go, 14, Vector3(0, -1.5, 0));
+
+		modelStack.Rotate(180, 0, 0, 1);
+		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
+
+		if (go->side == GameObject::SIDE_RED)
+			RenderMesh(meshList[GEO_BASEBLUE], false);
+		else
+			RenderMesh(meshList[GEO_BASERED], false);
+
+		modelStack.PopMatrix();
+
+		// optional: bar again (you had it twice; keep if you really need both)
+		RenderGOBar(go, 14);
+		break;
+	}
+
+	case GameObject::GO_SPAWNER:
+	{
+		// --- Overlay spawner copy (your 2nd spawner render) ---
+		modelStack.PushMatrix();
+
+		// reproduce your overlay placement logic
+		if (go->side == GameObject::SIDE_RED)
+		{
+			if (go->pos.y < m_worldHeight / 2)
+				modelStack.Translate(go->pos.x + 125, go->pos.y + 100, zOffset);
+			else
+				modelStack.Translate(go->pos.x + 90, go->pos.y + 42.5, zOffset);
+
+			RenderGOBar(go, 14, Vector3(0, -1.5, 0));
+		}
+		else
+		{
+			if (go->pos.y < m_worldHeight / 2)
+				modelStack.Translate(go->pos.x + 75, go->pos.y + 20, zOffset);
+			else
+				modelStack.Translate(go->pos.x + 40, go->pos.y + 17.5, zOffset);
+
+			RenderGOBar(go, 14, Vector3(0, -1.5, 0));
+		}
+
+		// resource text
+		ss << "W:" << go->woodenLogs << " M:" << go->metalParts;
+
+		modelStack.PushMatrix();
+		modelStack.Translate(-4.5, 6, 0);
+		modelStack.Scale(5, 5, 5);
+		RenderText(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0));
+		modelStack.PopMatrix();
+
+		// draw the spawner icon on overlay
+		modelStack.Scale(go->scale.x, go->scale.y, go->scale.z);
+		if (go->side == GameObject::SIDE_RED)
+			RenderMesh(meshList[GEO_SPAWNERBLUE], false);
+		else
+			RenderMesh(meshList[GEO_SPAWNERRED], false);
+
+		modelStack.PopMatrix();
+
+		break;
+	}
+
+	default:
+		break;
+	}
 }
 
 void SceneMovement_Week03::RenderGO(GameObject* go)
@@ -2961,12 +3223,12 @@ void SceneMovement_Week03::RenderGO(GameObject* go)
 		modelStack.PushMatrix();
 		if (go->side == GameObject::SIDE_RED)
 		{
-			modelStack.Translate(132.5, 90, zOffset);
+			modelStack.Translate(132.5, 92.5, zOffset);
 			RenderGOBar(go, 14, Vector3(0, -1.5, 0));
 		}
 		else
 		{
-			modelStack.Translate(132.5, 60, zOffset);
+			modelStack.Translate(132.5, 67.5, zOffset);
 			RenderGOBar(go, 14, Vector3(0, -1.5, 0));
 		}
 		modelStack.Rotate(180, 0, 0, 1);
@@ -3008,10 +3270,10 @@ void SceneMovement_Week03::RenderGO(GameObject* go)
 		{
 			if (go->pos.y < m_worldHeight / 2)
 			{
-				modelStack.Translate(go->pos.x + 125, go->pos.y + 60, zOffset);
+				modelStack.Translate(go->pos.x + 125, go->pos.y + 100, zOffset);
 			}
 			else {
-				modelStack.Translate(go->pos.x + 90, go->pos.y + 20, zOffset);
+				modelStack.Translate(go->pos.x + 90, go->pos.y + 42.5, zOffset);
 			}
 			RenderGOBar(go, 14, Vector3(0, -1.5, 0));
 
@@ -3023,7 +3285,7 @@ void SceneMovement_Week03::RenderGO(GameObject* go)
 				modelStack.Translate(go->pos.x + 75, go->pos.y + 20, zOffset);
 			}
 			else {
-				modelStack.Translate(go->pos.x + 40, go->pos.y - 20, zOffset);
+				modelStack.Translate(go->pos.x + 40, go->pos.y + 17.5, zOffset);
 			}
 			RenderGOBar(go, 14, Vector3(0, -1.5, 0));
 		}
@@ -3346,7 +3608,6 @@ bool SceneMovement_Week03::Handle(Message* message)
 		switch (t)
 		{
 		case Maze::TILE_ORE:
-			std::cout << "Call for Mechanics" << std::endl;
 			//call for closest 2 mechanics
 			//mechanics check if they are already assigned to a ore
 			//if yes, check if this ore is closer
@@ -3373,11 +3634,21 @@ bool SceneMovement_Week03::Handle(Message* message)
 
 		for (MazePt p : points)
 		{
+			if (p.x < 0 || p.x >= (int)m_noGrid || p.y < 0 || p.y >= (int)m_noGrid)
+				continue;
+
 			int ind = Get1DIndex(p.x, p.y);
+
+			if (ind < 0 || ind >= (int)m_maze.m_grid.size())
+				continue;
+
 			m_maze.m_grid[ind] = Maze::TILE_MAGMA;
+			m_maze.m_gridHealth[ind] = 100;
+
 			std::vector<GameObject*> affected = GetUnitsAtTile(p);
 			for (GameObject* go : affected)
 			{
+				if (!go) continue;
 				go->health -= 70;
 			}
 		}
@@ -4100,8 +4371,11 @@ void SceneMovement_Week03::Render()
 			RenderGO(go);
 		}
 	}
-	RenderDebugGO(GameObject::SIDE_BLUE, 50);
-	RenderDebugGO(GameObject::SIDE_RED,75);
+	RenderDebugGO(GameObject::SIDE_BLUE, 57.5);
+	RenderDebugGO(GameObject::SIDE_RED,82.5);
+
+	for (auto* go : m_goList)
+		RenderStructureOverlay(go);
 
 
 	for (int row = 0; row < m_noGrid; ++row)
@@ -4168,36 +4442,37 @@ void SceneMovement_Week03::Render()
 		}
 	}
 
-	float miniSize = 2.0f;                 // matches your Scale(2,2,2)
+	float miniSize = 1.0f;                 // matches your Scale(2,2,2)
 	float miniOffset = m_gridOffset;        // or pick a different corner offset
 	float step = miniSize;                 // 1 tile = 1 step (no gaps)
 
 	// If you want a small gap between tiles, use:
 	// float step = miniSize + 0.2f;
-
+	float rightShift = step * (m_noGrid + 2); // tweak this: +2 adds spacing
 	int i = 0;
-	for (auto b : b_grid)
+	for (auto b : m_maze.m_grid)
 	{
 		int cellX = i % m_noGrid;
 		int cellY = i / m_noGrid;
 
 		modelStack.PushMatrix();
 		modelStack.Translate(
-			100 + miniOffset + step * cellX,
-			miniOffset + step * cellY,
+			100 + miniOffset + step * cellX + rightShift,
+			miniOffset + step * cellY + 28.5,
 			10.0f
 		);
 		modelStack.Scale(miniSize, miniSize, miniSize);
 		modelStack.Rotate(180, 0, 0, 1);
+
 		if (b)
-		{			
+		{
 			switch (b_grid[cellY * m_noGrid + cellX])
 			{
 			case Maze::TILE_WALL:
 				RenderMesh(meshList[GEO_WALL], false);
 				break;
 			case Maze::TILE_FOG:
-				meshList[GEO_FOG]->material.kAmbient.Set(1.f, 1.f, 1.f);
+				meshList[GEO_FOG]->material.kAmbient.Set(0.f, 0.f, 0.f);
 				RenderMesh(meshList[GEO_FOG], true);
 				break;
 			case Maze::TILE_ORE:
@@ -4246,7 +4521,83 @@ void SceneMovement_Week03::Render()
 		modelStack.PopMatrix();
 		++i;
 	}
-	
+
+
+	// --------- DRAW r_grid (shifted right) ----------
+	i = 0;
+	for (auto b : m_maze.m_grid)
+	{
+		int cellX = i % m_noGrid;
+		int cellY = i / m_noGrid;
+
+		modelStack.PushMatrix();
+		modelStack.Translate(
+			100 + miniOffset + step * cellX,  
+			miniOffset + step * cellY + 28.5,
+			10.0f
+		);
+		modelStack.Scale(miniSize, miniSize, miniSize);
+		modelStack.Rotate(180, 0, 0, 1);
+
+		if (b)
+		{
+			switch (r_grid[cellY * m_noGrid + cellX])     
+			{
+			case Maze::TILE_WALL:
+				RenderMesh(meshList[GEO_WALL], false);
+				break;
+			case Maze::TILE_FOG:
+				meshList[GEO_FOG]->material.kAmbient.Set(0.f, 0.f, 0.f);
+				RenderMesh(meshList[GEO_FOG], true);
+				break;
+			case Maze::TILE_ORE:
+				meshList[GEO_ORE]->material.kAmbient.Set(1.f, 0.f, 0.f);
+				RenderMesh(meshList[GEO_ORE], true);
+				break;
+			case Maze::TILE_WOODENLOG:
+				meshList[GEO_LOG]->material.kAmbient.Set(1.f, 1.f, 1.f);
+				RenderMesh(meshList[GEO_LOG], true);
+				break;
+			case Maze::TILE_GRASS:
+				meshList[GEO_GRASS]->material.kAmbient.Set(1.f, 1.f, 1.f);
+				RenderMesh(meshList[GEO_GRASS], true);
+				break;
+			case Maze::TILE_WATER:
+				meshList[GEO_WATER]->material.kAmbient.Set(1.f, 1.f, 1.f);
+				RenderMesh(meshList[GEO_WATER], true);
+				break;
+			case Maze::TILE_SNOW:
+				meshList[GEO_SNOW]->material.kAmbient.Set(1.f, 1.f, 1.f);
+				RenderMesh(meshList[GEO_SNOW], true);
+				break;
+			case Maze::TILE_ICE:
+				meshList[GEO_ICE]->material.kAmbient.Set(1.f, 1.f, 1.f);
+				RenderMesh(meshList[GEO_ICE], true);
+				break;
+			case Maze::TILE_SAND:
+				meshList[GEO_SAND]->material.kAmbient.Set(1.f, 1.f, 1.f);
+				RenderMesh(meshList[GEO_SAND], true);
+				break;
+			case Maze::TILE_LAVA:
+				meshList[GEO_LAVA]->material.kAmbient.Set(1.f, 1.f, 1.f);
+				RenderMesh(meshList[GEO_LAVA], true);
+				break;
+			case Maze::TILE_EMPTY:
+				RenderMesh(meshList[GEO_FLOOR], false);
+				break;
+			}
+		}
+		else
+		{
+			meshList[GEO_WHITEQUAD]->material.kAmbient.Set(0, 0, 0);
+			RenderMesh(meshList[GEO_WHITEQUAD], true);
+		}
+
+		modelStack.PopMatrix();
+		++i;
+	}
+
+
 	//On screen text
 
 	std::ostringstream ss;
@@ -4264,30 +4615,43 @@ void SceneMovement_Week03::Render()
 	std::string input;
 	if (!gamePlaying)
 	{
-		if (timeCounter < 1) { input = "Press Space To Start"; }
+		if (m_turn < 1) { input = "Press Space To Start"; }
 		else { input = "Press Escape To End"; }
 	}
 	ss.str("");
 	ss << input;
 	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 3, 49, 2.5);
 
+	ss.str("");
 	ss.precision(3);
 	ss << "Speed:" << m_speed;
-	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 3, 50, 6);
-
-	ss.str("");
-	ss.precision(5);
-	ss << "FPS:" << fps;
-	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 3, 50, 3);
+	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 3, 49, 14);
 
 	ss.str("");
 	ss << "Turn:" << m_turn;
-	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 3, 50, 9);
+	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 3, 49, 12);
 
 	ss.str("");
 	ss << "Turn Maze " << m_mazeKey;
-	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 3, 50, 0);
+	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 3, 49, 0);
 
+	ss.str("");
+	ss << "Blue Memory   Red Memory ";
+	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 2.1, 49, 16);
+
+	ss.str("");
+	ss << "Weather:";
+	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 2.1, 69, 27);
+	ss.str("");
+	ss << weather;
+	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 2.1, 69, 25);
+
+	ss.str("");
+	ss << "Event:";
+	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 2.1, 69, 23);
+	ss.str("");
+	ss << event;
+	RenderTextOnScreen(meshList[GEO_TEXT], ss.str(), Color(0, 1, 0), 2.1, 69, 21);
 }
 
 std::string SceneMovement_Week03::GameState()
@@ -4423,7 +4787,13 @@ std::string SceneMovement_Week03::GameState()
 
 void SceneMovement_Week03::DFS(MazePt curr)
 {
+	MazePt agent = m_maze.GetCurr();
+	if (agent.x != curr.x || agent.y != curr.y)
+	{
+		return; // or fix by teleporting agent (not ideal)
+	}
 	m_visited[curr.y * m_noGrid + curr.x] = true;
+
 	//UP
 	if (curr.y < m_noGrid - 1)
 	{
@@ -4506,50 +4876,81 @@ void SceneMovement_Week03::CarveUntilNoFog()
 {
 	std::fill(m_myGrid.begin(), m_myGrid.end(), Maze::TILE_FOG);
 	m_myGrid[m_start.y * m_noGrid + m_start.x] = Maze::TILE_GRASS;
+
+	int loopCount = 0;
+	const int MAX_LOOPS = 100; // Adjust this threshold as needed
+
 	while (true)
 	{
 		std::fill(m_visited.begin(), m_visited.end(), false);
-		DFS(m_start);
-		bool fog = false;
+		DFS(m_maze.GetCurr());
 
+		bool fog = false;
 		for (auto t : m_myGrid)
 		{
-			if (t == Maze::TILE_FOG) fog = true;
+			if (t == Maze::TILE_FOG)
+			{
+				fog = true;
+				break;
+			}
 		}
 		if (!fog) { break; }
 
 		bool carved = false;
+		const int dx[4] = { 1, -1, 0, 0 };
+		const int dy[4] = { 0, 0, 1, -1 };
 
-		const int dx[4] = { 1,-1,0,0 };
-		const int dy[4] = { 0,0,1,-1 };
+		// Fallback: if stuck in loop too long, just break all walls around fog tiles
+		if (loopCount >= MAX_LOOPS)
+		{
+			for (int y = 0; y < (int)m_noGrid; y++)
+			{
+				for (int x = 0; x < (int)m_noGrid; x++)
+				{
+					int idx = y * m_noGrid + x;
+					if (m_myGrid[idx] != Maze::TILE_FOG) continue;
+
+					// Break all 4 surrounding tiles
+					for (int k = 0; k < 4; k++)
+					{
+						int nx = x + dx[k], ny = y + dy[k];
+						if (nx < 0 || nx >= (int)m_noGrid || ny < 0 || ny >= (int)m_noGrid) continue;
+						int nidx = ny * m_noGrid + nx;
+						m_maze.m_grid[nidx] = Maze::TILE_GRASS;
+						m_myGrid[nidx] = Maze::TILE_GRASS;
+					}
+				}
+			}
+			break;
+		}
 
 		for (int y = 0; y < (int)m_noGrid && !carved; y++)
+		{
 			for (int x = 0; x < (int)m_noGrid && !carved; x++)
 			{
 				int idx = y * m_noGrid + x;
-				if (m_myGrid[idx] != Maze::TILE_FOG) continue; // we're looking at fog walls
+				if (m_myGrid[idx] != Maze::TILE_FOG) continue;
 
-				// if this fog tile touches ANY seen tile, break THIS tile
 				for (int k = 0; k < 4; k++)
 				{
 					int nx = x + dx[k], ny = y + dy[k];
 					if (nx < 0 || nx >= (int)m_noGrid || ny < 0 || ny >= (int)m_noGrid) continue;
-
 					int nidx = ny * m_noGrid + nx;
 
 					if (m_myGrid[nidx] != Maze::TILE_FOG)
 					{
-						//std::cout << ny << " , " << nx << std::endl;
-						// carve the fog tile (idx) in the TRUE grid
 						m_maze.m_grid[nidx] = Maze::TILE_GRASS;
-						m_myGrid[nidx] = Maze::TILE_GRASS; // optional immediate reveal
+						m_myGrid[nidx] = Maze::TILE_GRASS;
+						std::fill(m_visited.begin(), m_visited.end(), false);
 						carved = true;
 						break;
 					}
 				}
 			}
+		}
 
-		if (!carved) break; // safety
+		if (!carved) break;
+		loopCount++;
 	}
 }
 
@@ -4997,14 +5398,8 @@ void SceneMovement_Week03::PathFind(GameObject* go, const MazePt& goal, int& mov
 
 		int idx = Get1DIndex(next.x, next.y);
 
-		std::cout << "STEP to (" << next.x << "," << next.y << ")"
-			<< " teamGrid=" << teamGrid[idx]
-			<< " realMap=" << m_maze.m_grid[idx] 
-			<< "\n";
 
 		auto raw = teamGrid[idx];
-		std::cout << "raw=" << (int)raw
-			<< " signed=" << (int)(signed char)raw << "\n";
 
 		if (stepCost > moveBudget)
 			return;
@@ -5231,13 +5626,13 @@ int SceneMovement_Week03::SetTurnsToNextWeather()
 	switch (currentWeather)
 	{
 	case FOREST: turns = 3; break;
-	case MIDWINTER: turns = 1; break;
+	case MIDWINTER: turns = 2; break;
 	case WINTER: turns = 3; break;
-	case MIDWINTERFOREST: turns = 1; break;
+	case MIDWINTERFOREST: turns = 2; break;
 	case FOREST2: turns = 2; break;
-	case MIDDESERT: turns = 1; break;
+	case MIDDESERT: turns = 2; break;
 	case DESERT: turns = 2; break;
-	case MIDDESERTFOREST: turns = 1; break;
+	case MIDDESERTFOREST: turns = 2; break;
 	}
 	return turns += Math::RandIntMinMax(-1,1);
 }
@@ -5247,16 +5642,21 @@ void SceneMovement_Week03::SetNextWeather()
 	std::vector<int> changed;
 	switch (currentWeather)
 	{
-	case FOREST: currentWeather = MIDWINTER; m_maze.ConvertTerrainForWinter(m_mazeKey, m_start, changed, 0.4, 0.05, 0.05, 0.35); break;
-	case MIDWINTER: currentWeather = WINTER; m_maze.ConvertTerrainForWinter(m_mazeKey, m_start, changed, 1, 0.05, 0.05, 1); m_maze.ForceWinterAll(m_start, changed);  break;
-	case WINTER: currentWeather = MIDWINTERFOREST; m_maze.RevertBiomeOverlayToForest(m_mazeKey, m_start, changed, Maze::TILE_SNOW, 0.55, 0.05, Maze::TILE_ICE, 0.60);  break;
-	case MIDWINTERFOREST: currentWeather = FOREST2; m_maze.RevertBiomeOverlayToForest(m_mazeKey, m_start, changed, Maze::TILE_SNOW, 1, 0.1, Maze::TILE_ICE, 1); m_maze.ForceBackToGrassAndWater(m_start, changed);  break;
-	case FOREST2: currentWeather = MIDDESERT; m_maze.ConvertTerrainForDesert(m_mazeKey, m_start, changed, 0.4, 0.05, 0.05, 0.35); break;
-	case MIDDESERT: currentWeather = DESERT; m_maze.ConvertTerrainForDesert(m_mazeKey, m_start, changed, 1, 0.05, 0.05, 1); m_maze.ForceDesertAll(m_start, changed); break;
-	case DESERT: currentWeather = MIDDESERTFOREST; m_maze.RevertBiomeOverlayToForest(m_mazeKey, m_start, changed, Maze::TILE_SAND, 0.55, 0.05, Maze::TILE_LAVA, 0.60); break;
-	case MIDDESERTFOREST: currentWeather = FOREST; m_maze.RevertBiomeOverlayToForest(m_mazeKey, m_start, changed, Maze::TILE_SAND, 1, 0.1, Maze::TILE_LAVA, 1); m_maze.ForceBackToGrassAndWater(m_start, changed); break;
+	case FOREST: currentWeather = MIDWINTER; m_maze.ConvertTerrainForWinter(m_mazeKey, m_start, changed, 0.4, 0.05, 0.05, 0.35); weather = "MidFrozen"; break;
+	case MIDWINTER: currentWeather = WINTER; m_maze.ConvertTerrainForWinter(m_mazeKey, m_start, changed, 1, 0.05, 0.05, 1); m_maze.ForceWinterAll(m_start, changed); weather = "Frozen"; break;
+	case WINTER: currentWeather = MIDWINTERFOREST; m_maze.RevertBiomeOverlayToForest(m_mazeKey, m_start, changed, Maze::TILE_SNOW, 0.55, 0.05, Maze::TILE_ICE, 0.60); weather = "MidTemperate"; break;
+	case MIDWINTERFOREST: currentWeather = FOREST2; m_maze.RevertBiomeOverlayToForest(m_mazeKey, m_start, changed, Maze::TILE_SNOW, 1, 0.1, Maze::TILE_ICE, 1); m_maze.ForceBackToGrassAndWater(m_start, changed); weather = "Temperate"; break;
+	case FOREST2: currentWeather = MIDDESERT; m_maze.ConvertTerrainForDesert(m_mazeKey, m_start, changed, 0.4, 0.05, 0.05, 0.35); weather = "MidArid"; break;
+	case MIDDESERT: currentWeather = DESERT; m_maze.ConvertTerrainForDesert(m_mazeKey, m_start, changed, 1, 0.05, 0.05, 1); m_maze.ForceDesertAll(m_start, changed); weather = "Arid"; break;
+	case DESERT: currentWeather = MIDDESERTFOREST; m_maze.RevertBiomeOverlayToForest(m_mazeKey, m_start, changed, Maze::TILE_SAND, 0.55, 0.05, Maze::TILE_LAVA, 0.60); weather = "MidTemperate"; break;
+	case MIDDESERTFOREST: currentWeather = FOREST; m_maze.RevertBiomeOverlayToForest(m_mazeKey, m_start, changed, Maze::TILE_SAND, 1, 0.1, Maze::TILE_LAVA, 1); m_maze.ForceBackToGrassAndWater(m_start, changed); weather = "Temperate"; break;
 	}
 	CarveUntilNoFog();
+	Carve2x2Both(0, 9, Maze::TILE_GRASS);
+	Carve2x2Both(4, 9, Maze::TILE_GRASS);
+
+	Carve2x2Both(18, 9, Maze::TILE_GRASS);
+	Carve2x2Both(14, 9, Maze::TILE_GRASS);
 	ResetTilesToFog(changed);
 }
 
@@ -5337,4 +5737,30 @@ void SceneMovement_Week03::FillCurrNodes2x2FromWorld(GameObject* go)
 
 	// (optional) also keep go->curr in sync if you use it
 	go->curr.Set(gx, gy);
+}
+
+bool SceneMovement_Week03::TeamMemoryContainsEnemyBase(MazePt& enemyBaseTL,
+	std::vector<Maze::TILE_CONTENT>& teamMem)
+{
+	MazePt pts[4] = {
+		enemyBaseTL,
+		MazePt(enemyBaseTL.x + 1, enemyBaseTL.y),
+		MazePt(enemyBaseTL.x,     enemyBaseTL.y + 1),
+		MazePt(enemyBaseTL.x + 1, enemyBaseTL.y + 1)
+	};
+
+	for (const MazePt& p : pts)
+	{
+		// bounds
+		if (p.x < 0 || p.x >= (int)m_noGrid || p.y < 0 || p.y >= (int)m_noGrid)
+			return false; // base is invalid / partially outside
+
+		int idx = p.y * m_noGrid + p.x;
+
+		// if any base tile is still fog in memory -> not fully known
+		if (teamMem[idx] == Maze::TILE_FOG || teamMem[idx] == Maze::TILE_EMPTY)
+			return false;
+	}
+
+	return true; // all 4 base tiles exist in memory (not fog)
 }

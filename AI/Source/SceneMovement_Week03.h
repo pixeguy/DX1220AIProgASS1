@@ -25,6 +25,8 @@ public:
 
 	void FillCurrNodes2x2FromWorld(GameObject* go);
 
+	bool TeamMemoryContainsEnemyBase(MazePt& enemyBaseTL, std::vector<Maze::TILE_CONTENT>& teamMem);
+
 	//init objs
 	virtual GameObject* InitMainBase(GameObject::SIDE side, Vector3 pos);
 	GameObject* InitGoldenOrb(Vector3 pos);
@@ -37,6 +39,7 @@ public:
 
 	void RenderGOBar(GameObject* go, float vertScale);
 	void RenderGOBar(GameObject* go, float vertScale, Vector3 pos);
+	void RenderStructureOverlay(GameObject* go);
 	Vector3 RandomPointInRing(const Vector3& center, float minRadius, float maxRadius);
 
 	void RenderGO(GameObject* go);
@@ -54,6 +57,10 @@ public:
 	GameObject* ref; //delete later
 
 	std::string gameStateString;
+	bool blueKnowsRedBase = false;
+	bool blueKnowsRedSpawner = false;
+	bool redKnowsBlueBase = false;
+	bool redKnowsBlueSpawner = false;
 
 	struct ArmyStats
 	{
@@ -128,6 +135,9 @@ public:
 	enum WorldWeather {FOREST, MIDWINTER, WINTER, MIDWINTERFOREST,FOREST2, MIDDESERT, DESERT, MIDDESERTFOREST};
 	WorldWeather currentWeather = WorldWeather::FOREST;
 	int turnsToNextWeather = 0;
+
+	std::string weather = "Temperate";
+	std::string event = "None";
 
 protected:
 	int turnSinceEvent = 0;

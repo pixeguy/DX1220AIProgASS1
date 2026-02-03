@@ -84,6 +84,7 @@ struct GameObject : public ObjectBase
 	int useMoves = 0;
 	STATE currState;
 	GameObject *nearest;
+	GameObject* targetBase;
 	//GameObject* nearest2 = NULL; //for archer to find 2nd nearest
 	bool moveLeft;
 	bool moveRight;
